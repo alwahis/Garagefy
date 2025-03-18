@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garagefy - AI Car Diagnostics & Garage Finder</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+        :root {
+            --royal-yellow: #FBBF24;
+            --royal-yellow-dark: #F59E0B;
+            --royal-yellow-light: #FCD34D;
+            --background-color: #FFFBEB;
+            --card-background: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+        }
+
+        .button-primary {
+            background: var(--royal-yellow);
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button-primary:hover {
+            background: var(--royal-yellow-dark);
+            transform: translateY(-2px);
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--royal-yellow) 0%, var(--royal-yellow-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .home-button {
+            height: 200px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: linear-gradient(135deg, var(--royal-yellow) 0%, var(--royal-yellow-dark) 100%);
+            transition: all 0.3s ease;
+        }
+
+        .home-button:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px -15px rgba(251, 191, 36, 0.4);
+        }
+
+        .home-button .icon {
+            font-size: 3rem;
+        }
+
+        #mainContent > div {
+            display: none;
+        }
+
+        #mainContent > div.active {
+            display: block;
+        }
+
+        :root {
+            --primary-color: #4F46E5;
+            --primary-dark: #4338CA;
+            --secondary-color: #10B981;
+            --secondary-dark: #059669;
+            --background-color: #F8FAFC;
+            --card-background: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+        }
+
+        .button-primary {
+            background: var(--primary-color);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .button-primary:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .button-primary:hover:before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .button-secondary {
+            background: var(--secondary-color);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .button-secondary:hover {
+            background: var(--secondary-dark);
+            transform: translateY(-2px);
+        }
+
+        #map {
+            height: 450px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #map:hover {
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab-active {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .tab-active:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+
+        .garage-card {
+            animation: slideUp 0.5s ease-out;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-overlay {
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 15px rgba(79, 70, 229, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+            }
+        }
+
+        .user-location-marker {
+            animation: bounce 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        select, textarea, input {
+            transition: all 0.3s ease;
+        }
+
+        select:hover, textarea:hover, input:hover {
+            border-color: var(--primary-color);
+        }
+
+        select:focus, textarea:focus, input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="text-2xl font-bold text-gray-800">Garagefy</a>
+                <div class="space-x-4">
+                    <a href="/diagnose" class="text-gray-600 hover:text-gray-900">Diagnose</a>
+                    <a href="/garages" class="text-gray-600 hover:text-gray-900">Find Garages</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="mainContent" class="container mx-auto px-4 py-8">
+        <!-- Home Screen -->
+        <div id="homeScreen" class="max-w-4xl mx-auto animate__animated animate__fadeIn active">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <a href="/diagnose" class="home-button">
+                    <span class="icon">Diagnose</span>
+                    <span>Diagnose Your Car</span>
+                </a>
+                <a href="/garages" class="home-button">
+                    <span class="icon">Find Garage</span>
+                    <span>Find a Garage</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Diagnosis Section -->
+        <div id="diagnosisSection" class="max-w-3xl mx-auto animate__animated animate__fadeIn">
+            <div class="glass-card rounded-2xl p-8 mb-8">
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Car Brand</label>
+                            <select id="carBrand" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-color focus:border-transparent transition-all duration-200" disabled>
+                                <option value="">Select Brand</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Car Model</label>
+                            <select id="carModel" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-color focus:border-transparent transition-all duration-200" disabled>
+                                <option value="">Select Model</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                        <select id="carYear" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-color focus:border-transparent transition-all duration-200" disabled>
+                            <option value="">Select Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Symptoms</label>
+                        <div class="relative">
+                            <textarea id="symptoms" rows="4" 
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-color focus:border-transparent transition-all duration-200" 
+                                placeholder="Describe what's wrong with your car..."></textarea>
+                            <button id="startSpeech" 
+                                class="absolute right-3 top-3 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+                                
+                            </button>
+                        </div>
+                    </div>
+                    <button id="diagnoseBtn" class="button-primary w-full py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center justify-center space-x-2">
+                        <span>Get Diagnosis</span>
+                        <span class="text-xl">Diagnose</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Diagnosis Results -->
+            <div id="results" class="glass-card rounded-2xl p-8 mb-8 hidden animate__animated animate__fadeIn">
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    <span class="mr-2">Diagnosis Results</span>
+                    <span class="text-2xl">Diagnose</span>
+                </h3>
+                <div id="diagnosisContent" class="prose text-gray-700 mb-6 leading-relaxed"></div>
+                <div id="manualReference" class="text-sm text-gray-500 mb-6 italic"></div>
+                <button id="findGaragesBtn" class="button-secondary w-full py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center justify-center space-x-2">
+                    <span>Find Nearby Garages</span>
+                    <span class="text-xl">Find Garage</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Garage Search Section -->
+        <div id="garageSection" class="max-w-5xl mx-auto animate__animated animate__fadeIn">
+            <div class="glass-card rounded-2xl p-8 mb-8">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">Address</span>
+                        <input type="text" id="addressInput" 
+                            class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-color focus:border-transparent transition-all duration-200" 
+                            placeholder="Enter your address in Luxembourg">
+                    </div>
+                    <button id="useLocationBtn" 
+                        class="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2">
+                        <span>Use My Location</span>
+                        <span>Location</span>
+                    </button>
+                    <button id="searchButton" 
+                        class="button-primary px-6 py-3 rounded-xl font-medium shadow-lg flex items-center space-x-2">
+                        <span>Search</span>
+                        <span>Search</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Map Container -->
+                <div class="lg:col-span-2">
+                    <div id="map" class="sticky top-24"></div>
+                </div>
+
+                <!-- Results Container -->
+                <div class="lg:col-span-1">
+                    <div id="garageResults" class="space-y-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay fixed inset-0 flex items-center justify-center z-50 hidden animate__animated animate__fadeIn">
+        <div class="glass-card rounded-2xl p-8 text-center">
+            <div class="pulse w-16 h-16 rounded-full mx-auto mb-4"></div>
+            <p class="text-lg font-medium text-gray-700" id="loadingText">Processing...</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Wait for DOM to be fully loaded before initializing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation Functions
+            function showHome() {
+                hideAllSections();
+                document.getElementById('homeScreen').classList.add('active');
+            }
+
+            function showDiagnosis() {
+                hideAllSections();
+                document.getElementById('diagnosisSection').classList.add('active');
+                // Load car brands when diagnosis section is shown
+                loadCarBrands();
+            }
+
+            function showGarage() {
+                hideAllSections();
+                document.getElementById('garageSection').classList.add('active');
+                if (!map) {
+                    initMap();
+                }
+            }
+
+            function hideAllSections() {
+                const sections = ['homeScreen', 'diagnosisSection', 'garageSection'];
+                sections.forEach(section => {
+                    document.getElementById(section).classList.remove('active');
+                });
+            }
+
+            // Initialize event listeners for navigation buttons
+            document.querySelectorAll('[onclick="showHome()"]').forEach(el => {
+                el.onclick = showHome;
+            });
+            document.querySelectorAll('[onclick="showDiagnosis()"]').forEach(el => {
+                el.onclick = showDiagnosis;
+            });
+            document.querySelectorAll('[onclick="showGarage()"]').forEach(el => {
+                el.onclick = showGarage;
+            });
+
+            // Car selection handling
+            async function loadCarBrands() {
+                try {
+                    const response = await fetch('/api/brands');
+                    const data = await response.json();
+                    const brandSelect = document.getElementById('carBrand');
+                    brandSelect.innerHTML = '<option value="">Select Brand</option>';
+                    data.brands.forEach(brand => {
+                        brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+                    });
+                    
+                    // Enable brand selection
+                    brandSelect.disabled = false;
+                    
+                    // Reset and disable model and year
+                    const modelSelect = document.getElementById('carModel');
+                    const yearSelect = document.getElementById('carYear');
+                    modelSelect.innerHTML = '<option value="">Select Model</option>';
+                    yearSelect.innerHTML = '<option value="">Select Year</option>';
+                    modelSelect.disabled = true;
+                    yearSelect.disabled = true;
+                } catch (error) {
+                    console.error('Error loading car brands:', error);
+                }
+            }
+
+            async function loadCarModels(brand) {
+                try {
+                    console.log('Loading models for brand:', brand);
+                    const response = await fetch(`/api/models/${encodeURIComponent(brand)}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('Received models:', data.models);
+                    
+                    const modelSelect = document.getElementById('carModel');
+                    modelSelect.innerHTML = '<option value="">Select Model</option>';
+                    data.models.forEach(model => {
+                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                    });
+                    
+                    modelSelect.disabled = false;
+                    
+                    // Reset and disable year
+                    const yearSelect = document.getElementById('carYear');
+                    yearSelect.innerHTML = '<option value="">Select Year</option>';
+                    yearSelect.disabled = true;
+                } catch (error) {
+                    console.error('Error loading car models:', error);
+                    alert('Error loading car models. Please try again.');
+                }
+            }
+
+            async function loadCarYears(brand, model) {
+                try {
+                    console.log('Loading years for brand:', brand, 'model:', model);
+                    const response = await fetch(`/api/years/${encodeURIComponent(brand)}/${encodeURIComponent(model)}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('Received years:', data.years);
+                    
+                    const yearSelect = document.getElementById('carYear');
+                    yearSelect.innerHTML = '<option value="">Select Year</option>';
+                    data.years.forEach(year => {
+                        yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+                    });
+                    
+                    yearSelect.disabled = false;
+                } catch (error) {
+                    console.error('Error loading car years:', error);
+                    alert('Error loading car years. Please try again.');
+                }
+            }
+
+            // Add event listeners for car selection
+            const brandSelect = document.getElementById('carBrand');
+            const modelSelect = document.getElementById('carModel');
+            
+            if (brandSelect) {
+                brandSelect.addEventListener('change', function() {
+                    console.log('Brand selected:', this.value);
+                    const brand = this.value;
+                    if (brand) {
+                        loadCarModels(brand);
+                    } else {
+                        const modelSelect = document.getElementById('carModel');
+                        const yearSelect = document.getElementById('carYear');
+                        modelSelect.innerHTML = '<option value="">Select Model</option>';
+                        yearSelect.innerHTML = '<option value="">Select Year</option>';
+                        modelSelect.disabled = true;
+                        yearSelect.disabled = true;
+                    }
+                });
+            }
+
+            if (modelSelect) {
+                modelSelect.addEventListener('change', function() {
+                    console.log('Model selected:', this.value);
+                    const brand = document.getElementById('carBrand').value;
+                    const model = this.value;
+                    if (brand && model) {
+                        loadCarYears(brand, model);
+                    } else {
+                        const yearSelect = document.getElementById('carYear');
+                        yearSelect.innerHTML = '<option value="">Select Year</option>';
+                        yearSelect.disabled = true;
+                    }
+                });
+            }
+
+            // Initialize the diagnosis section if it's active
+            if (document.getElementById('diagnosisSection').classList.contains('active')) {
+                loadCarBrands();
+            }
+
+            let map;
+            let markers = [];
+            let currentDiagnosis = null;
+            let userMarker = null;
+
+            // Tab switching
+            document.getElementById('diagnosisTab').addEventListener('click', () => {
+                document.getElementById('diagnosisTab').classList.add('tab-active');
+                document.getElementById('garageTab').classList.remove('tab-active');
+                document.getElementById('garageTab').classList.add('text-gray-600');
+                document.getElementById('diagnosisSection').classList.remove('hidden');
+                document.getElementById('garageSection').classList.add('hidden');
+            });
+
+            document.getElementById('garageTab').addEventListener('click', () => {
+                document.getElementById('garageTab').classList.add('tab-active');
+                document.getElementById('garageTab').classList.remove('text-gray-600');
+                document.getElementById('diagnosisTab').classList.remove('tab-active');
+                document.getElementById('diagnosisSection').classList.add('hidden');
+                document.getElementById('garageSection').classList.remove('hidden');
+                if (!map) {
+                    initMap();
+                }
+                // Get user's location when switching to garage tab
+                getCurrentLocation();
+            });
+
+            // Get current location
+            function getCurrentLocation() {
+                if (navigator.geolocation) {
+                    showLoading("Getting your location...");
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            hideLoading();
+                            const { latitude, longitude } = position.coords;
+                            
+                            // Update map
+                            if (map) {
+                                map.setView([latitude, longitude], 13);
+                                
+                                // Update or create user marker
+                                if (userMarker) {
+                                    userMarker.setLatLng([latitude, longitude]);
+                                } else {
+                                    userMarker = L.marker([latitude, longitude], {
+                                        icon: L.divIcon({
+                                            className: 'user-location-marker',
+                                            html: '',
+                                            iconSize: [25, 25],
+                                            iconAnchor: [12, 24]
+                                        })
+                                    }).addTo(map);
+                                }
+                            }
+                            
+                            // Search for garages near the current location
+                            searchGaragesNearLocation(latitude, longitude);
+                        },
+                        (error) => {
+                            hideLoading();
+                            console.error('Error getting location:', error);
+                            alert('Could not get your location. Please enter your address manually.');
+                        }
+                    );
+                } else {
+                    alert('Geolocation is not supported by your browser. Please enter your address manually.');
+                }
+            }
+
+            // Search garages near coordinates
+            async function searchGaragesNearLocation(latitude, longitude) {
+                showLoading("Searching for nearby garages...");
+                try {
+                    const response = await fetch('/search_garages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            coordinates: {
+                                latitude,
+                                longitude
+                            },
+                            diagnosis: currentDiagnosis
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Clear existing markers
+                    clearMarkers();
+                    
+                    // Add markers for each garage
+                    data.garages.forEach(garage => {
+                        addMarker(garage.latitude, garage.longitude, garage.name);
+                        
+                        // Add garage card to results
+                        const garageCard = formatGarageCard(garage);
+                        document.getElementById('garageResults').innerHTML += garageCard;
+                    });
+
+                } catch (error) {
+                    console.error('Error searching garages:', error);
+                    alert('Error searching for garages. Please try again.');
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            // Initialize the map
+            function initMap() {
+                map = L.map('map').setView([49.815273, 6.129583], 10); // Center on Luxembourg
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: ' OpenStreetMap contributors'
+                }).addTo(map);
+            }
+
+            function showLoading(message) {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').innerHTML = `
+                    <div class="glass-card rounded-2xl p-8 text-center">
+                        <div class="pulse w-16 h-16 rounded-full mx-auto mb-4"></div>
+                        <p class="text-lg font-medium text-gray-700" id="loadingText">${message}</p>
+                    </div>
+                `;
+            }
+
+            function hideLoading() {
+                document.getElementById('loading').style.display = 'none';
+            }
+
+            function clearMarkers() {
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+            }
+
+            function addMarker(lat, lon, title, isUser = false) {
+                const marker = L.marker([lat, lon]);
+                const icon = isUser ? '' : '';
+                marker.bindPopup(`${icon} ${title}`);
+                marker.addTo(map);
+                markers.push(marker);
+                return marker;
+            }
+
+            function formatGarageCard(garage) {
+                const hasServices = garage.services && garage.services.length > 0;
+                const hasHours = garage.hours && garage.hours.length > 0;
+                
+                return `
+                    <div class="garage-card glass-card rounded-xl p-6 card-hover">
+                        <div class="flex items-start justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${garage.name}</h3>
+                            <span class="px-3 py-1 bg-primary-color bg-opacity-10 text-primary-color rounded-full text-sm font-medium">
+                                ${garage.distance} km
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-start space-x-3">
+                                <span class="text-gray-400 mt-1">📍</span>
+                                <p class="text-gray-600 flex-grow">${garage.address}</p>
+                            </div>
+                            
+                            ${garage.phone ? `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">📞</span>
+                                <a href="tel:${garage.phone}" class="text-primary-color hover:text-primary-dark transition-colors">
+                                    ${garage.phone}
+                                </a>
+                            </div>
+                            ` : ''}
+                            
+                            ${garage.email ? `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">📧</span>
+                                <a href="mailto:${garage.email}" class="text-primary-color hover:text-primary-dark transition-colors">
+                                    ${garage.email}
+                                </a>
+                            </div>
+                            ` : ''}
+                            
+                            ${garage.website ? `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">🌐</span>
+                                <a href="${garage.website}" target="_blank" class="text-primary-color hover:text-primary-dark transition-colors">
+                                    Visit Website
+                                </a>
+                            </div>
+                            ` : ''}
+                            
+                            ${hasHours ? `
+                            <div class="flex items-start space-x-3">
+                                <span class="text-gray-400 mt-1">🕒</span>
+                                <div class="text-gray-600">
+                                    <p class="font-medium mb-1">Opening Hours</p>
+                                    <p class="text-sm whitespace-pre-line">${garage.hours}</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${hasServices ? `
+                            <div class="flex items-start space-x-3">
+                                <span class="text-gray-400 mt-1">🔧</span>
+                                <div class="text-gray-600">
+                                    <p class="font-medium mb-1">Services</p>
+                                    <p class="text-sm">${garage.services}</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <button onclick="centerMapOnGarage(${garage.latitude}, ${garage.longitude})" 
+                                class="w-full px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-medium transition-colors flex items-center justify-center space-x-2">
+                                <span>View on Map</span>
+                                <span>🗺️</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Handle diagnosis request
+            document.getElementById('diagnoseBtn').addEventListener('click', async () => {
+                const carBrand = document.getElementById('carBrand').value;
+                const carModel = document.getElementById('carModel').value;
+                const year = document.getElementById('carYear').value;
+                const symptoms = document.getElementById('symptoms').value;
+                
+                if (!carBrand || !carModel || !year || !symptoms) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+
+                showLoading('Analyzing your car...');
+                document.getElementById('results').classList.add('hidden');
+                
+                try {
+                    const response = await fetch('/diagnose', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            car_brand: carBrand,
+                            car_model: carModel,
+                            year: parseInt(year),
+                            symptoms: symptoms
+                        })
+                    });
+
+                    const data = await response.json();
+                    currentDiagnosis = data;
+                    
+                    hideLoading();
+                    
+                    // Show results
+                    document.getElementById('results').classList.remove('hidden');
+                    document.getElementById('diagnosisContent').innerHTML = data.diagnosis.replace(/\n/g, '<br>');
+                    document.getElementById('manualReference').innerHTML = `Reference: ${data.manual_reference}`;
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while getting the diagnosis. Please try again.');
+                    hideLoading();
+                }
+            });
+
+            // Handle find garages request after diagnosis
+            document.getElementById('findGaragesBtn').addEventListener('click', () => {
+                document.getElementById('garageTab').click();
+            });
+
+            async function searchGarages() {
+                const address = document.getElementById('addressInput').value.trim();
+                if (!address) return;
+
+                showLoading('Finding nearby garages...');
+                clearMarkers();
+
+                try {
+                    const response = await fetch('/search_garages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            address,
+                            diagnosis: currentDiagnosis
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        document.getElementById('garageResults').innerHTML = `
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                                ${data.error}
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    // Add user location marker
+                    const userMarker = addMarker(data.user_location.lat, data.user_location.lon, 'Your Location', true);
+                    
+                    // Add garage markers and create result cards
+                    let resultsHtml = '';
+                    data.garages.forEach(garage => {
+                        addMarker(garage.latitude, garage.longitude, garage.name);
+                        
+                        // Add garage card to results
+                        const garageCard = formatGarageCard(garage);
+                        resultsHtml += garageCard;
+                    });
+
+                    document.getElementById('garageResults').innerHTML = resultsHtml;
+
+                    // Fit map bounds to show all markers
+                    const bounds = L.latLngBounds([userMarker.getLatLng()]);
+                    markers.forEach(marker => bounds.extend(marker.getLatLng()));
+                    map.fitBounds(bounds, { padding: [50, 50] });
+
+                } catch (error) {
+                    console.error('Error searching garages:', error);
+                    document.getElementById('garageResults').innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            An error occurred while searching for garages. Please try again.
+                        </div>
+                    `;
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            // Add event listeners
+            document.getElementById('searchButton').addEventListener('click', searchGarages);
+            document.getElementById('useLocationBtn').addEventListener('click', getCurrentLocation);
+            document.getElementById('addressInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchGarages();
+            });
+
+            // Initialize map when page loads
+            document.addEventListener('DOMContentLoaded', () => {
+                if (!document.getElementById('garageSection').classList.contains('hidden')) {
+                    initMap();
+                }
+                
+                // Load car brands when page loads
+                loadCarBrands();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://garagefy:password@db:5432/garagefy
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+    networks:
+      - garagefy-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - garagefy-network
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=garagefy
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=garagefy
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - garagefy-network
+
+networks:
+  garagefy-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

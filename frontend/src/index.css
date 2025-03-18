@@ -1,0 +1,112 @@
+/* Reset default styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  touch-action: manipulation; /* Optimize for touch */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+/* App container */
+#root {
+  min-height: 100vh;
+  background-color: #f5f6f8;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Increase touch target sizes */
+  button, 
+  [role="button"],
+  a,
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form elements on mobile */
+  input, 
+  select, 
+  textarea {
+    font-size: 16px !important; /* Prevent zoom on focus in iOS */
+  }
+  
+  /* Add more spacing between elements */
+  .chakra-stack > * {
+    margin-bottom: 1rem;
+  }
+  
+  /* Adjust container padding */
+  .chakra-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Ensure buttons are easier to tap */
+  .chakra-button {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+}
+
+/* Improve scrolling experience */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 119, 255, 0.6);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 119, 255, 0.8);
+}
+
+/* Hide the question mark icon */
+[role="button"] img[alt="?"],
+img[alt="?"],
+button img[alt="?"],
+a img[alt="?"],
+div[role="button"] img,
+.intercom-launcher,
+.help-button,
+.support-button,
+.question-button,
+.chat-button {
+  display: none !important;
+}
+
+/* Hide any centered container that might contain the question mark */
+div[style*="position: fixed"][style*="bottom"],
+div[style*="position: absolute"][style*="bottom"] {
+  display: none !important;
+}
+
+/* Hide any centered container in the middle of the screen */
+div[style*="position: fixed"][style*="transform: translate"],
+div[style*="position: absolute"][style*="transform: translate"] {
+  display: none !important;
+}

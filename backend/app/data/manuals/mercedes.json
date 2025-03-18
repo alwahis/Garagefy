@@ -1,0 +1,171 @@
+{
+  "brand": "Mercedes-Benz",
+  "systems": [
+    {
+      "system": "Engine",
+      "subsystems": [
+        {
+          "name": "Fuel System",
+          "data": {
+            "symptoms": [
+              "Power loss during acceleration",
+              "Poor performance uphill",
+              "Engine stalling",
+              "Rough idling",
+              "Decreased fuel efficiency"
+            ],
+            "causes": [
+              {
+                "issue": "Clogged fuel filter",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1-2 weeks",
+                "cost_range": {"min": 150, "max": 350},
+                "reference": "Mercedes-Benz Service Manual W204, Section 07.16-P-0215A"
+              },
+              {
+                "issue": "Faulty fuel pump",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 800, "max": 1500},
+                "reference": "Mercedes-Benz Service Manual W204, Section 07.16-P-0310B"
+              },
+              {
+                "issue": "Blocked diesel particulate filter (DPF)",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 600, "max": 2000},
+                "reference": "Mercedes-Benz Technical Bulletin TB-07-25-01"
+              },
+              {
+                "issue": "Faulty injectors",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 900, "max": 2500},
+                "reference": "Mercedes-Benz Service Manual W204, Section 07.07-P-0712C"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check fuel pressure",
+                "tools_needed": ["Fuel pressure gauge", "Diagnostic scanner"],
+                "specifications": {"Pressure": "3.8-4.2 bar at idle (gasoline), 1800-2200 bar (diesel common rail)"},
+                "reference": "Mercedes-Benz Workshop Information System (WIS) Procedure 07.16-P-0100A"
+              },
+              {
+                "action": "Inspect fuel filter condition",
+                "tools_needed": ["Visual inspection tools", "Filter removal tools"],
+                "specifications": {"Replace at": "Every 60,000 km or if clogged"},
+                "reference": "Mercedes-Benz Maintenance Booklet, Service A/B Schedule"
+              },
+              {
+                "action": "Check DPF status with diagnostic tool",
+                "tools_needed": ["Star Diagnosis", "OBD scanner with Mercedes capabilities"],
+                "specifications": {"Back pressure": "Less than 120 mbar at idle, 200 mbar at 3000 RPM"},
+                "reference": "Mercedes-Benz Diesel Particulate Filter Service Manual, Section DPF-01"
+              },
+              {
+                "action": "Test injector performance",
+                "tools_needed": ["Star Diagnosis", "Injector test kit"],
+                "specifications": {"Spray pattern": "Even atomization, no leakage"},
+                "reference": "Mercedes-Benz Technical Training Manual 07-D-01, Fuel Injection Systems"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Electrical System",
+          "data": {
+            "symptoms": [
+              "Battery not charging",
+              "Dimming lights",
+              "Warning lights on dashboard",
+              "Electrical components not working"
+            ],
+            "causes": [
+              {
+                "issue": "Faulty alternator",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 500, "max": 1200},
+                "reference": "Mercedes-Benz Service Manual W204, Section 54.10-P-0200A"
+              },
+              {
+                "issue": "Battery failure",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1 week",
+                "cost_range": {"min": 200, "max": 500},
+                "reference": "Mercedes-Benz Service Manual W204, Section 54.10-P-0100A"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check battery voltage",
+                "tools_needed": ["Multimeter", "Battery tester"],
+                "specifications": {"Voltage": "12.6V when off, 13.7-14.7V when running"},
+                "reference": "Mercedes-Benz Workshop Information System (WIS) Procedure 54.10-P-0120A"
+              },
+              {
+                "action": "Test alternator output",
+                "tools_needed": ["Multimeter", "Star Diagnosis"],
+                "specifications": {"Output": "13.5-14.5V at idle, current output within 80% of rated capacity"},
+                "reference": "Mercedes-Benz Workshop Information System (WIS) Procedure 54.10-P-0220A"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "system": "Transmission",
+      "subsystems": [
+        {
+          "name": "Automatic Transmission",
+          "data": {
+            "symptoms": [
+              "Delayed shifting",
+              "Harsh shifting",
+              "Slipping gears",
+              "Transmission warning light"
+            ],
+            "causes": [
+              {
+                "issue": "Low transmission fluid",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1-2 weeks",
+                "cost_range": {"min": 100, "max": 300},
+                "reference": "Mercedes-Benz Service Manual W204, Section 27.00-P-0100A"
+              },
+              {
+                "issue": "Faulty valve body",
+                "severity": "HIGH",
+                "urgency": "Requires prompt attention",
+                "cost_range": {"min": 1200, "max": 2500},
+                "reference": "Mercedes-Benz Service Manual W204, Section 27.19-P-0500A"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check transmission fluid level and condition",
+                "tools_needed": ["Star Diagnosis", "Transmission dipstick (if equipped)"],
+                "specifications": {"Fluid level": "Between MIN and MAX marks when at operating temperature"},
+                "reference": "Mercedes-Benz Workshop Information System (WIS) Procedure 27.00-P-0100A"
+              },
+              {
+                "action": "Perform transmission adaptation reset",
+                "tools_needed": ["Star Diagnosis"],
+                "specifications": {"Procedure": "Follow exact sequence in WIS"},
+                "reference": "Mercedes-Benz Workshop Information System (WIS) Procedure 27.60-P-0300A"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "references": [
+    "Mercedes-Benz W204 C-Class Service Manual (2008-2014)",
+    "Mercedes-Benz Technical Bulletins Database",
+    "Mercedes-Benz Workshop Information System (WIS)",
+    "Mercedes-Benz Star Diagnosis Procedures"
+  ]
+}

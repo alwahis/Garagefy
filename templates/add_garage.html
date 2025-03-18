@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Garage - Garagefy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3">
+            <a href="/" class="inline-block">
+                <img src="/static/images/logo.svg" alt="Garagefy" class="h-10">
+            </a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Add New Garage</h1>
+            <a href="/find-garage-page" class="text-blue-500 hover:text-blue-700">
+                ← Back to Garage List
+            </a>
+        </div>
+
+        <form id="addGarageForm" class="bg-white rounded-lg shadow-lg p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
+                        Garage Name *
+                    </label>
+                    <input type="text" id="name" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="address">
+                        Address *
+                    </label>
+                    <input type="text" id="address" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="latitude">
+                        Latitude *
+                    </label>
+                    <input type="number" id="latitude" step="0.000001" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="longitude">
+                        Longitude *
+                    </label>
+                    <input type="number" id="longitude" step="0.000001" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">
+                        Phone Number *
+                    </label>
+                    <input type="tel" id="phone" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+                        Email *
+                    </label>
+                    <input type="email" id="email" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="website">
+                        Website *
+                    </label>
+                    <input type="text" id="website" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="image_url">
+                        Image URL *
+                    </label>
+                    <input type="url" id="image_url" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                        Specialties *
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="specialtiesContainer">
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Volkswagen" class="specialty-checkbox mr-2">
+                            <label>Volkswagen</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Audi" class="specialty-checkbox mr-2">
+                            <label>Audi</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="BMW" class="specialty-checkbox mr-2">
+                            <label>BMW</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Mercedes-Benz" class="specialty-checkbox mr-2">
+                            <label>Mercedes-Benz</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Toyota" class="specialty-checkbox mr-2">
+                            <label>Toyota</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Honda" class="specialty-checkbox mr-2">
+                            <label>Honda</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Ferrari" class="specialty-checkbox mr-2">
+                            <label>Ferrari</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" value="Maserati" class="specialty-checkbox mr-2">
+                            <label>Maserati</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                    Add Garage
+                </button>
+            </div>
+
+            <div id="statusMessage" class="mt-4 text-center hidden">
+                <!-- Status messages will appear here -->
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('addGarageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const specialties = Array.from(document.querySelectorAll('.specialty-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (specialties.length === 0) {
+                showStatus('Please select at least one specialty', 'error');
+                return;
+            }
+
+            const garageData = {
+                name: document.getElementById('name').value,
+                address: document.getElementById('address').value,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                website: document.getElementById('website').value,
+                image_url: document.getElementById('image_url').value,
+                specialties: specialties,
+                repair_capabilities: specialties.reduce((acc, specialty) => {
+                    acc[specialty] = ["engine", "transmission", "electrical", "suspension"];
+                    return acc;
+                }, {})
+            };
+
+            try {
+                console.log('Sending data:', garageData);  
+                const response = await fetch('http://192.168.217.102:8099/api/garages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(garageData)
+                });
+
+                console.log('Response status:', response.status);  
+                const data = await response.json();
+                console.log('Response data:', data);  
+                
+                if (response.ok) {
+                    showStatus('Garage added successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/find-garage-page';
+                    }, 2000);
+                } else {
+                    showStatus('Error: ' + (data.detail || 'Failed to add garage'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error adding garage. Please try again.', 'error');
+            }
+        });
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `mt-4 text-center p-4 ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            statusDiv.classList.remove('hidden');
+        }
+
+        // Get user's location to pre-fill coordinates
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                }
+            );
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+:root {
+    --royal-red: #8B0000;
+    --royal-red-dark: #660000;
+    --royal-red-light: #B22222;
+    --gold: #FFD700;
+}
+
+.home-container {
+    background: linear-gradient(135deg, var(--royal-red-dark), var(--royal-red));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.logo-container {
+    margin-bottom: 4rem;
+    text-align: center;
+}
+
+.logo-text {
+    font-size: 4rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+}
+
+.logo-subtext {
+    color: var(--gold);
+    font-size: 1.25rem;
+    margin-top: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.home-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.home-button {
+    padding: 1.75rem;
+    font-size: 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.home-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: -1;
+}
+
+.home-button:hover::before {
+    transform: translateX(0);
+}
+
+.home-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.diagnose-button {
+    background-color: white;
+    color: var(--royal-red);
+    border: 3px solid white;
+}
+
+.diagnose-button:hover {
+    background-color: var(--royal-red);
+    color: white;
+}
+
+.find-garage-button {
+    background-color: transparent;
+    color: white;
+    border: 3px solid white;
+}
+
+.find-garage-button:hover {
+    background-color: white;
+    color: var(--royal-red);
+}
+
+.loading {
+    display: none;
+}
+
+.loading.active {
+    display: block;
+}
+
+.garage-card {
+    border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: transform 0.2s;
+    background-color: white;
+}
+
+.garage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.garage-rating {
+    color: var(--gold);
+}
+
+.garage-distance {
+    color: #6B7280;
+}
+
+.garage-contact {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #E5E7EB;
+}
+
+.garage-slots {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.garage-slot {
+    background-color: #F3F4F6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--royal-red);
+    color: white;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.back-button:hover {
+    background-color: var(--royal-red-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}

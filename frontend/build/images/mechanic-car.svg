@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <!-- Car silhouette -->
+  <g transform="translate(100, 300)">
+    <!-- Car body -->
+    <path d="M50 100 Q100 50, 200 50 L400 50 Q500 50, 550 100 L550 200 Q550 250, 500 250 L100 250 Q50 250, 50 200 Z" 
+          fill="#1A365D" stroke="#0077FF" stroke-width="2"/>
+    
+    <!-- Windows -->
+    <path d="M150 100 L200 70 L400 70 L450 100 L450 150 L150 150 Z" 
+          fill="#A0AEC0" stroke="#0077FF" stroke-width="1"/>
+    
+    <!-- Wheels -->
+    <circle cx="150" cy="250" r="50" fill="#2D3748" stroke="#0077FF" stroke-width="2"/>
+    <circle cx="150" cy="250" r="25" fill="#4A5568" stroke="#0077FF" stroke-width="1"/>
+    <circle cx="450" cy="250" r="50" fill="#2D3748" stroke="#0077FF" stroke-width="2"/>
+    <circle cx="450" cy="250" r="25" fill="#4A5568" stroke="#0077FF" stroke-width="1"/>
+    
+    <!-- Headlights -->
+    <rect x="50" y="100" width="30" height="30" rx="10" fill="#F6E05E"/>
+    <rect x="520" y="100" width="30" height="30" rx="10" fill="#F6E05E"/>
+  </g>
+  
+  <!-- Mechanic silhouette -->
+  <g transform="translate(400, 200)">
+    <!-- Body -->
+    <path d="M0 0 Q-20 50, -40 100 L-20 200 L20 200 L40 100 Q20 50, 0 0 Z" 
+          fill="#FF6B00" stroke="#E53E3E" stroke-width="1"/>
+    
+    <!-- Head -->
+    <circle cx="0" cy="-30" r="30" fill="#FF6B00" stroke="#E53E3E" stroke-width="1"/>
+    
+    <!-- Arms -->
+    <path d="M-40 50 Q-80 70, -120 40" fill="none" stroke="#E53E3E" stroke-width="10" stroke-linecap="round"/>
+    <path d="M40 50 Q80 100, 120 80" fill="none" stroke="#E53E3E" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Legs -->
+    <path d="M-20 200 L-30 300" fill="none" stroke="#E53E3E" stroke-width="15" stroke-linecap="round"/>
+    <path d="M20 200 L40 300" fill="none" stroke="#E53E3E" stroke-width="15" stroke-linecap="round"/>
+    
+    <!-- Tools -->
+    <path d="M-120 40 L-150 20" fill="none" stroke="#CBD5E0" stroke-width="5" stroke-linecap="round"/>
+    <rect x="-170" y="10" width="20" height="20" fill="#A0AEC0" stroke="#718096" stroke-width="1"/>
+  </g>
+  
+  <!-- Decorative elements -->
+  <g opacity="0.2">
+    <circle cx="100" cy="100" r="50" fill="#0077FF"/>
+    <circle cx="700" cy="500" r="70" fill="#FF6B00"/>
+  </g>
+</svg>

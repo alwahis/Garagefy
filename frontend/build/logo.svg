@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 32px sans-serif; fill: #0080ff; }
+    .subtitle { font: 16px sans-serif; fill: #666; }
+  </style>
+  <text x="10" y="35" class="title">Garagefy</text>
+  <text x="10" y="55" class="subtitle">Luxembourg</text>
+</svg>
