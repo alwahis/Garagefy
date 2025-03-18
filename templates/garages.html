@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Garages - Garagefy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="text-2xl font-bold text-gray-800">Garagefy</a>
+                <div class="space-x-4">
+                    <a href="/diagnose" class="text-gray-600 hover:text-gray-900">Diagnose</a>
+                    <a href="/garages" class="text-gray-600 hover:text-gray-900">Find Garages</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8">Find Garages in Luxembourg</h1>
+
+            <!-- Search Section -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow">
+                        <input type="text" id="addressInput" placeholder="Enter your address in Luxembourg" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="searchButton" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Search
+                        </button>
+                        <button id="useLocationBtn" class="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            Use My Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div id="map"></div>
+            </div>
+
+            <!-- Garage List -->
+            <div id="garageList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for garage in garages %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-2">{{ garage.Name }}</h3>
+                    <p class="text-gray-600 mb-2">{{ garage.Address }}</p>
+                    <p class="text-gray-600 mb-2">Phone: {{ garage.Phone }}</p>
+                    <p class="text-gray-600 mb-4">Services: {{ garage.Services }}</p>
+                    <div class="flex gap-2">
+                        <a href="tel:{{ garage.Phone }}" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            Call
+                        </a>
+                        <a href="https://maps.google.com/?q={{ garage.Address }}" target="_blank" 
+                           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Directions
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let map;
+        let markers = [];
+
+        function initMap() {
+            // Center of Luxembourg
+            const luxembourg = [49.815273, 6.129583];
+            map = L.map('map').setView(luxembourg, 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add markers for all garages
+            {% for garage in garages %}
+            addMarker({{ garage.Latitude }}, {{ garage.Longitude }}, "{{ garage.Name }}");
+            {% endfor %}
+        }
+
+        function addMarker(lat, lon, title) {
+            const marker = L.marker([lat, lon])
+                .bindPopup(title)
+                .addTo(map);
+            markers.push(marker);
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.remove());
+            markers = [];
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const { latitude, longitude } = position.coords;
+                        map.setView([latitude, longitude], 13);
+                        clearMarkers();
+                        addMarker(latitude, longitude, "Your Location", true);
+                    },
+                    error => {
+                        alert("Error getting your location. Please enter an address manually.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser. Please enter an address manually.");
+            }
+        }
+
+        // Initialize map when page loads
+        document.addEventListener('DOMContentLoaded', initMap);
+
+        // Add event listeners
+        document.getElementById('useLocationBtn').addEventListener('click', getCurrentLocation);
+    </script>
+</body>
+</html>

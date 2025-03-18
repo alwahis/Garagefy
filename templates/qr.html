@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Garagefy QR Code</title>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <style>
+        :root {
+            --royal-yellow: #FBBF24;
+            --royal-yellow-dark: #F59E0B;
+            --background-color: #FFFBEB;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: var(--background-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .container {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -10px rgba(251, 191, 36, 0.3);
+            max-width: 90%;
+            width: 400px;
+        }
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--royal-yellow) 0%, var(--royal-yellow-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #qrcode {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        #qrcode img {
+            max-width: 100%;
+            height: auto;
+        }
+        .url {
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--background-color);
+            border-radius: 8px;
+            color: #1E293B;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        .instruction {
+            margin-top: 12px;
+            color: #64748B;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔧 Garagefy</div>
+        <div id="qrcode"></div>
+        <div class="url">http://192.168.217.102:5004</div>
+        <p class="instruction">Scan with your phone's camera to open Garagefy</p>
+    </div>
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "http://192.168.217.102:5004",
+            width: 256,
+            height: 256,
+            colorDark : "#F59E0B",
+            colorLight : "#FFFFFF",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>

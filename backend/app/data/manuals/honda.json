@@ -1,0 +1,246 @@
+{
+  "brand": "Honda",
+  "systems": [
+    {
+      "system": "Engine",
+      "subsystems": [
+        {
+          "name": "VTEC System",
+          "data": {
+            "symptoms": [
+              "Check engine light",
+              "Reduced power at high RPM",
+              "Rough idle",
+              "Poor acceleration",
+              "Unusual engine noise"
+            ],
+            "causes": [
+              {
+                "issue": "VTEC solenoid failure",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1-2 weeks",
+                "cost_range": {"min": 150, "max": 400},
+                "reference": "Honda Service Manual, Engine Section 6-12, VTEC System Diagnosis"
+              },
+              {
+                "issue": "Low oil pressure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 100, "max": 500},
+                "reference": "Honda Technical Service Bulletin 15-046, Oil Pressure Diagnosis"
+              },
+              {
+                "issue": "VTEC oil pressure switch failure",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2 weeks",
+                "cost_range": {"min": 80, "max": 250},
+                "reference": "Honda Service Manual, Engine Section 6-14, VTEC Pressure Switch Testing"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check VTEC solenoid operation",
+                "tools_needed": ["Honda HDS diagnostic tool", "Multimeter"],
+                "specifications": {"Resistance": "14-16 ohms at 20°C", "Voltage": "12V with ignition on"},
+                "reference": "Honda Service Manual, Engine Section 6-15, VTEC Solenoid Testing"
+              },
+              {
+                "action": "Test oil pressure",
+                "tools_needed": ["Oil pressure gauge", "Honda special tool 07HAA-PJ70101"],
+                "specifications": {"Pressure": "Minimum 35 psi at idle, 55 psi at 3000 RPM"},
+                "reference": "Honda Service Manual, Engine Section 8-5, Oil Pressure Testing"
+              },
+              {
+                "action": "Inspect VTEC oil passages",
+                "tools_needed": ["Inspection mirror", "Compressed air"],
+                "specifications": {"Condition": "Clean, free of sludge or blockages"},
+                "reference": "Honda Service Manual, Engine Section 6-18, VTEC Oil Passage Inspection"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Fuel System",
+          "data": {
+            "symptoms": [
+              "Hard starting",
+              "Stalling",
+              "Poor fuel economy",
+              "Hesitation during acceleration",
+              "Check engine light"
+            ],
+            "causes": [
+              {
+                "issue": "Clogged fuel filter",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2 weeks",
+                "cost_range": {"min": 100, "max": 250},
+                "reference": "Honda Service Manual, Fuel System Section 11-7, Fuel Filter Replacement"
+              },
+              {
+                "issue": "Faulty fuel pump",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 400, "max": 800},
+                "reference": "Honda Technical Service Bulletin 12-087, Fuel Pump Diagnosis"
+              },
+              {
+                "issue": "Dirty fuel injectors",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2-3 weeks",
+                "cost_range": {"min": 150, "max": 350},
+                "reference": "Honda Service Manual, Fuel System Section 11-12, Fuel Injector Testing"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check fuel pressure",
+                "tools_needed": ["Fuel pressure gauge", "Honda special tool 07AAJ-S6MA150"],
+                "specifications": {"Pressure": "45-55 psi with engine running"},
+                "reference": "Honda Service Manual, Fuel System Section 11-5, Fuel Pressure Testing"
+              },
+              {
+                "action": "Test fuel pump operation",
+                "tools_needed": ["Honda HDS diagnostic tool", "Multimeter"],
+                "specifications": {"Current draw": "5-7 amps", "Voltage": "12V with ignition on"},
+                "reference": "Honda Service Manual, Fuel System Section 11-8, Fuel Pump Testing"
+              },
+              {
+                "action": "Inspect fuel injector spray pattern",
+                "tools_needed": ["Injector test kit", "Honda special tool 07AAJ-S6MA200"],
+                "specifications": {"Pattern": "Even cone-shaped spray, no dripping"},
+                "reference": "Honda Service Manual, Fuel System Section 11-14, Injector Spray Testing"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "system": "Transmission",
+      "subsystems": [
+        {
+          "name": "CVT Transmission",
+          "data": {
+            "symptoms": [
+              "Shuddering",
+              "Delayed engagement",
+              "Transmission warning light",
+              "Unusual noise",
+              "Slipping"
+            ],
+            "causes": [
+              {
+                "issue": "CVT fluid deterioration",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2 weeks",
+                "cost_range": {"min": 150, "max": 300},
+                "reference": "Honda Service Manual, Transmission Section 14-8, CVT Fluid Inspection"
+              },
+              {
+                "issue": "Start clutch failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 1500, "max": 3000},
+                "reference": "Honda Technical Service Bulletin 15-084, Start Clutch Diagnosis"
+              },
+              {
+                "issue": "CVT belt/chain wear",
+                "severity": "HIGH",
+                "urgency": "Requires prompt attention",
+                "cost_range": {"min": 2000, "max": 4000},
+                "reference": "Honda Service Manual, Transmission Section 14-20, CVT Belt/Chain Inspection"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check CVT fluid level and condition",
+                "tools_needed": ["Honda HDS diagnostic tool", "Temperature probe"],
+                "specifications": {"Level": "Between marks on dipstick at operating temperature (70-80°C)", "Color": "Clear red, not brown or burnt-smelling"},
+                "reference": "Honda Service Manual, Transmission Section 14-9, CVT Fluid Check"
+              },
+              {
+                "action": "Perform CVT pressure test",
+                "tools_needed": ["Honda HDS diagnostic tool", "Pressure gauge kit 07AAK-RWCA120"],
+                "specifications": {"Line pressure": "See model-specific chart in service manual"},
+                "reference": "Honda Service Manual, Transmission Section 14-15, CVT Pressure Testing"
+              },
+              {
+                "action": "Perform stall speed test",
+                "tools_needed": ["Honda HDS diagnostic tool", "Tachometer"],
+                "specifications": {"Stall speed": "2000-2500 RPM depending on model"},
+                "reference": "Honda Service Manual, Transmission Section 14-12, Stall Speed Testing"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "system": "Electrical",
+      "subsystems": [
+        {
+          "name": "Charging System",
+          "data": {
+            "symptoms": [
+              "Battery warning light",
+              "Dead battery",
+              "Dimming lights",
+              "Electrical accessories malfunction",
+              "Hard starting"
+            ],
+            "causes": [
+              {
+                "issue": "Alternator failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 350, "max": 700},
+                "reference": "Honda Service Manual, Electrical Section 4-8, Charging System Diagnosis"
+              },
+              {
+                "issue": "Worn drive belt",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1 week",
+                "cost_range": {"min": 80, "max": 200},
+                "reference": "Honda Technical Service Bulletin 13-052, Drive Belt Inspection"
+              },
+              {
+                "issue": "Battery failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 120, "max": 300},
+                "reference": "Honda Service Manual, Electrical Section 4-5, Battery Testing"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Test battery condition",
+                "tools_needed": ["Battery tester", "Multimeter"],
+                "specifications": {"Voltage": "12.6V at rest, minimum 9.6V during cranking", "Load test": "Maintain above 9.6V for 15 seconds at half rated CCA"},
+                "reference": "Honda Service Manual, Electrical Section 4-6, Battery Load Testing"
+              },
+              {
+                "action": "Check alternator output",
+                "tools_needed": ["Honda HDS diagnostic tool", "Multimeter"],
+                "specifications": {"Voltage": "13.5-14.5V at idle, current output within 80% of rated capacity"},
+                "reference": "Honda Service Manual, Electrical Section 4-10, Alternator Output Testing"
+              },
+              {
+                "action": "Inspect charging circuit",
+                "tools_needed": ["Multimeter", "Circuit tester"],
+                "specifications": {"Voltage drop": "Less than 0.2V across connections"},
+                "reference": "Honda Service Manual, Electrical Section 4-12, Charging Circuit Testing"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "references": [
+    "Honda Factory Service Manual (2015-2023)",
+    "Honda Technical Service Bulletins Database",
+    "Honda HDS Diagnostic System Procedures",
+    "Honda i-HDS Technical Information System"
+  ]
+}

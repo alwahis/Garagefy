@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Garage - Garagefy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3">
+            <a href="/" class="inline-block">
+                <img src="/static/images/logo.svg" alt="Garagefy" class="h-10">
+            </a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Find a Garage</h1>
+            <a href="/add-garage-page" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                Add New Garage
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="maxDistance">
+                    Search Radius (km)
+                </label>
+                <input type="number" id="maxDistance" value="10" min="1" max="50" 
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+
+            <div class="text-center">
+                <button id="findGaragesBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Find Nearby Garages
+                </button>
+            </div>
+
+            <div id="locationStatus" class="mt-4 text-center text-sm text-gray-600">
+                Loading garages...
+            </div>
+        </div>
+
+        <div id="garagesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Garages will be listed here -->
+        </div>
+    </div>
+
+    <script>
+        let userLocation = null;
+
+        function displayGarages(garages) {
+            const garagesList = document.getElementById('garagesList');
+            garagesList.innerHTML = '';
+
+            if (garages.length === 0) {
+                garagesList.innerHTML = '<p class="text-center text-gray-600 col-span-full">No garages found in the specified radius.</p>';
+                return;
+            }
+
+            garages.forEach(garage => {
+                const garageCard = document.createElement('div');
+                garageCard.className = 'bg-white rounded-lg shadow-lg overflow-hidden';
+                garageCard.innerHTML = `
+                    <img src="${garage.image_url}" alt="${garage.name}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2">${garage.name}</h3>
+                        <p class="text-gray-600 mb-2">${garage.address}</p>
+                        ${garage.distance ? `<p class="text-gray-600 mb-2">Distance: ${garage.distance.toFixed(2)} km</p>` : ''}
+                        <p class="text-gray-600 mb-2">Rating: ${garage.rating} ⭐</p>
+                        <p class="text-gray-600 mb-2">
+                            <span class="font-semibold">Phone:</span> 
+                            <a href="tel:${garage.phone}" class="text-blue-500 hover:text-blue-700">${garage.phone}</a>
+                        </p>
+                        <p class="text-gray-600 mb-2">
+                            <span class="font-semibold">Email:</span> 
+                            <a href="mailto:${garage.email}" class="text-blue-500 hover:text-blue-700">${garage.email}</a>
+                        </p>
+                        <div class="mb-2">
+                            <span class="font-semibold">Specialties:</span>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                ${garage.specialties.map(specialty => 
+                                    `<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">${specialty}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <a href="${garage.website}" target="_blank" class="text-blue-500 hover:text-blue-700 block mt-4">Visit Website</a>
+                    </div>
+                `;
+                garagesList.appendChild(garageCard);
+            });
+        }
+
+        // Load all garages initially
+        async function loadAllGarages() {
+            try {
+                const response = await fetch('http://192.168.217.102:8099/api/garages');
+                const data = await response.json();
+                displayGarages(data.garages);
+                document.getElementById('locationStatus').textContent = 'Click "Find Nearby Garages" to sort by distance from your location.';
+            } catch (error) {
+                console.error('Error loading garages:', error);
+                document.getElementById('locationStatus').textContent = 'Error loading garages. Please try refreshing the page.';
+            }
+        }
+
+        // Load garages when page loads
+        loadAllGarages();
+
+        document.getElementById('findGaragesBtn').addEventListener('click', async () => {
+            if (!userLocation) {
+                // Try to get location
+                if ("geolocation" in navigator) {
+                    document.getElementById('locationStatus').textContent = 'Getting your location...';
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            userLocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude
+                            };
+                            await findNearbyGarages();
+                        },
+                        (error) => {
+                            console.error('Error getting location:', error);
+                            document.getElementById('locationStatus').textContent = 'Error getting location. Please enable location services.';
+                        }
+                    );
+                } else {
+                    document.getElementById('locationStatus').textContent = 'Geolocation is not supported by your browser.';
+                }
+                return;
+            }
+
+            await findNearbyGarages();
+        });
+
+        async function findNearbyGarages() {
+            const request = {
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                max_distance: parseFloat(document.getElementById('maxDistance').value)
+            };
+
+            try {
+                document.getElementById('locationStatus').textContent = 'Finding nearby garages...';
+                console.log('Sending request:', request);
+                const response = await fetch('http://192.168.217.102:8099/find-garages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(request)
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Received garages:', data.garages);
+                displayGarages(data.garages);
+                document.getElementById('locationStatus').textContent = 'Found nearby garages!';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('locationStatus').textContent = 'Error finding garages. Please try again.';
+            }
+        }
+
+        // Get user's location when page loads
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                    document.getElementById('locationStatus').textContent = 'Location found! Click the button to see nearby garages.';
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                }
+            );
+        }
+    </script>
+</body>
+</html>

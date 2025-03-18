@@ -1,0 +1,130 @@
+{
+    "metadata": {
+        "brand": "Toyota",
+        "last_updated": "2025-03-02",
+        "sources": [
+            "Toyota Factory Service Manual 2020-2025",
+            "Toyota Technical Service Bulletins (TSBs)",
+            "NHTSA Safety Recalls Database"
+        ]
+    },
+    "engine": {
+        "common_issues": {
+            "knocking_sound": {
+                "symptoms": [
+                    "Metallic knocking noise from engine",
+                    "Noise increases with engine speed",
+                    "Check Engine Light illumination"
+                ],
+                "causes": [
+                    {
+                        "issue": "Rod bearing wear",
+                        "severity": "High",
+                        "urgency": "Immediate",
+                        "cost_range": {"min": 2000, "max": 4000},
+                        "reference": "TSB-0123-20: Engine Rod Bearing Inspection"
+                    },
+                    {
+                        "issue": "Timing chain tensioner failure",
+                        "severity": "High",
+                        "urgency": "High",
+                        "cost_range": {"min": 800, "max": 1500},
+                        "reference": "FSM-EG-456: Timing Chain Service"
+                    }
+                ],
+                "diagnostic_steps": [
+                    {
+                        "step": 1,
+                        "action": "Perform engine knock sensor diagnostic",
+                        "tools_needed": ["OBD-II Scanner", "Stethoscope"],
+                        "reference": "FSM-DI-789: Engine Noise Diagnosis"
+                    },
+                    {
+                        "step": 2,
+                        "action": "Check oil pressure",
+                        "tools_needed": ["Oil Pressure Gauge"],
+                        "specifications": {
+                            "idle_pressure": "29-35 PSI",
+                            "running_pressure": "35-45 PSI"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "transmission": {
+        "common_issues": {
+            "shifting_problems": {
+                "symptoms": [
+                    "Delayed or harsh shifting",
+                    "Transmission warning light",
+                    "Slipping gears"
+                ],
+                "causes": [
+                    {
+                        "issue": "Low transmission fluid",
+                        "severity": "Medium",
+                        "urgency": "High",
+                        "cost_range": {"min": 100, "max": 300},
+                        "reference": "FSM-TR-234: Fluid Level Check"
+                    }
+                ],
+                "diagnostic_steps": [
+                    {
+                        "step": 1,
+                        "action": "Check transmission fluid level and condition",
+                        "specifications": {
+                            "fluid_type": "Toyota ATF WS",
+                            "capacity": "4.3 quarts"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "electrical": {
+        "common_issues": {
+            "check_engine_light": {
+                "symptoms": [
+                    "Check Engine Light on",
+                    "Multiple system warnings",
+                    "Engine performance issues"
+                ],
+                "diagnostic_steps": [
+                    {
+                        "step": 1,
+                        "action": "Retrieve DTCs using OBD-II scanner",
+                        "reference": "FSM-EL-567: DTC Reading Procedure"
+                    }
+                ],
+                "common_dtcs": {
+                    "P0300": {
+                        "description": "Random/Multiple Cylinder Misfire",
+                        "severity": "High",
+                        "reference": "TSB-0456-21: Misfire Diagnosis"
+                    },
+                    "P0171": {
+                        "description": "System Too Lean (Bank 1)",
+                        "severity": "Medium",
+                        "reference": "FSM-FI-890: Fuel System Diagnosis"
+                    }
+                }
+            }
+        }
+    },
+    "maintenance_schedules": {
+        "engine_oil": {
+            "interval": "10,000 miles or 12 months",
+            "specifications": {
+                "oil_type": "0W-20 Synthetic",
+                "capacity": "4.8 quarts with filter",
+                "reference": "FSM-MA-123: Oil Change Procedure"
+            }
+        },
+        "timing_chain": {
+            "interval": "120,000 miles",
+            "inspection": "60,000 miles",
+            "reference": "FSM-MA-456: Timing Chain Service"
+        }
+    }
+}

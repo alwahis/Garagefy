@@ -1,0 +1,246 @@
+{
+  "brand": "Hyundai",
+  "systems": [
+    {
+      "system": "Engine",
+      "subsystems": [
+        {
+          "name": "GDI System",
+          "data": {
+            "symptoms": [
+              "Check engine light",
+              "Poor fuel economy",
+              "Rough idle",
+              "Hesitation during acceleration",
+              "Engine misfire"
+            ],
+            "causes": [
+              {
+                "issue": "Carbon buildup on intake valves",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2-3 weeks",
+                "cost_range": {"min": 300, "max": 700},
+                "reference": "Hyundai Service Manual, Engine Section 9-12, GDI Intake Valve Cleaning"
+              },
+              {
+                "issue": "Faulty fuel injectors",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 500, "max": 1200},
+                "reference": "Hyundai Technical Service Bulletin 21-FL-001H, GDI Injector Diagnosis"
+              },
+              {
+                "issue": "High-pressure fuel pump failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 600, "max": 1500},
+                "reference": "Hyundai Service Manual, Engine Section 9-15, High Pressure Fuel System"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check fuel pressure",
+                "tools_needed": ["GDS diagnostic scanner", "Fuel pressure gauge"],
+                "specifications": {"Low pressure": "40-60 psi", "High pressure": "1500-2200 psi depending on model"},
+                "reference": "Hyundai Service Manual, Engine Section 9-16, Fuel Pressure Testing"
+              },
+              {
+                "action": "Inspect intake valves for carbon buildup",
+                "tools_needed": ["Borescope", "Inspection mirror"],
+                "specifications": {"Condition": "Clean, minimal carbon deposits"},
+                "reference": "Hyundai Service Manual, Engine Section 9-12, Intake Valve Inspection"
+              },
+              {
+                "action": "Test injector spray pattern",
+                "tools_needed": ["GDS diagnostic scanner", "Injector test kit"],
+                "specifications": {"Pattern": "Even cone-shaped spray, no dripping"},
+                "reference": "Hyundai Service Manual, Engine Section 9-18, Injector Testing"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Theta II Engine",
+          "data": {
+            "symptoms": [
+              "Engine knocking",
+              "Metal debris in oil",
+              "Loss of power",
+              "Engine stalling",
+              "Oil pressure warning light"
+            ],
+            "causes": [
+              {
+                "issue": "Rod bearing wear",
+                "severity": "CRITICAL",
+                "urgency": "Requires immediate attention - do not drive",
+                "cost_range": {"min": 3000, "max": 7000},
+                "reference": "Hyundai Technical Service Bulletin 18-01-046H, Theta II Engine Inspection"
+              },
+              {
+                "issue": "Oil passage restriction",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 500, "max": 1500},
+                "reference": "Hyundai Service Manual, Engine Section 8-10, Oil System Diagnosis"
+              },
+              {
+                "issue": "Engine seizure",
+                "severity": "CRITICAL",
+                "urgency": "Requires immediate attention - do not drive",
+                "cost_range": {"min": 4000, "max": 8000},
+                "reference": "Hyundai Technical Service Bulletin 19-01-051H, Engine Replacement Guidelines"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Check for engine knocking sounds",
+                "tools_needed": ["Stethoscope", "GDS diagnostic scanner"],
+                "specifications": {"Sound": "No knocking or ticking noises, especially at idle"},
+                "reference": "Hyundai Service Manual, Engine Section 8-5, Engine Noise Diagnosis"
+              },
+              {
+                "action": "Inspect oil for metal particles",
+                "tools_needed": ["Oil drain pan", "Magnet"],
+                "specifications": {"Condition": "No visible metal particles or shavings"},
+                "reference": "Hyundai Service Manual, Engine Section 8-8, Oil Contamination Inspection"
+              },
+              {
+                "action": "Test oil pressure",
+                "tools_needed": ["Oil pressure gauge", "GDS diagnostic scanner"],
+                "specifications": {"Pressure": "Minimum 28 psi at idle, 55 psi at 3000 RPM"},
+                "reference": "Hyundai Service Manual, Engine Section 8-10, Oil Pressure Testing"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "system": "Transmission",
+      "subsystems": [
+        {
+          "name": "DCT Transmission",
+          "data": {
+            "symptoms": [
+              "Shuddering",
+              "Harsh shifting",
+              "Transmission warning light",
+              "Delayed engagement",
+              "Unusual noises"
+            ],
+            "causes": [
+              {
+                "issue": "Clutch actuator failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 800, "max": 1800},
+                "reference": "Hyundai Technical Service Bulletin 20-AT-003H, DCT Clutch Actuator Diagnosis"
+              },
+              {
+                "issue": "DCT fluid deterioration",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 2 weeks",
+                "cost_range": {"min": 250, "max": 500},
+                "reference": "Hyundai Service Manual, Transmission Section 7-15, DCT Fluid Inspection"
+              },
+              {
+                "issue": "TCM software issues",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1-2 weeks",
+                "cost_range": {"min": 150, "max": 300},
+                "reference": "Hyundai Technical Service Bulletin 21-AT-005H, TCM Reprogramming"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Perform clutch adaptation procedure",
+                "tools_needed": ["GDS diagnostic scanner"],
+                "specifications": {"Procedure": "Follow exact sequence in service manual"},
+                "reference": "Hyundai Service Manual, Transmission Section 7-20, DCT Adaptation Procedure"
+              },
+              {
+                "action": "Check DCT fluid level and condition",
+                "tools_needed": ["GDS diagnostic scanner", "Temperature probe"],
+                "specifications": {"Level": "Between MIN and MAX marks at operating temperature", "Condition": "Clear red, not burnt or contaminated"},
+                "reference": "Hyundai Service Manual, Transmission Section 7-15, DCT Fluid Check"
+              },
+              {
+                "action": "Test clutch actuator operation",
+                "tools_needed": ["GDS diagnostic scanner", "Multimeter"],
+                "specifications": {"Movement": "Smooth operation through full range"},
+                "reference": "Hyundai Service Manual, Transmission Section 7-22, Clutch Actuator Testing"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "system": "Electrical",
+      "subsystems": [
+        {
+          "name": "Battery and Charging",
+          "data": {
+            "symptoms": [
+              "Dead battery",
+              "Battery warning light",
+              "Dimming lights",
+              "Electrical accessories malfunction",
+              "Hard starting"
+            ],
+            "causes": [
+              {
+                "issue": "Alternator failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 350, "max": 700},
+                "reference": "Hyundai Service Manual, Electrical Section 14-8, Charging System"
+              },
+              {
+                "issue": "Battery drain (parasitic draw)",
+                "severity": "MEDIUM",
+                "urgency": "Should be addressed within 1-2 weeks",
+                "cost_range": {"min": 100, "max": 300},
+                "reference": "Hyundai Technical Service Bulletin 19-EL-007H, Battery Drain Testing"
+              },
+              {
+                "issue": "Battery failure",
+                "severity": "HIGH",
+                "urgency": "Requires immediate attention",
+                "cost_range": {"min": 150, "max": 350},
+                "reference": "Hyundai Service Manual, Electrical Section 14-5, Battery Testing"
+              }
+            ],
+            "diagnostic_steps": [
+              {
+                "action": "Test battery condition",
+                "tools_needed": ["Battery tester", "Multimeter"],
+                "specifications": {"Voltage": "12.6V at rest, minimum 9.6V during cranking", "Load test": "Maintain above 9.6V for 15 seconds at half rated CCA"},
+                "reference": "Hyundai Service Manual, Electrical Section 14-6, Battery Load Testing"
+              },
+              {
+                "action": "Check alternator output",
+                "tools_needed": ["GDS diagnostic scanner", "Multimeter"],
+                "specifications": {"Voltage": "13.5-14.5V at idle, current output within 80% of rated capacity"},
+                "reference": "Hyundai Service Manual, Electrical Section 14-10, Alternator Output Testing"
+              },
+              {
+                "action": "Perform parasitic draw test",
+                "tools_needed": ["Digital multimeter", "Amp clamp"],
+                "specifications": {"Current draw": "Less than 50mA after 40 minutes of sleep mode"},
+                "reference": "Hyundai Service Manual, Electrical Section 14-12, Parasitic Draw Testing"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "references": [
+    "Hyundai Factory Service Manual (2015-2023)",
+    "Hyundai Technical Service Bulletins Database",
+    "Hyundai GDS Diagnostic System Procedures",
+    "Hyundai HMA Technical Information System"
+  ]
+}
