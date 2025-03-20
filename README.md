@@ -16,6 +16,28 @@ Garagefy is an intelligent car diagnostic system that uses AI models to analyze 
 - Comprehensive car brand and model database
 - User-friendly interface built with React and Chakra UI
 
+## Environment Variables
+The application uses environment variables for configuration. A template file `.env.example` is provided.
+
+1. Copy the example file to create your own `.env` file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file and replace the placeholder values with your actual API keys and configuration:
+   - `GOOGLE_API_KEY`: Required for geocoding and maps functionality
+   - `DEEPSEEK_API_KEY`: Used for AI-powered diagnostics
+   - `OPENAI_API_KEY`: Alternative AI provider
+
+**IMPORTANT: Never commit your `.env` file to version control. It contains sensitive information.**
+
+## Security
+
+- API keys and sensitive credentials should be stored in the `.env` file
+- The `.env` file is excluded from version control via `.gitignore`
+- Always rotate API keys if you suspect they have been compromised
+- Use environment-specific settings for development, testing, and production
+
 ## Quick Start
 To run the application locally, use the provided start script:
 
