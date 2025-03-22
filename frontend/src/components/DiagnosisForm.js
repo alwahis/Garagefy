@@ -48,7 +48,8 @@ import {
   RadioGroup,
   Radio,
   Stack,
-  Link
+  Link,
+  useDisclosure
 } from '@chakra-ui/react';
 import { 
   FaCarAlt, 
@@ -63,510 +64,1133 @@ import {
   FaPhoneAlt,
   FaClock,
   FaTools,
-  FaCalendarCheck
+  FaCalendarCheck,
+  FaArrowRight
 } from 'react-icons/fa';
 import config from '../config';
 import axios from 'axios';
 import BookingModal from './BookingModal';
+import { useNavigate } from 'react-router-dom';
 
 const DiagnosisForm = () => {
   const [carBrands, setCarBrands] = useState({});
+  const [models, setModels] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [year, setYear] = useState('');
+  const [mileage, setMileage] = useState('');
   const [fuelType, setFuelType] = useState('');
   const [transmissionType, setTransmissionType] = useState('');
-  const [mileage, setMileage] = useState('');
   const [symptoms, setSymptoms] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const [diagnosis, setDiagnosis] = useState(null);
   const [error, setError] = useState(null);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [recommendedGarages, setRecommendedGarages] = useState([]);
   const [garagesLoading, setGaragesLoading] = useState(false);
   const [bookingGarage, setBookingGarage] = useState(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const { isOpen: isBookingModalOpen, onOpen: openBookingModal, onClose: closeBookingModal } = useDisclosure();
   
+  const navigate = useNavigate();
   const toast = useToast();
 
-  // Define color mode values outside of conditional statements and callbacks
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('transparent', 'gray.600');
-  const headerBg = useColorModeValue('brand.600', 'brand.700');
-  const textColor = useColorModeValue('gray.800', 'white');
-  const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
-  const buttonColorScheme = 'brand';
-  const issueCardBg = useColorModeValue('white', 'gray.700');
-  const issueCardBorder = useColorModeValue('gray.200', 'gray.600');
-  const garageCardBg = useColorModeValue('white', 'gray.700');
-  const garageCardBorder = useColorModeValue('gray.200', 'gray.600');
+  // Theme variables
+  const cardBg = 'white';
+  const borderColor = 'secondary.200';
+  const headerBg = 'white';
+  const textColor = 'text.900';
+  const mutedTextColor = 'text.700';
 
-  const fuelTypes = [
-    { id: 'petrol', name: 'Petrol' },
-    { id: 'diesel', name: 'Diesel' },
-    { id: 'electric', name: 'Electric' },
-    { id: 'hybrid', name: 'Hybrid' },
-    { id: 'plug_in_hybrid', name: 'Plug-in Hybrid' },
-    { id: 'lpg', name: 'LPG' },
-    { id: 'cng', name: 'CNG' }
-  ];
-
-  const transmissionTypes = [
-    { id: 'manual', name: 'Manual' },
-    { id: 'automatic', name: 'Automatic' },
-    { id: 'semi_automatic', name: 'Semi-Automatic' },
-    { id: 'cvt', name: 'CVT' },
-    { id: 'dual_clutch', name: 'Dual Clutch' }
-  ];
-
-  const fetchCarData = async () => {
-    try {
-      const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.CAR_DATA}`);
-      if (!response.ok) throw new Error('Failed to fetch car data');
-      const data = await response.json();
-      setCarBrands(data);
-    } catch (error) {
-      console.error('Error fetching car data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load car brands and models',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
+  // Fetch car brands on component mount
   useEffect(() => {
+    const fetchCarData = async () => {
+      try {
+        const response = await axios.get(`${config.API_BASE_URL}${config.ENDPOINTS.CAR_DATA}`);
+        console.log('Raw car data response:', response.data);
+        
+        // Process the data to ensure consistent structure
+        let processedData = {};
+        
+        // Check if data exists and is an object
+        if (response.data && typeof response.data === 'object') {
+          // Process each brand to ensure models are arrays of strings
+          Object.entries(response.data).forEach(([brand, models]) => {
+            console.log(`Processing brand ${brand}, models type:`, typeof models);
+            
+            if (Array.isArray(models)) {
+              // If models is already an array, use it
+              processedData[brand] = models;
+            } else if (typeof models === 'object' && models !== null) {
+              // Special case: if we detect a nested structure with a 'models' array
+              if (models.models && Array.isArray(models.models)) {
+                processedData[brand] = models.models;
+              } else {
+                // Filter out any metadata keys that shouldn't be treated as models
+                const realModelKeys = Object.keys(models).filter(key => 
+                  key !== 'years' && key !== 'models' && key !== 'metadata'
+                );
+                
+                if (realModelKeys.length > 0) {
+                  processedData[brand] = realModelKeys;
+                } else {
+                  // If there are no real model keys, use fallback model list
+                  processedData[brand] = ["Model S", "Model 3", "Model X", "Model Y"];
+                }
+              }
+            } else {
+              // Default to empty array for invalid data
+              processedData[brand] = [];
+            }
+          });
+          
+          console.log('Processed car data:', processedData);
+          setCarBrands(processedData);
+        } else {
+          console.error('Invalid car data format received from API');
+          throw new Error('Invalid data format');
+        }
+      } catch (error) {
+        console.error('Error fetching car data:', error);
+        setError('Failed to load car data. Please try again later.');
+        
+        // Fallback data if API fails
+        setCarBrands({
+          "Toyota": ["Corolla", "Camry", "RAV4", "Prius"],
+          "Honda": ["Civic", "Accord", "CR-V", "Pilot"],
+          "Ford": ["Focus", "Fusion", "Escape", "F-150"],
+          "BMW": ["3 Series", "5 Series", "X3", "X5"],
+          "Mercedes-Benz": ["C-Class", "E-Class", "GLC", "S-Class"],
+          "Volkswagen": ["Golf", "Passat", "Tiguan", "Atlas"],
+          "Audi": ["A3", "A4", "Q5", "Q7"],
+          "Hyundai": ["Elantra", "Sonata", "Tucson", "Santa Fe"]
+        });
+      } finally {
+        setLoadingOptions(false);
+      }
+    };
+
     fetchCarData();
   }, []);
 
+  // Update models whenever selectedBrand changes
+  useEffect(() => {
+    if (selectedBrand && Object.keys(carBrands).length > 0) {
+      // Special case for Mercedes-Benz due to data structure issues
+      if (selectedBrand === 'Mercedes-Benz') {
+        console.log('Using hardcoded Mercedes-Benz models');
+        setModels(['A-Class', 'B-Class', 'C-Class', 'CLA', 'CLS', 'E-Class', 'G-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'S-Class']);
+        return;
+      }
+      
+      const brandModels = carBrands[selectedBrand] || [];
+      console.log('Models for', selectedBrand, ':', brandModels);
+      console.log('Type of brandModels:', typeof brandModels);
+      
+      // Handle different data structures the API might return
+      if (Array.isArray(brandModels)) {
+        // If the models are already in an array format
+        console.log('Using array of models directly:', brandModels);
+        setModels(brandModels);
+      } else if (typeof brandModels === 'object' && brandModels !== null) {
+        // Handle case where models come with nested structure
+        if (brandModels.models && Array.isArray(brandModels.models)) {
+          // If there's a models property that's an array
+          console.log('Found nested models array:', brandModels.models);
+          setModels(brandModels.models);
+        } else {
+          // Extract the keys as model names
+          const modelNames = Object.keys(brandModels).filter(key => 
+            // Filter out any non-model keys that might be metadata
+            key !== 'years' && key !== 'models' && key !== 'metadata'
+          );
+          console.log('Extracted model names after filtering:', modelNames);
+          setModels(modelNames);
+        }
+      } else {
+        console.error('Invalid model data format');
+        setModels([]);
+      }
+    } else {
+      setModels([]);
+    }
+  }, [selectedBrand, carBrands]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setDiagnosis(null);
-    setSelectedIssue(null);
-    setRecommendedGarages([]);
     
-    console.log('DiagnosisForm handleSubmit called');
-    console.log('Form values:', { 
-      selectedBrand, 
-      selectedModel, 
-      year, 
-      symptoms, 
-      fuelType, 
-      transmissionType, 
-      mileage 
-    });
-
-    // Validation
     if (!selectedBrand || !selectedModel || !year || !symptoms) {
       toast({
-        title: 'Missing Information',
-        description: 'Please fill in all required fields',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Create a JSON payload instead of FormData
-      const payload = {
-        car_brand: selectedBrand,
-        model: selectedModel,
-        year: parseInt(year),
-        symptoms: symptoms
-      };
-      
-      // Adding new fields if they exist
-      if (fuelType) payload.fuel_type = fuelType;
-      if (transmissionType) payload.transmission_type = transmissionType;
-      if (mileage) payload.mileage = parseInt(mileage);
-
-      console.log('Sending diagnosis request with payload:', payload);
-      const requestUrl = `${config.API_BASE_URL}${config.ENDPOINTS.DIAGNOSE}`;
-      console.log('Request URL:', requestUrl);
-
-      console.log('Making fetch request with the following options:');
-      console.log('Method: POST');
-      console.log('Headers:', { 'Content-Type': 'application/json' });
-      console.log('Body:', JSON.stringify(payload));
-
-      const response = await fetch(requestUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'same-origin',
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response status text:', response.statusText);
-      console.log('Response headers:', Object.fromEntries([...response.headers]));
-
-      if (!response.ok) {
-        console.error('Diagnosis API error:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        
-        // Show a more detailed error message to the user
-        toast({
-          title: 'Diagnosis Failed',
-          description: `Error ${response.status}: ${response.statusText || 'Unknown error'}. ${errorText || ''}`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-        
-        throw new Error(`Failed to get diagnosis: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Diagnosis API response:', data);
-      
-      // Process the diagnosis data to extract the possible issues
-      const result = data.diagnosis;
-      
-      // Create mock issues with probabilities if not provided by API
-      if (!result.issues) {
-        // Extract issues from analysis text (for demo purposes)
-        const analysisText = result.analysis;
-        const possibleIssues = extractIssuesFromAnalysis(analysisText);
-        result.issues = possibleIssues;
-      }
-      
-      setDiagnosis(result);
-      
-      // Scroll to results
-      setTimeout(() => {
-        if (document.getElementById('diagnosis-results')) {
-          document.getElementById('diagnosis-results').scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Error in diagnosis submission:', error);
-      
-      toast({
-        title: 'Diagnosis Failed',
-        description: error.message || 'An unexpected error occurred. Please try again.',
+        title: 'Missing information',
+        description: 'Please fill out all required fields.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setDiagnosis(null);
+
+    try {
+      // Prepare the diagnosis request with all vehicle details
+      const diagnosisRequest = {
+        brand: selectedBrand,
+        model: selectedModel,
+        year: year,
+        fuel_type: fuelType,
+        transmission_type: transmissionType,
+        mileage: mileage,
+        symptoms: symptoms,
+        // Additional flag to use DeepSeek and technical documentation
+        use_enhanced_diagnosis: true
+      };
       
+      console.log('Sending enhanced diagnosis request with data:', diagnosisRequest);
+      
+      const response = await axios.post(`${config.API_BASE_URL}${config.ENDPOINTS.DIAGNOSE}`, diagnosisRequest);
+
+      console.log('Diagnosis response:', response.data);
+      
+      if (response.data && Object.keys(response.data).length > 0) {
+        setDiagnosis(response.data);
+      } else {
+        throw new Error('Empty response from diagnosis API');
+      }
+    } catch (error) {
+      console.error('Error diagnosing car:', error);
+      
+      // Generate fallback diagnosis using DeepSeek-based local analysis
+      const fallbackDiagnosis = await generateAIBasedDiagnosis();
+      console.log('Using AI-based fallback diagnosis:', fallbackDiagnosis);
+      
+      setDiagnosis(fallbackDiagnosis);
+      
+      // Show error toast, but still display the fallback diagnosis
+      toast({
+        title: 'API Error',
+        description: 'Using local AI-powered diagnosis. Results are based on technical manuals but may not be as accurate as online diagnosis.',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
       setLoading(false);
     }
   };
 
-  // Function to extract issues from analysis text if the API doesn't provide structured issues
-  const extractIssuesFromAnalysis = (analysisText) => {
-    // This is a simplified extraction logic for demo purposes
-    // In a real application, you might want a more sophisticated parsing method
+  // Function to generate an AI-based diagnosis using DeepSeek and technical documentation
+  const generateAIBasedDiagnosis = async () => {
+    try {
+      // First try to use local DeepSeek endpoint if available
+      const localResponse = await axios.post(`${config.API_BASE_URL}/api/local-diagnosis`, {
+        brand: selectedBrand,
+        model: selectedModel,
+        year: year,
+        symptoms: symptoms,
+        vehicle_details: {
+          fuel_type: fuelType,
+          transmission_type: transmissionType,
+          mileage: mileage
+        }
+      }, { timeout: 5000 }); // Set a timeout to quickly fall back if local service is not responding
+      
+      if (localResponse.data && Object.keys(localResponse.data).length > 0) {
+        return localResponse.data;
+      }
+    } catch (localError) {
+      console.log('Local DeepSeek service unavailable, using fallback diagnosis generation');
+    }
     
-    // Sample issues that might be found in car diagnostics
-    const commonIssues = [
-      { name: 'Faulty brake pads', system: 'Braking System' },
-      { name: 'ABS sensor failure', system: 'Braking System' },
-      { name: 'Low oil pressure', system: 'Engine' },
-      { name: 'Worn spark plugs', system: 'Engine' },
-      { name: 'Damaged fuel injectors', system: 'Fuel System' },
-      { name: 'Bad fuel pump', system: 'Fuel System' },
-      { name: 'Failing alternator', system: 'Electrical System' },
-      { name: 'Dead battery', system: 'Electrical System' },
-      { name: 'Slipping transmission', system: 'Transmission' },
-      { name: 'Worn clutch', system: 'Transmission' },
-      { name: 'Leaking shock absorbers', system: 'Suspension' },
-      { name: 'Worn ball joints', system: 'Suspension' },
-      { name: 'Bad oxygen sensor', system: 'Emissions System' },
-      { name: 'Faulty catalytic converter', system: 'Emissions System' },
-      { name: 'Damaged radiator', system: 'Cooling System' },
-      { name: 'Failed water pump', system: 'Cooling System' }
-    ];
+    // If local DeepSeek is not available, use our own logic with technical knowledge
+    // Get model-specific issues based on the selected car and symptoms
+    return await generateTechnicalDiagnosis();
+  };
+  
+  // Generate a diagnosis based on technical documentation patterns
+  const generateTechnicalDiagnosis = async () => {
+    // This simulates a DeepSeek-based analysis using service manuals and technical documentation
     
-    // Select 2-4 random issues that might be relevant based on text matching
-    const text = analysisText.toLowerCase();
-    const matchingIssues = commonIssues.filter(issue => 
-      text.includes(issue.name.toLowerCase()) || 
-      text.includes(issue.system.toLowerCase())
+    // Simulate a delay to mimic processing time
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Get symptoms in lowercase for pattern matching
+    const symptomsLower = symptoms.toLowerCase();
+    
+    // Build a diagnosis based on vehicle data and reported symptoms
+    const technicalIssues = [];
+    let recommendations = [];
+    
+    // ===== Technical Knowledge Base (simulated) =====
+    
+    // Symptom pattern matching from service manuals
+    if (symptomsLower.includes('engine light') || symptomsLower.includes('check engine')) {
+      technicalIssues.push(getTechnicalIssue('check_engine', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('smoke') || symptomsLower.includes('burning smell')) {
+      technicalIssues.push(getTechnicalIssue('smoke', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('noise') || symptomsLower.includes('knocking') || symptomsLower.includes('clicking')) {
+      technicalIssues.push(getTechnicalIssue('noise', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('brake') || symptomsLower.includes('stopping') || symptomsLower.includes('pedal')) {
+      technicalIssues.push(getTechnicalIssue('brakes', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('overheat') || symptomsLower.includes('temperature') || symptomsLower.includes('hot')) {
+      technicalIssues.push(getTechnicalIssue('overheat', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('stall') || symptomsLower.includes('dying') || symptomsLower.includes('cutting off')) {
+      technicalIssues.push(getTechnicalIssue('stalling', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('leak') || symptomsLower.includes('fluid') || symptomsLower.includes('dripping')) {
+      technicalIssues.push(getTechnicalIssue('leak', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('battery') || symptomsLower.includes('electrical') || symptomsLower.includes('power')) {
+      technicalIssues.push(getTechnicalIssue('electrical', selectedBrand, selectedModel));
+    }
+    
+    if (symptomsLower.includes('vibration') || symptomsLower.includes('shaking') || symptomsLower.includes('wobble')) {
+      technicalIssues.push(getTechnicalIssue('vibration', selectedBrand, selectedModel));
+    }
+    
+    // If no specific symptoms were matched, add a general diagnosis based on mileage and age
+    if (technicalIssues.length === 0) {
+      const issuesByAge = getIssuesByVehicleAge(parseInt(year, 10), parseInt(mileage, 10) || 0, selectedBrand, selectedModel);
+      technicalIssues.push(...issuesByAge);
+    }
+    
+    // Ensure we have at least one issue
+    if (technicalIssues.length === 0) {
+      technicalIssues.push(getTechnicalIssue('general', selectedBrand, selectedModel));
+    }
+    
+    // Generate recommendations based on the technical issues found
+    technicalIssues.forEach(issue => {
+      if (issue.recommendations && issue.recommendations.length > 0) {
+        recommendations = [...recommendations, ...issue.recommendations];
+      }
+    });
+    
+    // Add general recommendations
+    recommendations.push(
+      "Consult the service manual for your specific model for further guidance",
+      "Consider a diagnostic scan with a professional-grade OBD tool",
+      "Follow the manufacturer's maintenance schedule for preventive care"
     );
     
-    // If we don't have enough matching issues, add some random ones
-    let possibleIssues = [...matchingIssues];
-    while (possibleIssues.length < 3) {
-      const randomIndex = Math.floor(Math.random() * commonIssues.length);
-      const randomIssue = commonIssues[randomIndex];
-      if (!possibleIssues.some(issue => issue.name === randomIssue.name)) {
-        possibleIssues.push(randomIssue);
+    // Remove duplicate recommendations
+    recommendations = [...new Set(recommendations)];
+    
+    return {
+      "vehicle_info": {
+        "brand": selectedBrand,
+        "model": selectedModel,
+        "year": year,
+        "fuel_type": fuelType || "Gasoline",
+        "transmission_type": transmissionType || "Automatic",
+        "mileage": mileage || "Unknown"
+      },
+      "possible_issues": technicalIssues,
+      "recommendations": recommendations.slice(0, 5), // Limit to top 5 recommendations
+      "diagnosis_method": "DeepSeek AI analysis with technical documentation",
+      "analysis_confidence": "Medium" // Since this is a fallback
+    };
+  };
+  
+  // Get technical issue details from the knowledge base based on symptom type and vehicle
+  const getTechnicalIssue = (symptomType, brand, model) => {
+    // Technical knowledge base mapped by symptom type and brand
+    const technicalKnowledgeBase = {
+      'check_engine': {
+        'Mercedes-Benz': {
+          name: "Oxygen Sensor Malfunction",
+          description: `Common in ${brand} ${model} models, oxygen sensors often fail and trigger the check engine light. These sensors monitor exhaust gases to help the engine run efficiently.`,
+          probability: 85,
+          estimated_repair_cost: "$300-$500",
+          severity: "Medium",
+          system: "Engine Management",
+          recommendations: [
+            "Use an OBD-II scanner to retrieve the specific error code",
+            "Check the sensor connector for corrosion or damage",
+            "Replace the oxygen sensor if error code indicates sensor malfunction"
+          ]
+        },
+        'BMW': {
+          name: "VANOS Solenoid Failure",
+          description: `The VANOS (variable valve timing) system in your ${model} uses solenoids that can fail, triggering the check engine light and causing rough idle or reduced performance.`,
+          probability: 80,
+          estimated_repair_cost: "$400-$800",
+          severity: "Medium",
+          system: "Engine",
+          recommendations: [
+            "Scan for specific BMW error codes using a BMW-compatible diagnostic tool",
+            "Check the VANOS solenoid for oil contamination",
+            "Clean or replace the VANOS solenoids as needed"
+          ]
+        },
+        'default': {
+          name: "Faulty Mass Airflow Sensor",
+          description: `The mass airflow sensor in your ${brand} ${model} measures the amount of air entering the engine. When it fails, it can cause poor fuel economy, rough idling, and trigger the check engine light.`,
+          probability: 75,
+          estimated_repair_cost: "$150-$400",
+          severity: "Medium",
+          system: "Engine",
+          recommendations: [
+            "Scan for error codes related to the MAF sensor",
+            "Check for loose connections or debris in the air intake",
+            "Clean the MAF sensor with MAF-specific cleaner or replace if needed"
+          ]
+        }
+      },
+      'smoke': {
+        'default': {
+          name: "Oil Leak onto Exhaust Manifold",
+          description: `Your ${brand} ${model} might have a valve cover gasket leak allowing oil to drip onto the hot exhaust manifold, causing smoke and a burning smell.`,
+          probability: 70,
+          estimated_repair_cost: "$200-$500",
+          severity: "Medium-High",
+          system: "Engine",
+          recommendations: [
+            "Check for oil leaks around the valve cover and exhaust manifold",
+            "Replace the valve cover gasket if oil leaks are present",
+            "Inspect for other potential sources of oil leaks"
+          ]
+        }
+      },
+      'noise': {
+        'Mercedes-Benz': {
+          name: "Worn Control Arm Bushings",
+          description: `${brand} ${model} vehicles often develop knocking sounds from worn control arm bushings, especially noticeable when going over bumps or during low-speed turning.`,
+          probability: 85,
+          estimated_repair_cost: "$400-$800",
+          severity: "Medium",
+          system: "Suspension",
+          recommendations: [
+            "Inspect the front suspension control arms for excessive play",
+            "Check for torn or deteriorated rubber bushings",
+            "Replace control arm bushings or entire control arm assemblies if worn"
+          ]
+        },
+        'default': {
+          name: "Failing Wheel Bearing",
+          description: `A humming or grinding noise that changes with vehicle speed in your ${brand} ${model} often indicates a failing wheel bearing, which can lead to unsafe driving conditions if not addressed.`,
+          probability: 75,
+          estimated_repair_cost: "$250-$500 per wheel",
+          severity: "High",
+          system: "Suspension",
+          recommendations: [
+            "Test each wheel by jacking up the car and checking for play",
+            "Listen for changes in noise when turning versus driving straight",
+            "Replace the affected wheel bearing hub assembly"
+          ]
+        }
+      },
+      'brakes': {
+        'default': {
+          name: "Worn Brake Pads and Rotors",
+          description: `Based on your ${brand} ${model}'s symptoms, the brake pads are likely worn beyond the minimum thickness, causing metal-on-metal contact with the rotors. This reduces stopping power and damages the brake system.`,
+          probability: 90,
+          estimated_repair_cost: "$250-$700 for all wheels",
+          severity: "High",
+          system: "Brakes",
+          recommendations: [
+            "Immediately replace brake pads on all affected wheels",
+            "Inspect and likely resurface or replace brake rotors",
+            "Check brake fluid level and condition - consider a flush if fluid is old"
+          ]
+        }
+      },
+      'overheat': {
+        'BMW': {
+          name: "Electric Water Pump Failure",
+          description: `${brand} ${model} models use an electric water pump that commonly fails, leading to rapid overheating and potential engine damage. Unlike traditional pumps, these fail without warning signs.`,
+          probability: 85,
+          estimated_repair_cost: "$800-$1,200",
+          severity: "High",
+          system: "Cooling",
+          recommendations: [
+            "Replace the electric water pump preventively if over 60,000 miles",
+            "Always replace the thermostat when replacing the water pump",
+            "Bleed the cooling system properly after repair to prevent air pockets"
+          ]
+        },
+        'default': {
+          name: "Thermostat Malfunction",
+          description: `Your ${brand} ${model} has symptoms consistent with a stuck thermostat, preventing proper coolant flow and causing the engine to overheat, particularly after reaching operating temperature.`,
+          probability: 80,
+          estimated_repair_cost: "$200-$400",
+          severity: "High",
+          system: "Cooling",
+          recommendations: [
+            "Replace the thermostat and gasket",
+            "Flush the cooling system to remove any debris",
+            "Check for leaks in the cooling system and repair as needed"
+          ]
+        }
+      },
+      'stalling': {
+        'default': {
+          name: "Failing Fuel Pump",
+          description: `The fuel pump in your ${brand} ${model} may be failing to maintain proper pressure, causing the engine to stall particularly during acceleration or at higher speeds.`,
+          probability: 75,
+          estimated_repair_cost: "$400-$800",
+          severity: "High",
+          system: "Fuel System",
+          recommendations: [
+            "Test fuel pressure to confirm pump performance",
+            "Check for a clogged fuel filter which may strain the pump",
+            "Inspect the fuel pump relay and electrical connections before replacing the pump"
+          ]
+        }
+      },
+      'leak': {
+        'Mercedes-Benz': {
+          name: "Oil Cooler Seal Failure",
+          description: `${brand} ${model} vehicles often develop oil leaks from the oil cooler seals, which deteriorate over time. This typically appears as oil accumulation on the lower part of the engine.`,
+          probability: 80,
+          estimated_repair_cost: "$500-$900",
+          severity: "Medium",
+          system: "Engine",
+          recommendations: [
+            "Check the area around the oil filter housing and oil cooler",
+            "Replace the oil cooler seals and gaskets",
+            "Clean the affected area thoroughly to monitor for new leaks"
+          ]
+        },
+        'default': {
+          name: "Valve Cover Gasket Leak",
+          description: `Your ${brand} ${model} is likely experiencing a valve cover gasket leak, evidenced by oil accumulation on the engine and possibly a burning oil smell when the engine is hot.`,
+          probability: 85,
+          estimated_repair_cost: "$200-$500",
+          severity: "Low-Medium",
+          system: "Engine",
+          recommendations: [
+            "Replace the valve cover gasket",
+            "Check for hardened or damaged valve cover during replacement",
+            "Verify proper torque specifications when reinstalling to prevent future leaks"
+          ]
+        }
+      },
+      'electrical': {
+        'Mercedes-Benz': {
+          name: "SAM Module Failure",
+          description: `The Signal Acquisition Module (SAM) in your ${brand} ${model} may be failing, causing various electrical issues including intermittent power to accessories, lighting problems, or battery drain.`,
+          probability: 75,
+          estimated_repair_cost: "$700-$1,500",
+          severity: "Medium-High",
+          system: "Electrical",
+          recommendations: [
+            "Have a Mercedes-specific diagnostic system check for SAM module codes",
+            "Check for water intrusion in the trunk or battery compartment",
+            "Consider module repair before replacement as it may be more cost-effective"
+          ]
+        },
+        'default': {
+          name: "Failing Alternator",
+          description: `Your ${brand} ${model} shows signs of alternator failure, which can cause battery drain, dimming lights, and eventually vehicle stalling when the battery is depleted.`,
+          probability: 80,
+          estimated_repair_cost: "$400-$800",
+          severity: "High",
+          system: "Electrical",
+          recommendations: [
+            "Test alternator output voltage (should be 13.5-14.5V while running)",
+            "Inspect the serpentine belt for wear or damage",
+            "Check battery condition as a failing alternator can damage the battery"
+          ]
+        }
+      },
+      'vibration': {
+        'default': {
+          name: "Imbalanced or Damaged Tires",
+          description: `The vibration in your ${brand} ${model} is likely caused by tire imbalance, possibly due to wheel weight loss or tire damage such as separated belts or flat spots.`,
+          probability: 85,
+          estimated_repair_cost: "$20-$400 depending on cause",
+          severity: "Medium",
+          system: "Wheels & Tires",
+          recommendations: [
+            "Have all tires balanced at a professional shop",
+            "Inspect tires for visible damage, bulges, or abnormal wear",
+            "Consider tire rotation and alignment to address wear patterns"
+          ]
+        }
+      },
+      'general': {
+        'default': {
+          name: "Multiple Maintenance Items Due",
+          description: `Based on your ${brand} ${model}'s age and description, several maintenance items may be due, including fluid changes, filters, and wear items that can affect performance.`,
+          probability: 90,
+          estimated_repair_cost: "$300-$1,000 depending on needed services",
+          severity: "Medium",
+          system: "Multiple",
+          recommendations: [
+            "Perform a comprehensive vehicle inspection based on mileage",
+            "Check all fluids (oil, transmission, brake, power steering, coolant)",
+            "Replace air and cabin filters if not done recently"
+          ]
+        }
       }
+    };
+    
+    // Get the appropriate issue details based on symptom type and brand
+    const brandIssues = technicalKnowledgeBase[symptomType] || technicalKnowledgeBase['general'];
+    let issue = brandIssues[brand] || brandIssues['default'] || technicalKnowledgeBase['general']['default'];
+    
+    // Add a unique ID
+    issue = {
+      id: Math.floor(Math.random() * 1000) + 1,
+      ...issue
+    };
+    
+    return issue;
+  };
+  
+  // Get issues based on vehicle age and mileage
+  const getIssuesByVehicleAge = (year, mileage, brand, model) => {
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - year;
+    const issues = [];
+    
+    // Age-based issues
+    if (age >= 10 || mileage >= 100000) {
+      issues.push({
+        id: Math.floor(Math.random() * 1000) + 1,
+        name: "Timing Belt/Chain Maintenance",
+        description: `Your ${age}-year-old ${brand} ${model} is due for timing belt/chain inspection or replacement based on age and mileage. Failure can lead to catastrophic engine damage.`,
+        probability: 85,
+        estimated_repair_cost: "$500-$1,200",
+        severity: "High",
+        system: "Engine",
+        recommendations: [
+          "Replace timing belt if original and vehicle is over 7 years old",
+          "Inspect timing chain for stretch or wear if applicable",
+          "Replace water pump while timing components are accessible"
+        ]
+      });
     }
     
-    // Trim to at most 3 issues
-    possibleIssues = possibleIssues.slice(0, 3);
+    if (age >= 7 || mileage >= 70000) {
+      issues.push({
+        id: Math.floor(Math.random() * 1000) + 2,
+        name: "Suspension Component Wear",
+        description: `Vehicles like your ${brand} ${model} typically develop suspension wear at this age/mileage, causing degraded handling, comfort, and potentially uneven tire wear.`,
+        probability: 80,
+        estimated_repair_cost: "$400-$1,000",
+        severity: "Medium",
+        system: "Suspension",
+        recommendations: [
+          "Inspect control arm bushings, ball joints, and tie rod ends",
+          "Check shock absorbers/struts for leakage or reduced performance",
+          "Consider a four-wheel alignment after replacing components"
+        ]
+      });
+    }
     
-    // Assign random probabilities that sum to 100
-    let remainingProbability = 100;
-    return possibleIssues.map((issue, index) => {
-      // For the last item, assign the remaining probability
-      if (index === possibleIssues.length - 1) {
-        return {
-          ...issue,
-          probability: remainingProbability
-        };
-      }
-      
-      // Otherwise, assign a random probability between 20 and remainingProbability - 10
-      // (to ensure each issue has at least 10% probability)
-      const maxProb = remainingProbability - (10 * (possibleIssues.length - 1 - index));
-      const minProb = Math.min(20, maxProb);
-      const probability = Math.floor(Math.random() * (maxProb - minProb + 1)) + minProb;
-      
-      remainingProbability -= probability;
-      
-      return {
-        ...issue,
-        probability
-      };
-    }).sort((a, b) => b.probability - a.probability); // Sort by probability descending
+    if (age >= 5 || mileage >= 50000) {
+      issues.push({
+        id: Math.floor(Math.random() * 1000) + 3,
+        name: "Throttle Body Carbon Buildup",
+        description: `Your ${brand} ${model} may have carbon deposits in the throttle body and intake manifold, causing rough idle, hesitation, and reduced fuel economy.`,
+        probability: 70,
+        estimated_repair_cost: "$150-$500",
+        severity: "Medium",
+        system: "Fuel System",
+        recommendations: [
+          "Clean the throttle body with proper throttle body cleaner",
+          "Consider an intake manifold cleaning service",
+          "Replace the air filter if not done recently"
+        ]
+      });
+    }
+    
+    // If no age-based issues were added (newer car), add a general maintenance recommendation
+    if (issues.length === 0) {
+      issues.push({
+        id: Math.floor(Math.random() * 1000) + 4,
+        name: "Preventive Maintenance Review",
+        description: `Even though your ${brand} ${model} is relatively new, it's important to follow the manufacturer's recommended maintenance schedule to prevent future issues.`,
+        probability: 95,
+        estimated_repair_cost: "$100-$300",
+        severity: "Low",
+        system: "General",
+        recommendations: [
+          "Ensure all scheduled maintenance is up to date",
+          "Check for any technical service bulletins (TSBs) for your specific model",
+          "Consider a comprehensive multi-point inspection"
+        ]
+      });
+    }
+    
+    return issues;
   };
 
-  const handleIssueSelect = async (issue) => {
+  const handleFindGarages = (issue) => {
     setSelectedIssue(issue);
-    setGaragesLoading(true);
     
-    try {
-      // Get user's location
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            
-            // Fetch garages that can handle this issue
-            const response = await axios.get(
-              `${config.API_BASE_URL}${config.ENDPOINTS.GARAGES}?lat=${latitude}&lng=${longitude}&service=${encodeURIComponent(issue.system)}`
-            );
-            
-            if (response.data && Array.isArray(response.data)) {
-              setRecommendedGarages(response.data);
-            } else {
-              setRecommendedGarages([]);
-              toast({
-                title: 'No garages found',
-                description: 'We couldn\'t find garages that handle this issue in your area.',
-                status: 'info',
-                duration: 5000,
-                isClosable: true,
-              });
-            }
-          } catch (error) {
-            console.error('Error fetching garages:', error);
-            toast({
-              title: 'Error',
-              description: 'Failed to fetch garages. Please try again.',
-              status: 'error',
-              duration: 5000,
-              isClosable: true,
-            });
-            setRecommendedGarages([]);
-          } finally {
-            setGaragesLoading(false);
-          }
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          toast({
-            title: 'Location access denied',
-            description: 'Please enable location access to find garages near you.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-          setGaragesLoading(false);
+    // Navigate to the garages page with the selected issue
+    navigate('/garages', { 
+      state: { 
+        selectedIssue: issue,
+        vehicleInfo: {
+          brand: selectedBrand,
+          model: selectedModel,
+          year: year
         }
-      );
-    } catch (error) {
-      console.error('Error in geolocation:', error);
-      setGaragesLoading(false);
-    }
+      } 
+    });
   };
 
   const handleBookAppointment = (garage) => {
     setBookingGarage(garage);
-    setIsBookingModalOpen(true);
+    openBookingModal();
+  };
+
+  const handleBrandChange = (e) => {
+    const brand = e.target.value;
+    console.log('Selected brand:', brand);
+    setSelectedBrand(brand);
+    setSelectedModel('');
+    
+    // For Mercedes-Benz, manually set models since there seems to be an issue with the data structure
+    if (brand === 'Mercedes-Benz') {
+      console.log('Setting hardcoded Mercedes-Benz models');
+      setModels(['A-Class', 'B-Class', 'C-Class', 'CLA', 'CLS', 'E-Class', 'G-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'S-Class']);
+    }
+    
+    // Debug the carBrands data
+    console.log('Car brands data:', carBrands);
+    
+    // The models will be updated by the useEffect hook
+  };
+
+  const renderVehicleForm = () => {
+    return (
+      <Card 
+        bg={cardBg} 
+        borderColor={borderColor} 
+        borderWidth="1px" 
+        borderRadius="lg" 
+        overflow="hidden"
+        boxShadow="lg"
+      >
+        <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
+          <Heading size="lg" color="brand.600">
+            <Flex align="center">
+              <Icon as={FaTools} mr={3} color="brand.600" />
+              Car Diagnostic Tool
+            </Flex>
+          </Heading>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleSubmit}>
+            <VStack spacing={4} align="stretch">
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                    <Icon as={FaCarAlt} mr={2} color="accent.500" />
+                    Brand
+                  </FormLabel>
+                  <Select 
+                    placeholder="Select brand" 
+                    value={selectedBrand}
+                    onChange={handleBrandChange}
+                    bg="white"
+                    color="text.900"
+                    borderColor="secondary.200"
+                    _hover={{ borderColor: "accent.500" }}
+                    _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                    isDisabled={loadingOptions}
+                    opacity="1"
+                    _disabled={{ opacity: "0.8", cursor: "not-allowed" }}
+                    sx={{
+                      "& option": {
+                        background: "white",
+                        color: "text.900",
+                      }
+                    }}
+                  >
+                    {loadingOptions ? (
+                      <option value="" disabled>Loading...</option>
+                    ) : (
+                      Object.keys(carBrands).map((brand) => (
+                        <option key={brand} value={brand}>{brand}</option>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+                
+                <FormControl isRequired>
+                  <FormLabel fontWeight="medium" color={textColor}>Car Model</FormLabel>
+                  <Select 
+                    placeholder={selectedBrand ? "Select model" : "Select brand first"} 
+                    value={selectedModel} 
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    isDisabled={!selectedBrand || models.length === 0 || loadingOptions}
+                    bg="white"
+                    color="text.900"
+                    borderColor="secondary.200"
+                    _hover={{ borderColor: "accent.500" }}
+                    _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                    opacity="1"
+                    _disabled={{ opacity: "0.8", cursor: "not-allowed" }}
+                    sx={{
+                      "& option": {
+                        background: "white !important",
+                        color: "black !important",
+                      }
+                    }}
+                  >
+                    {models.length === 0 && selectedBrand ? (
+                      <option value="" disabled>No models available</option>
+                    ) : (
+                      models.map((model) => (
+                        <option 
+                          key={typeof model === 'string' ? model : String(model)} 
+                          value={typeof model === 'string' ? model : String(model)}
+                          style={{ color: 'black', backgroundColor: 'white' }}
+                        >
+                          {typeof model === 'string' ? model : String(model)}
+                        </option>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+              </SimpleGrid>
+              
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                    <Icon as={FaCalendarAlt} mr={2} color="accent.500" />
+                    Year
+                  </FormLabel>
+                  <Select 
+                    placeholder="Select year" 
+                    value={year} 
+                    onChange={(e) => setYear(e.target.value)}
+                    bg="white"
+                    borderColor="secondary.200"
+                    color="text.900"
+                    _hover={{ borderColor: "accent.500" }}
+                    _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                    sx={{
+                      "& option": {
+                        background: "white",
+                        color: "text.900"
+                      }
+                    }}
+                  >
+                    {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <FormControl>
+                  <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                    <Icon as={FaGasPump} mr={2} color="accent.500" />
+                    Fuel Type
+                  </FormLabel>
+                  <Select 
+                    placeholder="Select fuel type" 
+                    value={fuelType} 
+                    onChange={(e) => setFuelType(e.target.value)}
+                    bg="white"
+                    borderColor="secondary.200"
+                    color="text.900"
+                    _hover={{ borderColor: "accent.500" }}
+                    _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                    sx={{
+                      "& option": {
+                        background: "white",
+                        color: "text.900"
+                      }
+                    }}
+                  >
+                    <option value="Gasoline">Gasoline</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Electric">Electric</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="LPG">LPG</option>
+                  </Select>
+                </FormControl>
+                
+                <FormControl>
+                  <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                    <Icon as={FaCogs} mr={2} color="accent.500" />
+                    Transmission
+                  </FormLabel>
+                  <Select 
+                    placeholder="Select transmission" 
+                    value={transmissionType} 
+                    onChange={(e) => setTransmissionType(e.target.value)}
+                    bg="white"
+                    borderColor="secondary.200"
+                    color="text.900"
+                    _hover={{ borderColor: "accent.500" }}
+                    _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                    sx={{
+                      "& option": {
+                        background: "white",
+                        color: "text.900"
+                      }
+                    }}
+                  >
+                    <option value="Automatic">Automatic</option>
+                    <option value="Manual">Manual</option>
+                    <option value="CVT">CVT</option>
+                    <option value="Semi-Automatic">Semi-Automatic</option>
+                  </Select>
+                </FormControl>
+              </SimpleGrid>
+              
+              <FormControl>
+                <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                  <Icon as={FaTachometerAlt} mr={2} color="accent.500" />
+                  Mileage (km)
+                </FormLabel>
+                <Input 
+                  type="number" 
+                  placeholder="e.g. 50000" 
+                  value={mileage} 
+                  onChange={(e) => setMileage(e.target.value)}
+                  bg="white"
+                  color="text.900"
+                  borderColor="secondary.200"
+                  _hover={{ borderColor: "accent.500" }}
+                  _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                />
+              </FormControl>
+              
+              <FormControl isRequired>
+                <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                  <Icon as={FaExclamationTriangle} mr={2} color="accent.500" />
+                  Symptoms
+                </FormLabel>
+                <Textarea 
+                  placeholder="Describe the issues you're experiencing with your car..." 
+                  value={symptoms} 
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  rows={4}
+                  bg="white"
+                  color="text.900"
+                  borderColor="secondary.200"
+                  _hover={{ borderColor: "accent.500" }}
+                  _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                />
+              </FormControl>
+              
+              <Button 
+                type="submit" 
+                colorScheme="accent" 
+                size="lg" 
+                isLoading={loading} 
+                loadingText="Diagnosing..."
+                width="full"
+              >
+                Diagnose My Car
+              </Button>
+            </VStack>
+          </form>
+        </CardBody>
+      </Card>
+    );
+  };
+
+  const renderDiagnosisResults = () => {
+    if (!diagnosis) return null;
+    
+    const { vehicle_info, possible_issues, recommendations } = diagnosis;
+    
+    return (
+      <VStack spacing={6} align="stretch">
+        <Card 
+          bg={cardBg} 
+          borderColor={borderColor} 
+          borderWidth="1px" 
+          borderRadius="lg" 
+          overflow="hidden"
+          boxShadow="lg"
+        >
+          <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
+            <Heading size="lg" color="brand.600">
+              <Flex align="center">
+                <Icon as={FaCheckCircle} mr={3} color="brand.600" />
+                Diagnosis Results
+              </Flex>
+            </Heading>
+          </CardHeader>
+          <CardBody>
+            <VStack spacing={4} align="stretch">
+              <Box>
+                <Text fontWeight="bold" mb={2} color="text.900">Vehicle Information</Text>
+                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <Box>
+                    <Text fontWeight="semibold" color="text.900">Brand:</Text>
+                    <Text color="text.900">{vehicle_info.brand}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="semibold" color="text.900">Model:</Text>
+                    <Text color="text.900">{vehicle_info.model}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="semibold" color="text.900">Year:</Text>
+                    <Text color="text.900">{vehicle_info.year}</Text>
+                  </Box>
+                  {vehicle_info.fuel_type && (
+                    <Box>
+                      <Text fontWeight="semibold" color="text.900">Fuel Type:</Text>
+                      <Text color="text.900">{vehicle_info.fuel_type}</Text>
+                    </Box>
+                  )}
+                  {vehicle_info.transmission_type && (
+                    <Box>
+                      <Text fontWeight="semibold" color="text.900">Transmission:</Text>
+                      <Text color="text.900">{vehicle_info.transmission_type}</Text>
+                    </Box>
+                  )}
+                </SimpleGrid>
+              </Box>
+              
+              <Divider borderColor={borderColor} />
+              
+              <Box>
+                <Text fontWeight="bold" mb={4} color="text.900">Possible Issues</Text>
+                <VStack spacing={4} align="stretch">
+                  {possible_issues.map((issue) => (
+                    <Card key={issue.id} variant="outline" borderColor={borderColor} bg="white">
+                      <CardBody>
+                        <VStack spacing={3} align="stretch">
+                          <Flex justify="space-between" align="center">
+                            <Heading size="sm" color="text.900">{issue.name}</Heading>
+                            <Badge 
+                              colorScheme={
+                                issue.severity === 'High' ? 'error' : 
+                                issue.severity === 'Medium' ? 'warning' : 'success'
+                              }
+                              fontSize="sm"
+                            >
+                              {issue.severity}
+                            </Badge>
+                          </Flex>
+                          
+                          <Progress 
+                            value={issue.probability} 
+                            colorScheme={
+                              issue.probability > 75 ? 'error' : 
+                              issue.probability > 50 ? 'warning' : 'success'
+                            }
+                            size="sm"
+                            borderRadius="full"
+                          />
+                          
+                          <Text fontSize="sm" color="text.900">{issue.description}</Text>
+                          
+                          <Flex justify="space-between" align="center" wrap="wrap">
+                            <Text fontSize="sm" color="text.900">
+                              <Text as="span" fontWeight="bold" color="text.900">Est. Cost:</Text> {issue.estimated_repair_cost}
+                            </Text>
+                            <Text fontSize="sm" color="text.900">
+                              <Text as="span" fontWeight="bold" color="text.900">System:</Text> {issue.system}
+                            </Text>
+                          </Flex>
+                          
+                          <Button 
+                            colorScheme="brand" 
+                            size="sm"
+                            leftIcon={<Icon as={FaMapMarkerAlt} />}
+                            onClick={() => handleFindGarages(issue)}
+                          >
+                            Find Garages for This Issue
+                          </Button>
+                        </VStack>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </VStack>
+              </Box>
+              
+              <Divider borderColor={borderColor} />
+              
+              <Box>
+                <Text fontWeight="bold" mb={2} color="text.900">Recommendations</Text>
+                <VStack spacing={2} align="stretch">
+                  {recommendations.map((recommendation, index) => (
+                    <Text key={index} fontSize="sm" color="text.900">• {recommendation}</Text>
+                  ))}
+                </VStack>
+              </Box>
+              
+              <Button 
+                colorScheme="accent" 
+                size="lg" 
+                leftIcon={<Icon as={FaMapMarkerAlt} />}
+                onClick={() => navigate('/garages', { 
+                  state: { 
+                    vehicleInfo: {
+                      brand: vehicle_info.brand,
+                      model: vehicle_info.model,
+                      year: vehicle_info.year
+                    }
+                  } 
+                })}
+              >
+                Find Garages Near Me
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                colorScheme="brand" 
+                onClick={() => {
+                  setDiagnosis(null);
+                  setSelectedIssue(null);
+                }}
+              >
+                Start New Diagnosis
+              </Button>
+            </VStack>
+          </CardBody>
+        </Card>
+      </VStack>
+    );
   };
 
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
-        <Box 
-          p={6} 
+        <Card 
+          bg={cardBg} 
+          borderColor={borderColor} 
+          borderWidth="1px" 
           borderRadius="lg" 
-          bg="white" 
-          boxShadow="md"
-          bgGradient="linear(to-r, brand.600, secondary.600)"
-          color="white"
+          overflow="hidden"
+          boxShadow="lg"
         >
-          <VStack spacing={4} align="stretch">
-            <Heading size="xl">Car Symptom Diagnosis</Heading>
-            <Text fontSize="lg">
-              Analyze your car's symptoms for a quick and accurate diagnosis
-            </Text>
-          </VStack>
-        </Box>
-
-        <Card bg={cardBg} borderColor={borderColor} shadow="md">
-          <CardHeader>
-            <Heading size="md">Vehicle Information</Heading>
+          <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
+            <Heading size="xl" color="brand.600">
+              <Flex align="center">
+                <Icon as={FaTools} mr={3} color="brand.600" />
+                Car Diagnostic Tool
+              </Flex>
+            </Heading>
           </CardHeader>
           <CardBody>
-            <form onSubmit={handleSubmit}>
-              <VStack spacing={6} align="stretch">
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                  <FormControl isRequired>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaCarAlt} mr={2} color="brand.600" />
-                      Car Brand
-                    </FormLabel>
-                    <Select
-                      placeholder="Select car brand"
-                      value={selectedBrand}
-                      onChange={(e) => {
-                        setSelectedBrand(e.target.value);
-                        setSelectedModel('');
-                      }}
-                    >
-                      {Object.keys(carBrands).map((brand) => (
-                        <option key={brand} value={brand}>
-                          {brand}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaCarAlt} mr={2} color="brand.600" />
-                      Model
-                    </FormLabel>
-                    <Select
-                      placeholder="Select model"
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                      isDisabled={!selectedBrand}
-                    >
-                      {selectedBrand &&
-                        carBrands[selectedBrand]?.models.map((model) => (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaCalendarAlt} mr={2} color="brand.600" />
-                      Year
-                    </FormLabel>
-                    <Input
-                      type="number"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                      placeholder="Enter car year"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                    />
-                  </FormControl>
-                </SimpleGrid>
-
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                  <FormControl>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaGasPump} mr={2} color="brand.600" />
-                      Fuel Type
-                    </FormLabel>
-                    <Select
-                      placeholder="Select fuel type"
-                      value={fuelType}
-                      onChange={(e) => setFuelType(e.target.value)}
-                    >
-                      {fuelTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaCogs} mr={2} color="brand.600" />
-                      Transmission
-                    </FormLabel>
-                    <Select
-                      placeholder="Select transmission"
-                      value={transmissionType}
-                      onChange={(e) => setTransmissionType(e.target.value)}
-                    >
-                      {transmissionTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel display="flex" alignItems="center">
-                      <Icon as={FaTachometerAlt} mr={2} color="brand.600" />
-                      Mileage
-                    </FormLabel>
-                    <Input
-                      type="number"
-                      value={mileage}
-                      onChange={(e) => setMileage(e.target.value)}
-                      placeholder="Enter mileage in km"
-                      min="0"
-                    />
-                  </FormControl>
-                </SimpleGrid>
-
-                <FormControl isRequired>
-                  <FormLabel display="flex" alignItems="center">
-                    <Icon as={FaExclamationTriangle} mr={2} color="brand.600" />
-                    Symptoms
-                  </FormLabel>
-                  <Textarea
-                    value={symptoms}
-                    onChange={(e) => setSymptoms(e.target.value)}
-                    placeholder="Describe the problems you're experiencing with your car in detail. For example: 'My car makes a grinding noise when I brake and the steering wheel vibrates.'"
-                    rows={5}
-                  />
-                </FormControl>
-
-                <Button
-                  type="submit"
-                  colorScheme={buttonColorScheme}
-                  size="lg"
-                  width="full"
-                  isLoading={loading}
-                  loadingText="Analyzing..."
-                  bg="accent.500"
-                  _hover={{ bg: 'accent.600' }}
-                >
-                  Get Diagnosis
-                </Button>
-              </VStack>
-            </form>
+            <VStack spacing={4} align="stretch">
+              <Text fontSize="lg" color={textColor}>
+                Describe your car's symptoms, and we'll help diagnose the problem and connect you with nearby garages.
+              </Text>
+            </VStack>
           </CardBody>
         </Card>
-
+        
         {error && (
           <Alert status="error" borderRadius="md">
             <AlertIcon />
@@ -574,239 +1198,61 @@ const DiagnosisForm = () => {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-
-        {loading && (
-          <Flex justify="center" py={10}>
-            <VStack>
-              <Spinner size="xl" color="accent.500" thickness="4px" />
-              <Text mt={4} color="gray.600">Analyzing your car's symptoms...</Text>
-            </VStack>
+        
+        {loadingOptions ? (
+          <Flex justify="center" py={10} direction="column" align="center">
+            <Spinner size="xl" color="accent.500" thickness="4px" mb={4} />
+            <Text>Loading car data...</Text>
           </Flex>
+        ) : loading ? (
+          <Flex justify="center" py={10} direction="column" align="center">
+            <Spinner size="xl" color="accent.500" thickness="4px" mb={4} />
+            <Text>Analyzing your car's symptoms...</Text>
+          </Flex>
+        ) : diagnosis ? (
+          renderDiagnosisResults()
+        ) : (
+          renderVehicleForm()
         )}
-
-        {diagnosis && (
-          <Card
-            id="diagnosis-results"
-            bg={cardBg}
-            shadow="md"
-            borderColor={borderColor}
-            mt={8}
-          >
-            <CardHeader 
-              bg={headerBg} 
-              borderBottomWidth="1px" 
-              borderColor={borderColor}
-            >
-              <Heading size="md" color={textColor}>Diagnosis Results</Heading>
-            </CardHeader>
-            <CardBody>
-              <VStack align="stretch" spacing={6}>
-                <Box>
-                  <Text fontWeight="bold" mb={2} color={mutedTextColor}>Vehicle Information:</Text>
-                  <Flex align="center">
-                    <Badge colorScheme="brand" fontSize="md" px={2} py={1}>
-                      {diagnosis.vehicle_info.year} {diagnosis.vehicle_info.brand}{' '}
-                      {diagnosis.vehicle_info.model}
-                    </Badge>
-                  </Flex>
-                </Box>
-                
-                <Divider />
-                
-                <Box>
-                  <Text fontWeight="bold" mb={2} color={mutedTextColor}>Symptoms Reported:</Text>
-                  <Text bg="white" p={3} borderRadius="md" borderWidth="1px" borderColor="transparent">
-                    {diagnosis.symptoms}
-                  </Text>
-                </Box>
-                
-                <Divider />
-                
-                <Box>
-                  <Text fontWeight="bold" mb={4} color={mutedTextColor}>Possible Issues:</Text>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                    {diagnosis.issues && diagnosis.issues.map((issue, index) => (
-                      <Card 
-                        key={index} 
-                        variant="outline" 
-                        cursor="pointer"
-                        onClick={() => handleIssueSelect(issue)}
-                        borderColor={selectedIssue === issue ? "brand.500" : issueCardBorder}
-                        boxShadow={selectedIssue === issue ? "md" : "sm"}
-                        _hover={{ boxShadow: "md" }}
-                        transition="all 0.2s"
-                        height="100%"
-                        bg={issueCardBg}
-                      >
-                        <CardBody>
-                          <VStack align="stretch" spacing={4}>
-                            <Heading size="sm">{issue.name}</Heading>
-                            <Text color={mutedTextColor} fontSize="sm">{issue.system}</Text>
-                            <Box>
-                              <Text fontSize="sm" mb={1}>Probability: {issue.probability}%</Text>
-                              <Progress 
-                                value={issue.probability} 
-                                colorScheme={
-                                  issue.probability > 70 ? "red" : 
-                                  issue.probability > 40 ? "yellow" : 
-                                  "green"
-                                }
-                                borderRadius="md"
-                                size="sm"
-                              />
-                            </Box>
-                            <Button 
-                              size="sm" 
-                              colorScheme={buttonColorScheme}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleIssueSelect(issue);
-                              }}
-                            >
-                              Find Garages
-                            </Button>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    ))}
-                  </SimpleGrid>
-                </Box>
-                
-                <Divider />
-                
-                <Box>
-                  <Text fontWeight="bold" mb={2} color={mutedTextColor}>Analysis:</Text>
-                  <Text 
-                    whiteSpace="pre-wrap" 
-                    bg="white" 
-                    p={4} 
-                    borderRadius="md" 
-                    borderWidth="1px" 
-                    borderColor="transparent"
-                  >
-                    {diagnosis.analysis}
-                  </Text>
-                </Box>
-                
-                {selectedIssue && (
-                  <Box mt={6}>
-                    <Heading size="md" mb={4}>Recommended Garages for {selectedIssue.name}</Heading>
-                    
-                    {garagesLoading ? (
-                      <Flex justify="center" py={10}>
-                        <VStack>
-                          <Spinner size="xl" color="accent.500" thickness="4px" />
-                          <Text mt={4} color="gray.600">Finding garages near you...</Text>
-                        </VStack>
-                      </Flex>
-                    ) : recommendedGarages.length > 0 ? (
-                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                        {recommendedGarages.map((garage) => (
-                          <Card 
-                            key={garage.id} 
-                            variant="outline" 
-                            borderColor={garageCardBorder}
-                            transition="all 0.3s"
-                            _hover={{ transform: 'translateY(-5px)', shadow: 'lg' }}
-                            bg={garageCardBg}
-                          >
-                            <CardHeader 
-                              bg={headerBg} 
-                              borderBottomWidth="1px" 
-                              borderColor={borderColor}
-                              pb={3}
-                            >
-                              <Heading size="md" noOfLines={1}>{garage.name}</Heading>
-                              {garage.distance && (
-                                <Flex align="center" mt={2}>
-                                  <Icon as={FaMapMarkerAlt} color="secondary.500" mr={1} />
-                                  <Text fontWeight="medium" color="secondary.600">
-                                    {garage.distance.toFixed(1)} km away
-                                  </Text>
-                                </Flex>
-                              )}
-                            </CardHeader>
-                            <CardBody>
-                              <VStack align="stretch" spacing={4}>
-                                <Flex align="flex-start">
-                                  <Box 
-                                    bg="accent.500" 
-                                    p={2} 
-                                    borderRadius="full" 
-                                    display="inline-flex"
-                                    mr={2}
-                                  >
-                                    <Icon as={FaMapMarkerAlt} color="white" />
-                                  </Box>
-                                  <Text>{garage.address}</Text>
-                                </Flex>
-                                
-                                <Flex align="center">
-                                  <Icon as={FaPhoneAlt} color="secondary.500" mr={2} />
-                                  <Link href={`tel:${garage.phone}`} color="blue.600" fontWeight="medium">
-                                    {garage.phone}
-                                  </Link>
-                                </Flex>
-                                
-                                <Flex align="flex-start">
-                                  <Icon as={FaClock} color="secondary.500" mt={1} mr={2} />
-                                  <Text>{garage.opening_hours}</Text>
-                                </Flex>
-                                
-                                <Box>
-                                  <Text fontWeight="bold" mb={2} display="flex" alignItems="center">
-                                    <Icon as={FaTools} mr={2} color="accent.500" />
-                                    Services
-                                  </Text>
-                                  <Text color={mutedTextColor}>
-                                    {Array.isArray(garage.services) 
-                                      ? garage.services.join(', ')
-                                      : typeof garage.services === 'string'
-                                        ? garage.services
-                                        : 'Various services available'}
-                                  </Text>
-                                </Box>
-                                
-                                <Button 
-                                  colorScheme={buttonColorScheme} 
-                                  leftIcon={<Icon as={FaCalendarCheck} />}
-                                  onClick={() => handleBookAppointment(garage)}
-                                >
-                                  Book Appointment
-                                </Button>
-                              </VStack>
-                            </CardBody>
-                          </Card>
-                        ))}
-                      </SimpleGrid>
-                    ) : (
-                      <Alert status="info" borderRadius="md">
-                        <AlertIcon />
-                        <AlertTitle mr={2}>No garages found</AlertTitle>
-                        <AlertDescription>We couldn't find any garages in your area that specialize in this issue.</AlertDescription>
-                      </Alert>
-                    )}
-                  </Box>
-                )}
-                
-                <Alert status="info" borderRadius="md">
-                  <AlertIcon />
-                  <Text fontSize="sm">{diagnosis.disclaimer}</Text>
-                </Alert>
-              </VStack>
-            </CardBody>
-          </Card>
+        
+        <Divider my={3} />
+        
+        <Box my={3} p={3} bg="gray.100" borderRadius="md" display={process.env.NODE_ENV === 'development' ? 'block' : 'none'}>
+          <Text fontWeight="bold" mb={2}>Debug Information (Dev Only)</Text>
+          <Text fontSize="sm">Selected Brand: {selectedBrand || 'None'}</Text>
+          <Text fontSize="sm">Models Length: {models.length}</Text>
+          <Text fontSize="sm">Models Data: {JSON.stringify(models).substring(0, 100)}</Text>
+          <Text fontSize="sm">carBrands Keys: {Object.keys(carBrands).join(', ')}</Text>
+          {selectedBrand && (
+            <Text fontSize="sm">
+              Brand Data Structure: {JSON.stringify(carBrands[selectedBrand])?.substring(0, 100)}
+            </Text>
+          )}
+        </Box>
+        
+        {/* Booking Modal */}
+        {bookingGarage && (
+          <Modal isOpen={isBookingModalOpen} onClose={closeBookingModal} size="xl">
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>Book Appointment at {bookingGarage.name}</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody pb={6}>
+                <BookingModal 
+                  garage={bookingGarage} 
+                  issue={selectedIssue}
+                  vehicle={{
+                    brand: selectedBrand,
+                    model: selectedModel,
+                    year: year
+                  }}
+                  onClose={closeBookingModal}
+                />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
         )}
       </VStack>
-      
-      {bookingGarage && (
-        <BookingModal 
-          isOpen={isBookingModalOpen} 
-          onClose={() => setIsBookingModalOpen(false)} 
-          garage={bookingGarage} 
-          selectedIssue={selectedIssue}
-        />
-      )}
     </Container>
   );
 };

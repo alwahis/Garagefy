@@ -13,7 +13,7 @@ function App() {
   return (
     <Router>
       <ChakraProvider theme={theme}>
-        <Box bg="gray.100" minH="100vh" display="flex" flexDirection="column">
+        <Box minH="100vh" display="flex" flexDirection="column" bg="white">
           <Navbar />
           <Box flex="1" pb={16}>
             <Routes>

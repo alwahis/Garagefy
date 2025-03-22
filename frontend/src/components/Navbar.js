@@ -31,12 +31,12 @@ const NavLink = ({ children, to, icon, isMobile = false, ...rest }) => (
     width={isMobile ? "full" : "auto"}
     _hover={{
       textDecoration: 'none',
-      bg: isMobile ? 'accent.500' : 'secondary.600',
-      color: 'white',
+      bg: isMobile ? 'accent.500' : 'rgba(255, 255, 255, 0.15)',
+      color: isMobile ? 'white' : 'white',
       transform: isMobile ? 'none' : 'translateY(-2px)',
-      boxShadow: isMobile ? 'none' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+      boxShadow: isMobile ? 'none' : '0 4px 6px rgba(0, 0, 0, 0.3)',
     }}
-    color={isMobile ? "gray.800" : "gray.200"}
+    color={isMobile ? "white" : "white"}
     fontWeight="medium"
     transition="all 0.2s"
     display="flex"
@@ -44,22 +44,22 @@ const NavLink = ({ children, to, icon, isMobile = false, ...rest }) => (
     fontSize={isMobile ? "lg" : "md"}
     {...rest}
   >
-    {icon && <Icon as={icon} mr={2} boxSize={isMobile ? "5" : "4"} />}
+    {icon && <Icon as={icon} mr={2} boxSize={isMobile ? "5" : "4"} color={isMobile ? "white" : "white"} />}
     {children}
   </Link>
 );
 
 const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const bgGradient = "linear(to-r, brand.600, secondary.600)";
-
+  
   return (
     <Box 
-      bgGradient={bgGradient}
+      bg="brand.600"
+      backdropFilter="blur(10px)"
       px={{ base: 2, md: 4 }}
       py={{ base: 2, md: 0 }}
       borderBottom="1px" 
-      borderColor="darkBg.600"
+      borderColor="brand.700"
       boxShadow="0 2px 10px rgba(0, 0, 0, 0.2)"
       position="sticky"
       top="0"
@@ -74,10 +74,10 @@ const Navbar = () => {
             display={{ md: 'none' }}
             onClick={onOpen}
             variant="ghost"
-            color="gray.400"
+            color="text.50"
             _hover={{
-              bg: "secondary.600",
-              color: "white",
+              bg: "rgba(255, 255, 255, 0.1)",
+              color: "text.50",
             }}
           />
           <HStack spacing={{ base: 2, md: 8 }} alignItems="center">
@@ -102,9 +102,9 @@ const Navbar = () => {
                     display="flex" 
                     alignItems="center"
                     justifyContent="center"
-                    boxShadow="0 2px 5px rgba(0, 0, 0, 0.2)"
+                    boxShadow="0 2px 5px rgba(0, 0, 0, 0.3)"
                   >
-                    <FaWrench color="white" size="1.2em" />
+                    <FaWrench color="#121212" size="1.2em" />
                   </Box>
                   <Text 
                     color="white" 
@@ -128,10 +128,11 @@ const Navbar = () => {
       {/* Mobile Navigation Drawer */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose} size="xs">
         <DrawerOverlay />
-        <DrawerContent bg="gray.100">
-          <DrawerCloseButton color="gray.800" />
+        <DrawerContent bgGradient="linear(to-br, gradient.blue, gradient.purple)">
+          <DrawerCloseButton color="white" />
           <DrawerHeader 
-            bgGradient="linear(to-r, brand.600, secondary.600)" 
+            borderBottomWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.1)"
             color="white" 
             px={4} 
             py={6}
@@ -145,7 +146,7 @@ const Navbar = () => {
                 alignItems="center" 
                 justifyContent="center"
               >
-                <FaWrench color="white" size="1.2em" />
+                <FaWrench color="#121212" size="1.2em" />
               </Box>
               <Text 
                 color="white" 

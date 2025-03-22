@@ -66,9 +66,12 @@ class BookingResponse(BaseModel):
 
 
 class UsedCarCheckRequest(BaseModel):
-    brand: str
-    model: str
-    year: int
-    mileage: int
-    price: Optional[int] = 0
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    mileage: Optional[int] = None
+    fuel_type: Optional[str] = None
+    transmission: Optional[str] = None
     description: Optional[str] = None
+    price: Optional[int] = 0
+    vin: Optional[str] = None
