@@ -382,7 +382,7 @@ async def check_used_car(request: UsedCarCheckRequest):
         return result
     except Exception as e:
         logger.error(f"Error in used car check endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Used car check failed: {str(e)}")
 
 @app.get("/test-options")
 def test_options():

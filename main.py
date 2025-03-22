@@ -20,6 +20,7 @@ from functools import lru_cache
 from backend.app.schemas import BookingCreate, BookingResponse, UsedCarCheckRequest
 from used_car_check import used_car_checker
 import math
+import re
 
 app = FastAPI()
 
@@ -353,71 +354,341 @@ async def get_garage_bookings(garage_id: int):
     
     return {"bookings": garage_bookings}
 
-@app.post("/api/used-car/check")
+class UsedCarCheckRequest(BaseModel):
+    brand: Optional[str]
+    model: Optional[str]
+    year: Optional[int]
+    mileage: Optional[int]
+    price: Optional[float]
+    description: Optional[str]
+    vin: Optional[str]
+
+@app.post("/api/check-used-car")
 async def check_used_car(request: UsedCarCheckRequest):
     """
     Check if a used car is worth buying based on online research.
     """
     try:
-        result = used_car_checker.check_car(
+        if not request.brand and not request.model and not request.year and not request.mileage:
+            raise HTTPException(status_code=400, detail="Missing required car information")
+            
+        result = await used_car_checker.check_used_car(
             brand=request.brand,
             model=request.model,
             year=request.year,
             mileage=request.mileage,
-            price=request.price,
+            price=request.price if hasattr(request, 'price') else 0,
             description=request.description
         )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Used car check failed: {str(e)}")
 
+@app.post("/api/check-used-car/vin")
+async def check_used_car_by_vin(request: UsedCarCheckRequest):
+    """
+    Check if a used car is worth buying based on its VIN.
+    """
+    try:
+        if not request.vin:
+            raise HTTPException(status_code=400, detail="VIN is required")
+            
+        # In a real system, we'd use the VIN to lookup the car details
+        # For now, simulate a lookup by returning placeholder data
+        
+        # Extract some basic info from VIN (demonstration only - not real VIN decoding)
+        # VIN format example: WDB2030461A123456
+        # First 3 chars typically represent manufacturer
+        manufacturer_code = request.vin[:3] if len(request.vin) >= 3 else "UNK"
+        year_char = request.vin[9] if len(request.vin) >= 10 else "0"
+        
+        # Simple mapping for demo purposes
+        brand_mapping = {
+            "WDB": "Mercedes-Benz",
+            "WBA": "BMW",
+            "WAU": "Audi",
+            "WVW": "Volkswagen",
+            "JTD": "Toyota",
+            "1HG": "Honda",
+            "JHM": "Honda",
+        }
+        
+        # Very simplistic year mapping
+        year_mapping = {
+            "A": 2010, "B": 2011, "C": 2012, "D": 2013, "E": 2014,
+            "F": 2015, "G": 2016, "H": 2017, "J": 2018, "K": 2019,
+            "L": 2020, "M": 2021, "N": 2022, "P": 2023, "R": 2024
+        }
+        
+        # Get brand and estimated year
+        brand = brand_mapping.get(manufacturer_code, "Unknown")
+        year = year_mapping.get(year_char, 2020)  # Default to 2020 if unknown
+        
+        # Use a generic model for simplicity
+        model = "Unknown Model"
+        
+        # For a real VIN decoder, we'd use a more sophisticated approach
+        
+        result = await used_car_checker.check_used_car(
+            brand=brand,
+            model=model,
+            year=year,
+            mileage=request.mileage if request.mileage else 100000,
+            description=f"VIN: {request.vin}"
+        )
+        
+        # Add VIN to the result
+        result['car_info']['vin'] = request.vin
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"VIN check failed: {str(e)}")
+
+@app.post("/api/local-diagnosis")
+async def local_diagnosis(request: Request):
+    """
+    Process car diagnostics locally using AI.
+    """
+    try:
+        body = await request.json()
+        query_type = body.get("query_type", "")
+        vehicle_info = body.get("vehicle_info", "")
+        
+        if query_type == "used_car_check":
+            # In a real implementation, this would use DeepSeek API or another LLM
+            # Extract car info from the vehicle_info if possible
+            brand = None
+            model = None
+            year = None
+            mileage = None
+            
+            # Simple regex extractions
+            if "Make:" in vehicle_info:
+                brand_match = re.search(r"Make:\s*(\w+)", vehicle_info)
+                if brand_match:
+                    brand = brand_match.group(1)
+            
+            if "Model:" in vehicle_info:
+                model_match = re.search(r"Model:\s*([^\n]+)", vehicle_info)
+                if model_match:
+                    model = model_match.group(1).strip()
+            
+            if "Year:" in vehicle_info:
+                year_match = re.search(r"Year:\s*(\d{4})", vehicle_info)
+                if year_match:
+                    year = int(year_match.group(1))
+            
+            if "Mileage:" in vehicle_info:
+                mileage_match = re.search(r"Mileage:\s*(\d+)", vehicle_info)
+                if mileage_match:
+                    mileage = int(mileage_match.group(1))
+            
+            # Generate a response that simulates market research and Eastern European factors
+            current_year = datetime.now().year
+            age = current_year - year if year else 5
+            
+            # Adjust scores based on Eastern European market preferences
+            reliability_score = 8 - (0.5 * age if age <= 10 else 5 + (0.3 * (age - 10)))
+            reliability_score = max(3, min(10, reliability_score))  # Cap between 3-10
+            
+            # Brand-specific adjustments (simplified)
+            brand_reliability = {
+                "Toyota": 1.5,
+                "Honda": 1.2,
+                "Volkswagen": 0.8,
+                "BMW": 0.7,
+                "Mercedes-Benz": 0.7,
+                "Audi": 0.7,
+                "Ford": 0.5,
+                "Hyundai": 0.8,
+                "Kia": 0.8,
+                "Skoda": 1.0,
+                "Renault": 0.6,
+                "Dacia": 0.9,
+            }
+            
+            if brand in brand_reliability:
+                reliability_score *= brand_reliability[brand]
+                
+            # Clamp final score
+            reliability_score = max(3, min(10, reliability_score))
+            final_score = int(reliability_score)
+            
+            # Generate common issues based on brand and age
+            issues = []
+            
+            if age > 10:
+                issues.append("Older vehicle - inspect for rust, especially in wheel arches and underbody")
+                issues.append("Check all rubber components (hoses, belts) for age deterioration")
+            
+            if mileage and mileage > 150000:
+                issues.append("High mileage - check engine compression and transmission shifting")
+                
+            if brand == "Volkswagen" or brand == "Skoda" or brand == "Audi":
+                if 2008 <= year <= 2013:
+                    issues.append("TSI engine timing chain issues common in this generation - verify if replaced")
+                if 2004 <= year <= 2009:
+                    issues.append("DSG transmission mechatronics unit may need inspection")
+                    
+            if brand == "BMW":
+                if 2005 <= year <= 2013:
+                    issues.append("N54/N55 engines - check for oil leaks and turbo wastegate rattle")
+                    issues.append("Potential issues with VANOS system - listen for rattling on startup")
+                    
+            if brand == "Mercedes-Benz":
+                if 2004 <= year <= 2010:
+                    issues.append("Inspect for rust in rear wheel arches - common issue in Eastern Europe")
+                if year > 2012:
+                    issues.append("Check electronics and infotainment system functionality")
+                    
+            # Eastern European specific issues
+            issues.append("Verify fuel quality compatibility - Eastern European fuel can vary in quality")
+            issues.append("Check undercarriage for damage from poor road conditions")
+            
+            # Market value estimation based on Eastern European factors
+            base_value = ((current_year - year) * 1000) # Simple age-based depreciation
+            if brand in ["Volkswagen", "Skoda", "BMW", "Mercedes-Benz", "Audi"]:
+                base_value *= 1.2  # Premium for German cars in Eastern Europe
+            if model and "SUV" in model.upper() or any(suv in model.upper() for suv in ["X5", "Q7", "GLE"]):
+                base_value *= 1.15  # SUV premium
+                
+            # Mileage adjustment
+            if mileage:
+                mileage_factor = 1 - (mileage / 300000)  # Simplified depreciation
+                base_value *= max(0.6, mileage_factor)
+                
+            # Format market value
+            market_value = f"€{int(base_value):,}"
+            price_range = f"€{int(base_value * 0.9):,} - €{int(base_value * 1.1):,}"
+            
+            # Recommendation based on score
+            recommendation = "RECOMMENDED" if final_score >= 7 else "PROCEED WITH CAUTION" if final_score >= 5 else "NOT RECOMMENDED"
+            
+            # Format response
+            response = {
+                "diagnosis": f"""
+USED CAR EVALUATION - EASTERN EUROPEAN MARKET ANALYSIS
+
+Based on the information provided:
+{vehicle_info}
+
+SUMMARY: This {brand or 'vehicle'} {model or ''} from {year or 'unknown year'} with {mileage or 'unknown'} km scores {final_score}/10 in our assessment. {
+"It appears to be a good purchase option with expected reliability for its age and mileage." if final_score >= 7 else 
+"Some caution is advised, but could be a reasonable purchase with proper inspection." if final_score >= 5 else
+"Major concerns exist that make this a risky purchase. Consider alternatives."
+}
+
+ISSUES:
+{chr(10).join(f"- {issue}" for issue in issues)}
+
+RELIABILITY: {
+"Excellent" if final_score >= 8 else
+"Good" if final_score >= 6 else
+"Average" if final_score >= 5 else
+"Below Average" if final_score >= 4 else
+"Poor"
+} for Eastern European conditions. Common problems include:
+- Check for service records, especially timing belt/chain service
+- Inspect for oil leaks around valve cover and oil pan
+- Test all electronic features thoroughly
+- Get a professional pre-purchase inspection
+
+MARKET VALUE: 
+Eastern European average market value: {market_value}
+Expected price range: {price_range} (depending on condition and location)
+
+RECOMMENDATION: {recommendation} {
+"This vehicle presents good value and reliability for the Eastern European market." if final_score >= 7 else
+"This vehicle needs careful inspection before purchase." if final_score >= 5 else
+"Major concerns exist with this vehicle. Consider alternatives with better reliability."
+}
+"""
+            }
+            return response
+            
+        return {"error": "Unsupported query type"}
+    except Exception as e:
+        print(f"Local diagnosis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Local diagnosis failed: {str(e)}")
+
 @app.get("/api/used-car/options")
 async def get_used_car_options():
-    """Get all available options for car selection dropdowns"""
+    """
+    Get options for used car check form (brands, models, fuel types, etc.)
+    """
     try:
-        # Create a sample response with the necessary data
-        current_year = datetime.now().year
-        years = list(range(current_year, current_year - 30, -1))
+        # Expanded car data with focus on Eastern European market popularity
+        car_brands = [
+            "Audi", "BMW", "Chevrolet", "Citroen", "Dacia", "Fiat", "Ford", "Honda", "Hyundai", 
+            "Kia", "Mazda", "Mercedes-Benz", "Mitsubishi", "Nissan", "Opel", "Peugeot", "Renault", 
+            "Seat", "Skoda", "Suzuki", "Toyota", "Volkswagen", "Volvo"
+        ]
         
-        # Sample car makes and models
-        makes = ["BMW", "Volkswagen", "Toyota", "Audi", "Mercedes-Benz"]
-        models_by_make = {
-            "BMW": ["3 Series", "5 Series"],
-            "Volkswagen": ["Golf", "Passat"],
-            "Toyota": ["Corolla", "Camry"],
-            "Audi": ["A3", "A4", "Q5"],
-            "Mercedes-Benz": ["C-Class", "E-Class"]
+        # Models for each brand with focus on common models in Eastern Europe
+        car_models = {
+            "Audi": ["A3", "A4", "A6", "Q3", "Q5", "Q7"],
+            "BMW": ["1 Series", "3 Series", "5 Series", "X1", "X3", "X5"],
+            "Chevrolet": ["Aveo", "Captiva", "Cruze", "Lacetti", "Spark"],
+            "Citroen": ["C3", "C4", "C5", "Berlingo", "Jumper"],
+            "Dacia": ["Duster", "Logan", "Sandero", "Lodgy", "Dokker"],
+            "Fiat": ["500", "Panda", "Punto", "Tipo", "Doblo"],
+            "Ford": ["Fiesta", "Focus", "Kuga", "Mondeo", "Transit"],
+            "Honda": ["Civic", "Accord", "CR-V", "Jazz", "HR-V"],
+            "Hyundai": ["i20", "i30", "Tucson", "Santa Fe", "Elantra"],
+            "Kia": ["Ceed", "Sportage", "Rio", "Sorento", "Picanto"],
+            "Mazda": ["2", "3", "6", "CX-3", "CX-5"],
+            "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "GLC", "Sprinter"],
+            "Mitsubishi": ["ASX", "Outlander", "Lancer", "Pajero", "L200"],
+            "Nissan": ["Qashqai", "Juke", "X-Trail", "Micra", "Navara"],
+            "Opel": ["Astra", "Corsa", "Insignia", "Mokka", "Zafira"],
+            "Peugeot": ["208", "308", "3008", "508", "Partner"],
+            "Renault": ["Clio", "Megane", "Captur", "Kadjar", "Trafic"],
+            "Seat": ["Ibiza", "Leon", "Ateca", "Arona", "Alhambra"],
+            "Skoda": ["Fabia", "Octavia", "Superb", "Kodiaq", "Karoq"],
+            "Suzuki": ["Swift", "Vitara", "SX4", "Jimny", "Ignis"],
+            "Toyota": ["Corolla", "Yaris", "RAV4", "Avensis", "Land Cruiser"],
+            "Volkswagen": ["Golf", "Passat", "Polo", "Tiguan", "Transporter"],
+            "Volvo": ["V40", "V60", "XC60", "XC90", "S60"]
         }
         
-        # Sample fuel types
+        # Comprehensive fuel types
         fuel_types = [
-            {"id": "petrol", "name": "Petrol"},
-            {"id": "diesel", "name": "Diesel"},
-            {"id": "hybrid", "name": "Hybrid"},
-            {"id": "electric", "name": "Electric"},
-            {"id": "lpg", "name": "LPG"},
-            {"id": "cng", "name": "CNG"}
+            "Gasoline", "Diesel", "Hybrid", "Plug-in Hybrid", "Electric", 
+            "Liquefied Petroleum Gas (LPG)", "Compressed Natural Gas (CNG)", 
+            "Ethanol (E85)", "Biodiesel"
         ]
         
-        # Sample transmission types
+        # All common transmission types
         transmission_types = [
-            {"id": "manual", "name": "Manual"},
-            {"id": "automatic", "name": "Automatic"},
-            {"id": "semi-auto", "name": "Semi-Automatic"},
-            {"id": "cvt", "name": "CVT"},
-            {"id": "dct", "name": "Dual-Clutch"}
+            "Manual", "Automatic", "Semi-automatic", "CVT (Continuously Variable Transmission)",
+            "Dual-clutch (DCT/DSG)", "AMT (Automated Manual Transmission)",
+            "Tiptronic"
         ]
         
+        # Eastern European specific market segments
+        market_segments = [
+            "Family Car", "City Car", "SUV/Crossover", "Executive", 
+            "Budget", "Luxury", "Commercial", "Off-road"
+        ]
+        
+        # Common Eastern European countries for region-specific data
+        countries = [
+            "Poland", "Czech Republic", "Hungary", "Romania", "Bulgaria", 
+            "Slovakia", "Slovenia", "Croatia", "Serbia", "Ukraine"
+        ]
+        
+        # Return comprehensive options
         return {
-            "makes": makes,
-            "models_by_make": models_by_make,
-            "years": years,
-            "fuelTypes": fuel_types,
-            "transmissionTypes": transmission_types
+            "brands": car_brands,
+            "models": car_models,
+            "fuel_types": fuel_types,
+            "transmission_types": transmission_types,
+            "market_segments": market_segments,
+            "countries": countries,
+            "years": list(range(2000, datetime.now().year + 1))
         }
     except Exception as e:
-        print(f"Error fetching used car options: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error fetching car options: {str(e)}")
 
 @app.get("/health")
 async def health_check():

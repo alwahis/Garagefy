@@ -22,6 +22,63 @@ code {
   box-sizing: border-box;
 }
 
+/* Form elements global styles - ensure proper text contrast */
+select, 
+input, 
+textarea, 
+.chakra-select__wrapper select,
+.chakra-input,
+.chakra-textarea {
+  color: #1a1a1a !important; /* text.900 equivalent - ensuring high contrast */
+  background-color: white !important;
+}
+
+select option {
+  color: #1a1a1a !important;
+  background-color: white !important;
+}
+
+/* Fix select options */
+select option,
+.chakra-select option,
+.chakra-select__wrapper select option {
+  color: black !important;
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Ensure select options in dropdown have proper styling for ALL browsers */
+@-moz-document url-prefix() {
+  select option, 
+  .chakra-select option,
+  .chakra-select__wrapper select option {
+    background-color: white !important;
+    color: black !important;
+  }
+}
+
+option {
+  background-color: white !important;
+  color: black !important;
+  font-weight: normal !important;
+}
+
+/* Placeholder styles with proper contrast */
+::placeholder {
+  color: #718096 !important; /* text.500 equivalent - balanced contrast for placeholders */
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: #718096 !important;
+  opacity: 1;
+}
+
+::-ms-input-placeholder {
+  color: #718096 !important;
+  opacity: 1;
+}
+
 /* App container */
 #root {
   min-height: 100vh;
