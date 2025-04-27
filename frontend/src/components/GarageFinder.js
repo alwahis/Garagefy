@@ -25,6 +25,8 @@ import { FaMapMarkerAlt, FaPhone, FaGlobe, FaCalendarAlt } from 'react-icons/fa'
 import axios from 'axios';
 
 const GarageCard = ({ garage, onBookAppointment }) => {
+  // Ensure services exists and is an array
+  const services = Array.isArray(garage.services) ? garage.services : [];
   return (
     <Box
       bg="darkBg.800"
@@ -61,6 +63,27 @@ const GarageCard = ({ garage, onBookAppointment }) => {
           <Text color="blue.300" fontSize="sm">
             {garage.distance.toFixed(1)} km away
           </Text>
+        )}
+
+        {services.length > 0 && (
+          <VStack align="start" spacing={2}>
+            <Text fontWeight="medium" color="gray.400">Services:</Text>
+            <HStack wrap="wrap">
+              {services.map((service, index) => (
+                <Text
+                  key={index}
+                  px={3}
+                  py={1}
+                  bg="darkBg.600"
+                  borderRadius="full"
+                  fontSize="sm"
+                  color="blue.300"
+                >
+                  {service}
+                </Text>
+              ))}
+            </HStack>
+          </VStack>
         )}
 
         <Button
@@ -210,14 +233,22 @@ const GarageFinder = () => {
 
       const { latitude, longitude } = position.coords;
       
+      console.log('Attempting to fetch garages with coordinates:', { latitude, longitude });
+      
       // Fetch garages from backend
-      const response = await axios.get(`http://localhost:8098/api/garages/nearby?lat=${latitude}&lon=${longitude}`);
+      const apiUrl = `http://localhost:8098/api/garages?lat=${latitude}&lon=${longitude}`;
+      console.log('Fetching garages from:', apiUrl);
+      
+      const response = await axios.get(apiUrl);
+      console.log('Garage API response:', response.data);
       setGarages(response.data);
     } catch (error) {
       console.error('Error fetching garages:', error);
+      console.error('Error details:', error.response ? error.response.data : 'No response data');
+      console.error('Error status:', error.response ? error.response.status : 'No status code');
       toast({
         title: 'Error',
-        description: 'Failed to fetch nearby garages. Please try again.',
+        description: `Failed to fetch nearby garages: ${error.message}`,
         status: 'error',
         duration: 5000,
         isClosable: true,

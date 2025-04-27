@@ -9,198 +9,119 @@ import {
   SimpleGrid, 
   Flex, 
   Icon, 
-  useColorModeValue 
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { FaTools, FaMapMarkerAlt, FaWrench, FaRobot, FaArrowRight } from 'react-icons/fa';
+import { FaTools, FaCar, FaArrowRight, FaCarCrash } from 'react-icons/fa';
 
-const FeatureCard = ({ icon, title, description, iconBg, ...rest }) => {
+const BigButton = ({ icon, title, description, onClick, bgColor, hoverBgColor }) => {
+  const buttonSize = useBreakpointValue({ base: "100%", md: "400px" });
+  const buttonHeight = useBreakpointValue({ base: "200px", md: "250px" });
+  const iconSize = useBreakpointValue({ base: 12, md: 16 });
+  const headingSize = useBreakpointValue({ base: "xl", md: "2xl" });
+  const descSize = useBreakpointValue({ base: "sm", md: "md" });
+  
   return (
-    <Box
-      p={5}
-      shadow="md"
-      borderWidth="1px"
-      borderRadius="lg"
-      bg="white"
-      borderColor="secondary.200"
-      transition="all 0.3s"
-      _hover={{ transform: 'translateY(-5px)', shadow: 'lg' }}
-      {...rest}
+    <Button
+      width={buttonSize}
+      height={buttonHeight}
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      p={6}
+      borderRadius="xl"
+      bg={bgColor}
+      color="white"
+      _hover={{ bg: hoverBgColor, transform: 'translateY(-5px)', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
+      _active={{ bg: hoverBgColor }}
+      transition="all 0.3s ease"
+      boxShadow="0 5px 15px rgba(0,0,0,0.3)"
+      onClick={onClick}
+      border="1px solid rgba(255,255,255,0.1)"
+      backgroundImage="linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)"
+      overflow="hidden"
+      textOverflow="ellipsis"
     >
-      <Flex direction="column" align="center" textAlign="center">
-        <Icon as={icon} boxSize={10} color={iconBg} mb={4} />
-        <Heading fontSize="xl" mb={2} color="text.900">{title}</Heading>
-        <Text color="text.700">{description}</Text>
-      </Flex>
-    </Box>
+      <Icon as={icon} boxSize={iconSize} mb={3} />
+      <Heading size={headingSize} mb={2} letterSpacing="tight" width="100%" textAlign="center" overflowWrap="break-word">{title}</Heading>
+      <Text textAlign="center" fontSize={descSize} opacity="0.9" width="100%" px={2} overflowWrap="break-word">{description}</Text>
+    </Button>
   );
 };
-
-const ServiceItem = ({ icon, title }) => (
-  <Flex align="center" mb={4}>
-    <Icon as={icon} boxSize={6} color="brand.600" mr={3} />
-    <Text fontWeight="bold" color="text.900">{title}</Text>
-  </Flex>
-);
 
 const Home = () => {
   const navigate = useNavigate();
-  const bgGradient = useColorModeValue(
-    'linear(to-b, brand.600, secondary.600)',
-    'linear(to-b, gray.700, gray.800)'
-  );
+  const containerPadding = useBreakpointValue({ base: 4, md: 8 });
+  const spacing = useBreakpointValue({ base: 8, md: 16 });
+  const headingSize = useBreakpointValue({ base: "xl", md: "2xl" });
+  const textSize = useBreakpointValue({ base: "md", md: "lg" });
 
   return (
-    <Box bgGradient={bgGradient} minH="calc(100vh - 72px)">
-      {/* Hero Section */}
-      <Box py={28} bgGradient={bgGradient} color="white">
-        <Container maxW="container.xl">
-          <VStack spacing={8} textAlign="center">
+    <Box 
+      bgGradient="linear(to-b, #1A365D, #2A4365, #2C5282)" 
+      minH="calc(100vh - 72px)"
+    >
+      <Container maxW="container.xl" py={{ base: 10, md: 20 }} px={containerPadding}>
+        <VStack spacing={spacing} align="center">
+          <VStack spacing={4} textAlign="center" mb={{ base: 8, md: 12 }}>
             <Heading 
               as="h1" 
-              size="2xl" 
+              size={headingSize}
               fontWeight="bold"
               lineHeight="shorter"
               color="white"
+              letterSpacing="wide"
+              textShadow="0 2px 4px rgba(0,0,0,0.3)"
             >
-              Your AI-Powered Car Diagnostic Assistant
+              GARAGEFY
             </Heading>
-            <Text mb={4} fontSize={{ base: "lg", md: "xl" }} color="white">
-              Your one-stop solution for car diagnostics and finding the best garages
+            <Text fontSize={textSize} color="whiteAlpha.900" maxW="800px" fontWeight="medium">
+              Your trusted car assistant
             </Text>
-
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10} mb={20}>
-              <FeatureCard
-                title="AI Car Diagnosis"
-                icon={FaRobot}
-                description="Get instant AI-powered diagnosis for your car issues."
-                iconBg="brand.600"
-              />
-              <FeatureCard
-                title="Find Nearby Garages"
-                icon={FaMapMarkerAlt}
-                description="Discover top-rated garages near you."
-                iconBg="brand.600"
-              />
-              <FeatureCard
-                title="Used Car Check"
-                icon={FaTools}
-                description="Verify a used car's history and condition before you buy."
-                iconBg="brand.600"
-                onClick={() => navigate('/used-car-check')}
-              />
-            </SimpleGrid>
-
-            <Box
-              bgGradient="linear(to-b, brand.600, secondary.600)"
-              color="white"
-              borderRadius="lg"
-              p={8}
-              textAlign="center"
-              boxShadow="xl"
-            >
-              <Heading size="xl" mb={4}>
-                Ready to diagnose your car?
-              </Heading>
-              <Text fontSize="lg" mb={6} maxW="2xl" mx="auto" color="white">
-                Our AI-powered diagnostic tool can help identify issues with your vehicle in seconds.
-                Just describe the symptoms and get an instant analysis.
-              </Text>
-              <Button
-                variant="solid"
-                size="lg"
-                rightIcon={<Icon as={FaArrowRight} />}
-                onClick={() => navigate('/diagnose-car')}
-                bg="accent.500"
-                _hover={{ bg: 'accent.600' }}
-                _active={{ bg: 'accent.700' }}
-                color="white"
-              >
-                Start Diagnosis
-              </Button>
-            </Box>
           </VStack>
-        </Container>
-      </Box>
 
-      {/* Features Section */}
-      <Box py={20} bg="white">
-        <Container maxW="container.xl">
-          <VStack spacing={16}>
-            <VStack spacing={5} textAlign="center">
-              <Heading as="h2" size="xl" color="text.900">
-                Our Services
-              </Heading>
-              <Text maxW="2xl" fontSize="lg" color="text.700">
-                We provide a range of services to help you diagnose and repair your car.
-              </Text>
-            </VStack>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={spacing} width="100%" justifyItems="center">
+            <BigButton
+              icon={FaCar}
+              title="Car Diagnosis"
+              description="Get instant diagnosis for your car issues"
+              bgColor="#2C5282" /* Darker blue for better contrast */
+              hoverBgColor="#1A365D"
+              onClick={() => navigate('/diagnose-car')}
+            />
+            <BigButton
+              icon={FaTools}
+              title="Used Car Check"
+              description="Verify a used car's history and condition before you buy"
+              bgColor="#276749" /* Darker green for better contrast */
+              hoverBgColor="#1C4532"
+              onClick={() => navigate('/used-car-check')}
+            />
+          </SimpleGrid>
 
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10} width="full">
-              <FeatureCard 
-                icon={FaRobot}
-                title="AI Diagnostics"
-                description="Get instant AI-powered diagnostics for your car issues."
-                iconBg="brand.600"
-                onClick={() => navigate('/diagnosis')}
-              />
-              <FeatureCard 
-                icon={FaMapMarkerAlt}
-                title="Garage Finder"
-                description="Find the nearest trusted garages with ratings, services, and contact information."
-                iconBg="brand.600"
-                onClick={() => navigate('/garages')}
-              />
-              <FeatureCard 
-                icon={FaWrench}
-                title="Used Car Check"
-                description="Verify a used car's history and condition before you buy to avoid costly surprises."
-                iconBg="brand.600"
-                onClick={() => navigate('/used-car-check')}
-              />
-            </SimpleGrid>
-          </VStack>
-        </Container>
-      </Box>
-
-      {/* How It Works Section */}
-      <Box py={20} bg="secondary.50">
-        <Container maxW="container.xl">
-          <VStack spacing={12}>
-            <VStack spacing={5} textAlign="center">
-              <Heading as="h2" size="xl" color="text.900">
-                How It Works
-              </Heading>
-              <Text maxW="2xl" fontSize="lg" color="text.700">
-                Our platform uses AI to diagnose car issues and provide personalized recommendations.
-              </Text>
-            </VStack>
-
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10} width="full">
-              <FeatureCard 
-                icon={FaRobot}
-                title="AI-Powered Diagnostics"
-                description="Our AI engine analyzes your car's symptoms and provides a diagnosis."
-                iconBg="brand.600"
-              />
-              <FeatureCard 
-                icon={FaMapMarkerAlt}
-                title="Garage Finder"
-                description="We connect you with trusted garages near you for repairs and maintenance."
-                iconBg="brand.600"
-              />
-              <FeatureCard 
-                icon={FaWrench}
-                title="Personalized Recommendations"
-                description="Our platform provides personalized recommendations for your car's specific needs."
-                iconBg="brand.600"
-              />
-            </SimpleGrid>
-          </VStack>
-        </Container>
-      </Box>
+          {/* Professional bottom section */}
+          <Box 
+            bg="rgba(255, 255, 255, 0.1)" 
+            p={{ base: 6, md: 8 }} 
+            borderRadius="xl" 
+            boxShadow="0 5px 15px rgba(0,0,0,0.2)" 
+            mt={{ base: 8, md: 12 }}
+            textAlign="center"
+            maxW="800px"
+            border="1px solid rgba(255,255,255,0.15)"
+            backdropFilter="blur(10px)"
+          >
+            <Heading size="md" mb={4} color="white" letterSpacing="wide" textShadow="0 1px 2px rgba(0,0,0,0.3)">
+              PROFESSIONAL • RELIABLE • FAST
+            </Heading>
+            <Text fontSize={textSize} color="whiteAlpha.900" mb={6} fontWeight="medium">
+              Select a service above to get started with your car needs
+            </Text>
+          </Box>
+        </VStack>
+      </Container>
     </Box>
   );
 };
-
 export default Home;

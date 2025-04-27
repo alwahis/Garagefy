@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import config from '../config';
+import BookingModal from './BookingModal';
 import {
   Box,
   Button,
@@ -49,13 +53,17 @@ import {
   Radio,
   Stack,
   Link,
-  useDisclosure
+  useDisclosure,
+  UnorderedList,
+  ListItem,
+  OrderedList
 } from '@chakra-ui/react';
-import { 
-  FaCarAlt, 
-  FaCalendarAlt, 
-  FaExclamationTriangle, 
-  FaGasPump, 
+import {
+  FaCar,
+  FaCarAlt,
+  FaCalendarAlt,
+  FaExclamationTriangle,
+  FaGasPump,
   FaCogs,
   FaTachometerAlt,
   FaCheckCircle,
@@ -67,12 +75,13 @@ import {
   FaCalendarCheck,
   FaArrowRight
 } from 'react-icons/fa';
-import config from '../config';
-import axios from 'axios';
-import BookingModal from './BookingModal';
-import { useNavigate } from 'react-router-dom';
+
+// We'll use FaCar instead of FaCarSide to avoid issues
 
 const DiagnosisForm = () => {
+
+// (imports moved to top)
+
   const [carBrands, setCarBrands] = useState({});
   const [models, setModels] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -90,8 +99,7 @@ const DiagnosisForm = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [recommendedGarages, setRecommendedGarages] = useState([]);
   const [garagesLoading, setGaragesLoading] = useState(false);
-  const [bookingGarage, setBookingGarage] = useState(null);
-  const { isOpen: isBookingModalOpen, onOpen: openBookingModal, onClose: closeBookingModal } = useDisclosure();
+  // Booking functionality removed
   
   const navigate = useNavigate();
   const toast = useToast();
@@ -205,8 +213,13 @@ const DiagnosisForm = () => {
             // Filter out any non-model keys that might be metadata
             key !== 'years' && key !== 'models' && key !== 'metadata'
           );
-          console.log('Extracted model names after filtering:', modelNames);
-          setModels(modelNames);
+          
+          if (modelNames.length > 0) {
+            setModels(modelNames);
+          } else {
+            console.error('Invalid model data format');
+            setModels([]);
+          }
         }
       } else {
         console.error('Invalid model data format');
@@ -238,45 +251,66 @@ const DiagnosisForm = () => {
     try {
       // Prepare the diagnosis request with all vehicle details
       const diagnosisRequest = {
-        brand: selectedBrand,
-        model: selectedModel,
+        car_brand: selectedBrand,
+        car_model: selectedModel,
         year: year,
+        symptoms: symptoms,
         fuel_type: fuelType,
         transmission_type: transmissionType,
         mileage: mileage,
-        symptoms: symptoms,
         // Additional flag to use DeepSeek and technical documentation
         use_enhanced_diagnosis: true
       };
       
-      console.log('Sending enhanced diagnosis request with data:', diagnosisRequest);
+      console.log('Sending diagnosis request with data:', diagnosisRequest);
+      console.log('API URL:', `${config.API_BASE_URL}${config.ENDPOINTS.DIAGNOSE}`);
       
-      const response = await axios.post(`${config.API_BASE_URL}${config.ENDPOINTS.DIAGNOSE}`, diagnosisRequest);
+      const response = await axios.post(
+        `${config.API_BASE_URL}${config.ENDPOINTS.DIAGNOSE}`,
+        diagnosisRequest,
+        { timeout: 30000 } // Increased timeout for DeepSeek processing
+      );
 
       console.log('Diagnosis response:', response.data);
       
-      if (response.data && Object.keys(response.data).length > 0) {
-        setDiagnosis(response.data);
+      if (response.data && response.data.diagnosis) {
+        setDiagnosis(response.data.diagnosis);
+        
+        // Scroll to the results
+        setTimeout(() => {
+          const resultsElement = document.getElementById('diagnosis-results');
+          if (resultsElement) {
+            resultsElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 500);
       } else {
-        throw new Error('Empty response from diagnosis API');
+        throw new Error('Empty or invalid response from diagnosis API');
       }
     } catch (error) {
       console.error('Error diagnosing car:', error);
       
       // Generate fallback diagnosis using DeepSeek-based local analysis
-      const fallbackDiagnosis = await generateAIBasedDiagnosis();
-      console.log('Using AI-based fallback diagnosis:', fallbackDiagnosis);
-      
-      setDiagnosis(fallbackDiagnosis);
-      
-      // Show error toast, but still display the fallback diagnosis
-      toast({
-        title: 'API Error',
-        description: 'Using local AI-powered diagnosis. Results are based on technical manuals but may not be as accurate as online diagnosis.',
-        status: 'warning',
-        duration: 5000,
-        isClosable: true,
-      });
+      try {
+        const fallbackDiagnosis = await generateAIBasedDiagnosis();
+        console.log('Using AI-based fallback diagnosis:', fallbackDiagnosis);
+        
+        if (fallbackDiagnosis) {
+          setDiagnosis(fallbackDiagnosis);
+        } else {
+          throw new Error('Failed to generate fallback diagnosis');
+        }
+      } catch (fallbackError) {
+        console.error('Error generating fallback diagnosis:', fallbackError);
+        setError('Failed to diagnose your car. Please try again later.');
+        
+        toast({
+          title: 'Diagnosis Failed',
+          description: 'We encountered an error while diagnosing your car. Please try again later.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -284,29 +318,46 @@ const DiagnosisForm = () => {
 
   // Function to generate an AI-based diagnosis using DeepSeek and technical documentation
   const generateAIBasedDiagnosis = async () => {
+    console.log('Generating AI-based diagnosis with DeepSeek...');
     try {
-      // First try to use local DeepSeek endpoint if available
-      const localResponse = await axios.post(`${config.API_BASE_URL}/api/local-diagnosis`, {
-        brand: selectedBrand,
-        model: selectedModel,
+      // First try to use the backend DeepSeek endpoint
+      const diagnosisRequest = {
+        car_brand: selectedBrand,
+        car_model: selectedModel,
         year: year,
         symptoms: symptoms,
-        vehicle_details: {
-          fuel_type: fuelType,
-          transmission_type: transmissionType,
-          mileage: mileage
-        }
-      }, { timeout: 5000 }); // Set a timeout to quickly fall back if local service is not responding
+        fuel_type: fuelType,
+        transmission_type: transmissionType,
+        mileage: mileage,
+        use_enhanced_diagnosis: true // Explicitly request DeepSeek enhanced diagnosis
+      };
       
-      if (localResponse.data && Object.keys(localResponse.data).length > 0) {
-        return localResponse.data;
+      console.log('Sending AI diagnosis request:', diagnosisRequest);
+      
+      const aiResponse = await axios.post(
+        `${config.API_BASE_URL}/api/diagnose`, 
+        diagnosisRequest, 
+        { timeout: 30000 } // Increased timeout to give DeepSeek more time
+      );
+      
+      console.log('Received AI diagnosis response:', aiResponse.data);
+      
+      if (aiResponse.data && aiResponse.data.diagnosis) {
+        return aiResponse.data;
       }
-    } catch (localError) {
-      console.log('Local DeepSeek service unavailable, using fallback diagnosis generation');
+    } catch (aiError) {
+      console.error('Error using DeepSeek API:', aiError);
+      toast({
+        title: 'DeepSeek API Error',
+        description: 'Could not connect to the DeepSeek API. Using local diagnosis instead.',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
     }
     
-    // If local DeepSeek is not available, use our own logic with technical knowledge
-    // Get model-specific issues based on the selected car and symptoms
+    // If DeepSeek API failed, use our own logic with technical knowledge
+    console.log('Falling back to local technical diagnosis');
     return await generateTechnicalDiagnosis();
   };
   
@@ -434,7 +485,7 @@ const DiagnosisForm = () => {
           system: "Engine",
           recommendations: [
             "Scan for specific BMW error codes using a BMW-compatible diagnostic tool",
-            "Check the VANOS solenoid for oil contamination",
+            "Check for oil contamination in the VANOS solenoid",
             "Clean or replace the VANOS solenoids as needed"
           ]
         },
@@ -749,10 +800,7 @@ const DiagnosisForm = () => {
     });
   };
 
-  const handleBookAppointment = (garage) => {
-    setBookingGarage(garage);
-    openBookingModal();
-  };
+  // Booking appointment handler removed
 
   const handleBrandChange = (e) => {
     const brand = e.target.value;
@@ -788,7 +836,7 @@ const DiagnosisForm = () => {
               <Icon as={FaTools} mr={3} color="brand.600" />
               Car Diagnostic Tool
             </Flex>
-          </Heading>
+        </Heading>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit}>
@@ -1008,147 +1056,357 @@ const DiagnosisForm = () => {
   const renderDiagnosisResults = () => {
     if (!diagnosis) return null;
     
-    const { vehicle_info, possible_issues, recommendations } = diagnosis;
+    // Add default values for vehicle_info if it's undefined
+    const { vehicle_info = {}, possible_issues = [], recommendations = [], analysis = '', severity = '', diagnosis_method = '' } = diagnosis;
+    
+    // Add default empty object for vehicle_info properties
+    const {
+      brand = '',
+      model = '',
+      year = '',
+      fuel_type = '',
+      transmission_type = ''
+    } = vehicle_info;
     
     return (
       <VStack spacing={6} align="stretch">
-        <Card 
-          bg={cardBg} 
-          borderColor={borderColor} 
-          borderWidth="1px" 
+        <Heading as="h3" size="lg" color="text.900">Diagnosis Results</Heading>
+        
+        <Box 
+          bg="white" 
           borderRadius="lg" 
-          overflow="hidden"
-          boxShadow="lg"
+          boxShadow="md" 
+          p={6}
+          borderLeft="4px solid" 
+          borderLeftColor={
+            severity === 'high' ? 'red.500' : 
+            severity === 'medium' ? 'orange.500' : 
+            severity === 'low' ? 'green.500' : 
+            'blue.500'
+          }
         >
-          <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
-            <Heading size="lg" color="brand.600">
-              <Flex align="center">
-                <Icon as={FaCheckCircle} mr={3} color="brand.600" />
-                Diagnosis Results
-              </Flex>
+          <VStack align="stretch" spacing={4}>
+            <Heading as="h4" size="md" color="text.900">Vehicle Information</Heading>
+            
+            <Box bg="gray.50" p={4} borderRadius="md">
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="semibold" color="text.900">Brand:</Text>
+                  <Text color="text.900">{brand}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="semibold" color="text.900">Model:</Text>
+                  <Text color="text.900">{model}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="semibold" color="text.900">Year:</Text>
+                  <Text color="text.900">{year}</Text>
+                </Box>
+                {fuel_type && (
+                  <Box>
+                    <Text fontWeight="semibold" color="text.900">Fuel Type:</Text>
+                    <Text color="text.900">{fuel_type}</Text>
+                  </Box>
+                )}
+                {transmission_type && (
+                  <Box>
+                    <Text fontWeight="semibold" color="text.900">Transmission:</Text>
+                    <Text color="text.900">{transmission_type}</Text>
+                  </Box>
+                )}
+              </SimpleGrid>
+            </Box>
+            
+            <Divider />
+            
+            <Heading as="h4" size="md" color="text.900">Analysis</Heading>
+            <Text color="text.900" whiteSpace="pre-wrap">{analysis}</Text>
+            
+            {severity && (
+              <>
+                <Heading as="h4" size="md" color="text.900">Severity</Heading>
+                <Badge 
+                  colorScheme={
+                    severity === 'high' ? 'red' : 
+                    severity === 'medium' ? 'orange' : 
+                    severity === 'low' ? 'green' : 
+                    'blue'
+                  }
+                  fontSize="md"
+                  px={3}
+                  py={1}
+                  borderRadius="md"
+                  alignSelf="flex-start"
+                >
+                  {severity.toUpperCase()}
+                </Badge>
+              </>
+            )}
+            
+            {possible_issues && possible_issues.length > 0 && (
+              <>
+                <Heading as="h4" size="md" color="text.900">Possible Issues</Heading>
+                <UnorderedList spacing={2} pl={4}>
+                  {possible_issues.map((issue, index) => (
+                    <ListItem key={index} color="text.900">
+                      {typeof issue === 'object' ? issue.name : issue}
+                      {typeof issue === 'object' && issue.description && (
+                        <Text fontSize="sm" color="text.700" mt={1}>{issue.description}</Text>
+                      )}
+                    </ListItem>
+                  ))}
+                </UnorderedList>
+              </>
+            )}
+            
+            {recommendations && recommendations.length > 0 && (
+              <>
+                <Heading as="h4" size="md" color="text.900">Recommendations</Heading>
+                <OrderedList spacing={2} pl={4}>
+                  {recommendations.map((rec, index) => (
+                    <ListItem key={index} color="text.900">{rec}</ListItem>
+                  ))}
+                </OrderedList>
+              </>
+            )}
+            
+            {diagnosis_method && (
+              <Text fontSize="sm" color="gray.500" mt={2}>
+                Diagnosis method: {diagnosis_method}
+              </Text>
+            )}
+          </VStack>
+        </Box>
+        
+        <Button 
+          colorScheme="accent" 
+          size="lg" 
+          leftIcon={<Icon as={FaMapMarkerAlt} />}
+          onClick={() => navigate('/garages', { 
+            state: { 
+              vehicleInfo: {
+                brand,
+                model,
+                year
+              }
+            } 
+          })}
+        >
+          Find Garages Near Me
+        </Button>
+      </VStack>
+    );
+  };
+
+  return (
+    <Box w="full">
+      <Container maxW="container.lg" py={8}>
+        <VStack spacing={8} align="stretch">
+          <Box textAlign="center">
+            <Heading as="h1" size="xl" mb={2} color="text.900">
+              Car Diagnosis
             </Heading>
-          </CardHeader>
-          <CardBody>
-            <VStack spacing={4} align="stretch">
-              <Box>
-                <Text fontWeight="bold" mb={2} color="text.900">Vehicle Information</Text>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                  <Box>
-                    <Text fontWeight="semibold" color="text.900">Brand:</Text>
-                    <Text color="text.900">{vehicle_info.brand}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontWeight="semibold" color="text.900">Model:</Text>
-                    <Text color="text.900">{vehicle_info.model}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontWeight="semibold" color="text.900">Year:</Text>
-                    <Text color="text.900">{vehicle_info.year}</Text>
-                  </Box>
-                  {vehicle_info.fuel_type && (
-                    <Box>
-                      <Text fontWeight="semibold" color="text.900">Fuel Type:</Text>
-                      <Text color="text.900">{vehicle_info.fuel_type}</Text>
-                    </Box>
-                  )}
-                  {vehicle_info.transmission_type && (
-                    <Box>
-                      <Text fontWeight="semibold" color="text.900">Transmission:</Text>
-                      <Text color="text.900">{vehicle_info.transmission_type}</Text>
-                    </Box>
-                  )}
-                </SimpleGrid>
-              </Box>
-              
-              <Divider borderColor={borderColor} />
-              
-              <Box>
-                <Text fontWeight="bold" mb={4} color="text.900">Possible Issues</Text>
-                <VStack spacing={4} align="stretch">
-                  {possible_issues.map((issue) => (
-                    <Card key={issue.id} variant="outline" borderColor={borderColor} bg="white">
-                      <CardBody>
-                        <VStack spacing={3} align="stretch">
-                          <Flex justify="space-between" align="center">
-                            <Heading size="sm" color="text.900">{issue.name}</Heading>
-                            <Badge 
-                              colorScheme={
-                                issue.severity === 'High' ? 'error' : 
-                                issue.severity === 'Medium' ? 'warning' : 'success'
-                              }
-                              fontSize="sm"
-                            >
-                              {issue.severity}
-                            </Badge>
-                          </Flex>
-                          
-                          <Progress 
-                            value={issue.probability} 
-                            colorScheme={
-                              issue.probability > 75 ? 'error' : 
-                              issue.probability > 50 ? 'warning' : 'success'
+            <Text color="text.700">
+              Get an expert diagnosis for your car issues using DeepSeek AI and technical documentation
+            </Text>
+          </Box>
+          
+          {!diagnosis ? (
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px" borderRadius="lg" overflow="hidden">
+              <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
+                <Heading size="md" color="text.900">
+                  <Flex align="center">
+                    <Icon as={FaCarAlt} mr={3} color="accent.500" />
+                    Vehicle Information
+                  </Flex>
+                </Heading>
+              </CardHeader>
+              <CardBody>
+                <form onSubmit={handleSubmit}>
+                  <VStack spacing={6} align="stretch">
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                      <FormControl isRequired>
+                        <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                          <Icon as={FaCar} mr={2} color="accent.500" />
+                          Car Brand
+                        </FormLabel>
+                        <Select 
+                          placeholder="Select brand" 
+                          value={selectedBrand}
+                          onChange={handleBrandChange}
+                          bg="white"
+                          color="text.900"
+                          borderColor="secondary.200"
+                          _hover={{ borderColor: "accent.500" }}
+                          _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                          isDisabled={loadingOptions}
+                          opacity="1"
+                          _disabled={{ opacity: "0.8", cursor: "not-allowed" }}
+                          sx={{
+                            "& option": {
+                              background: "white",
+                              color: "text.900",
                             }
-                            size="sm"
-                            borderRadius="full"
-                          />
-                          
-                          <Text fontSize="sm" color="text.900">{issue.description}</Text>
-                          
-                          <Flex justify="space-between" align="center" wrap="wrap">
-                            <Text fontSize="sm" color="text.900">
-                              <Text as="span" fontWeight="bold" color="text.900">Est. Cost:</Text> {issue.estimated_repair_cost}
-                            </Text>
-                            <Text fontSize="sm" color="text.900">
-                              <Text as="span" fontWeight="bold" color="text.900">System:</Text> {issue.system}
-                            </Text>
-                          </Flex>
-                          
-                          <Button 
-                            colorScheme="brand" 
-                            size="sm"
-                            leftIcon={<Icon as={FaMapMarkerAlt} />}
-                            onClick={() => handleFindGarages(issue)}
-                          >
-                            Find Garages for This Issue
-                          </Button>
-                        </VStack>
-                      </CardBody>
-                    </Card>
-                  ))}
-                </VStack>
-              </Box>
-              
-              <Divider borderColor={borderColor} />
-              
-              <Box>
-                <Text fontWeight="bold" mb={2} color="text.900">Recommendations</Text>
-                <VStack spacing={2} align="stretch">
-                  {recommendations.map((recommendation, index) => (
-                    <Text key={index} fontSize="sm" color="text.900">• {recommendation}</Text>
-                  ))}
-                </VStack>
-              </Box>
+                          }}
+                        >
+                          {loadingOptions ? (
+                            <option value="" disabled>Loading...</option>
+                          ) : (
+                            Object.keys(carBrands).map((brand) => (
+                              <option key={brand} value={brand}>{brand}</option>
+                            ))
+                          )}
+                        </Select>
+                      </FormControl>
+                      
+                      <FormControl isRequired>
+                        <FormLabel fontWeight="medium" color={textColor}>Car Model</FormLabel>
+                        <Select 
+                          placeholder={selectedBrand ? "Select model" : "Select brand first"} 
+                          value={selectedModel} 
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                          isDisabled={!selectedBrand || models.length === 0 || loadingOptions}
+                          bg="white"
+                          color="text.900"
+                          borderColor="secondary.200"
+                          _hover={{ borderColor: "accent.500" }}
+                          _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                          opacity="1"
+                          _disabled={{ opacity: "0.8", cursor: "not-allowed" }}
+                          sx={{
+                            "& option": {
+                              background: "white !important",
+                              color: "black !important",
+                            }
+                          }}
+                        >
+                          {models.map((model) => (
+                            <option key={model} value={model}>{model}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </SimpleGrid>
+                    
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+                      <FormControl isRequired>
+                        <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                          <Icon as={FaCalendarAlt} mr={2} color="accent.500" />
+                          Year
+                        </FormLabel>
+                        <Select 
+                          placeholder="Select year" 
+                          value={year} 
+                          onChange={(e) => setYear(e.target.value)}
+                          bg="white"
+                          color="text.900"
+                          borderColor="secondary.200"
+                          _hover={{ borderColor: "accent.500" }}
+                          _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                        >
+                          {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      
+                      <FormControl>
+                        <FormLabel fontWeight="medium" color={textColor}>Fuel Type</FormLabel>
+                        <Select 
+                          placeholder="Select fuel type" 
+                          value={fuelType} 
+                          onChange={(e) => setFuelType(e.target.value)}
+                          bg="white"
+                          color="text.900"
+                          borderColor="secondary.200"
+                          _hover={{ borderColor: "accent.500" }}
+                          _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                        >
+                          <option value="Gasoline">Gasoline</option>
+                          <option value="Diesel">Diesel</option>
+                          <option value="Electric">Electric</option>
+                          <option value="Hybrid">Hybrid</option>
+                          <option value="LPG">LPG</option>
+                        </Select>
+                      </FormControl>
+                      
+                      <FormControl>
+                        <FormLabel fontWeight="medium" color={textColor}>Transmission</FormLabel>
+                        <Select 
+                          placeholder="Select transmission" 
+                          value={transmissionType} 
+                          onChange={(e) => setTransmissionType(e.target.value)}
+                          bg="white"
+                          color="text.900"
+                          borderColor="secondary.200"
+                          _hover={{ borderColor: "accent.500" }}
+                          _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                        >
+                          <option value="Automatic">Automatic</option>
+                          <option value="Manual">Manual</option>
+                          <option value="CVT">CVT</option>
+                          <option value="Semi-Automatic">Semi-Automatic</option>
+                        </Select>
+                      </FormControl>
+                    </SimpleGrid>
+                    
+                    <FormControl>
+                      <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                        <Icon as={FaTachometerAlt} mr={2} color="accent.500" />
+                        Mileage (km)
+                      </FormLabel>
+                      <Input 
+                        type="number" 
+                        placeholder="e.g. 50000" 
+                        value={mileage} 
+                        onChange={(e) => setMileage(e.target.value)}
+                        bg="white"
+                        color="text.900"
+                        borderColor="secondary.200"
+                        _hover={{ borderColor: "accent.500" }}
+                        _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                      />
+                    </FormControl>
+                    
+                    <FormControl isRequired>
+                      <FormLabel fontWeight="medium" color={textColor} display="flex" alignItems="center">
+                        <Icon as={FaExclamationTriangle} mr={2} color="accent.500" />
+                        Symptoms
+                      </FormLabel>
+                      <Textarea 
+                        placeholder="Describe the issues you're experiencing with your car..." 
+                        value={symptoms} 
+                        onChange={(e) => setSymptoms(e.target.value)}
+                        rows={4}
+                        bg="white"
+                        color="text.900"
+                        borderColor="secondary.200"
+                        _hover={{ borderColor: "accent.500" }}
+                        _focus={{ borderColor: "accent.500", boxShadow: "0 0 0 1px var(--chakra-colors-accent-500)" }}
+                      />
+                    </FormControl>
+                    
+                    <Button 
+                      type="submit" 
+                      colorScheme="accent" 
+                      size="lg" 
+                      isLoading={loading} 
+                      loadingText="Diagnosing..."
+                      width="full"
+                    >
+                      Diagnose My Car
+                    </Button>
+                  </VStack>
+                </form>
+              </CardBody>
+            </Card>
+          ) : (
+            <Box id="diagnosis-results">
+              {renderDiagnosisResults()}
               
               <Button 
-                colorScheme="accent" 
-                size="lg" 
-                leftIcon={<Icon as={FaMapMarkerAlt} />}
-                onClick={() => navigate('/garages', { 
-                  state: { 
-                    vehicleInfo: {
-                      brand: vehicle_info.brand,
-                      model: vehicle_info.model,
-                      year: vehicle_info.year
-                    }
-                  } 
-                })}
-              >
-                Find Garages Near Me
-              </Button>
-              
-              <Button 
+                mt={6}
                 variant="outline" 
-                colorScheme="brand" 
+                colorScheme="accent" 
                 onClick={() => {
                   setDiagnosis(null);
                   setSelectedIssue(null);
@@ -1156,104 +1414,21 @@ const DiagnosisForm = () => {
               >
                 Start New Diagnosis
               </Button>
-            </VStack>
-          </CardBody>
-        </Card>
-      </VStack>
-    );
-  };
-
-  return (
-    <Container maxW="container.xl" py={8}>
-      <VStack spacing={8} align="stretch">
-        <Card 
-          bg={cardBg} 
-          borderColor={borderColor} 
-          borderWidth="1px" 
-          borderRadius="lg" 
-          overflow="hidden"
-          boxShadow="lg"
-        >
-          <CardHeader bg={headerBg} borderBottomWidth="1px" borderColor={borderColor}>
-            <Heading size="xl" color="brand.600">
-              <Flex align="center">
-                <Icon as={FaTools} mr={3} color="brand.600" />
-                Car Diagnostic Tool
-              </Flex>
-            </Heading>
-          </CardHeader>
-          <CardBody>
-            <VStack spacing={4} align="stretch">
-              <Text fontSize="lg" color={textColor}>
-                Describe your car's symptoms, and we'll help diagnose the problem and connect you with nearby garages.
-              </Text>
-            </VStack>
-          </CardBody>
-        </Card>
-        
-        {error && (
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            <AlertTitle mr={2}>Error!</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {loadingOptions ? (
-          <Flex justify="center" py={10} direction="column" align="center">
-            <Spinner size="xl" color="accent.500" thickness="4px" mb={4} />
-            <Text>Loading car data...</Text>
-          </Flex>
-        ) : loading ? (
-          <Flex justify="center" py={10} direction="column" align="center">
-            <Spinner size="xl" color="accent.500" thickness="4px" mb={4} />
-            <Text>Analyzing your car's symptoms...</Text>
-          </Flex>
-        ) : diagnosis ? (
-          renderDiagnosisResults()
-        ) : (
-          renderVehicleForm()
-        )}
-        
-        <Divider my={3} />
-        
-        <Box my={3} p={3} bg="gray.100" borderRadius="md" display={process.env.NODE_ENV === 'development' ? 'block' : 'none'}>
-          <Text fontWeight="bold" mb={2}>Debug Information (Dev Only)</Text>
-          <Text fontSize="sm">Selected Brand: {selectedBrand || 'None'}</Text>
-          <Text fontSize="sm">Models Length: {models.length}</Text>
-          <Text fontSize="sm">Models Data: {JSON.stringify(models).substring(0, 100)}</Text>
-          <Text fontSize="sm">carBrands Keys: {Object.keys(carBrands).join(', ')}</Text>
-          {selectedBrand && (
-            <Text fontSize="sm">
-              Brand Data Structure: {JSON.stringify(carBrands[selectedBrand])?.substring(0, 100)}
-            </Text>
+            </Box>
           )}
-        </Box>
-        
-        {/* Booking Modal */}
-        {bookingGarage && (
-          <Modal isOpen={isBookingModalOpen} onClose={closeBookingModal} size="xl">
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>Book Appointment at {bookingGarage.name}</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody pb={6}>
-                <BookingModal 
-                  garage={bookingGarage} 
-                  issue={selectedIssue}
-                  vehicle={{
-                    brand: selectedBrand,
-                    model: selectedModel,
-                    year: year
-                  }}
-                  onClose={closeBookingModal}
-                />
-              </ModalBody>
-            </ModalContent>
-          </Modal>
-        )}
-      </VStack>
-    </Container>
+          
+          {error && (
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              <AlertTitle mr={2}>Error!</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </VStack>
+      </Container>
+      
+      {/* BookingModal removed */}
+    </Box>
   );
 };
 
