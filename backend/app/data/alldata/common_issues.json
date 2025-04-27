@@ -1,0 +1,38 @@
+{
+  "Volkswagen": {
+    "Golf": {
+      "2015-2020": [
+        "Timing chain tensioner failure",
+        "Water pump leaks",
+        "DSG transmission issues",
+        "EGR valve failures"
+      ]
+    },
+    "Passat": {
+      "2016-2021": [
+        "DPF clogging issues",
+        "Turbocharger failures",
+        "Timing belt tensioner problems",
+        "Water ingress in electronics"
+      ]
+    }
+  },
+  "BMW": {
+    "3 Series": {
+      "2012-2019": [
+        "Timing chain issues",
+        "VANOS solenoid failures",
+        "Oil leaks from valve cover gasket",
+        "Cooling system failures"
+      ]
+    },
+    "5 Series": {
+      "2010-2017": [
+        "Turbocharger wastegate issues",
+        "Water pump failures",
+        "Oil filter housing gasket leaks",
+        "iDrive system failures"
+      ]
+    }
+  }
+}

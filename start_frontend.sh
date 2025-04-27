@@ -1,5 +1,5 @@
 #!/bin/bash
 # Start the React frontend server
-echo "Starting Garagefy React frontend on port 3001..."
+echo "Starting Garagefy React frontend on port 3006..."
 cd frontend
-npm start
+cross-env PORT=3006 npm start

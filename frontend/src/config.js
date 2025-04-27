@@ -5,7 +5,9 @@ const config = {
         DIAGNOSE: '/api/diagnose',
         CAR_DATA: '/api/car-data',
         GARAGES: '/api/garages',
-        TEST: '/api/test'
+        TEST: '/api/test',
+        USED_CAR_CHECK: '/api/used-car/check',
+        USED_CAR_OPTIONS: '/api/used-car/options'
     }
 };
 

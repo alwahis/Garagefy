@@ -24,7 +24,7 @@ class DiagnosticSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     car_brand = Column(String, index=True)
-    car_model = Column(String)
+    model = Column(String)
     car_year = Column(Integer)
     problem_description = Column(Text)
     diagnosis = Column(Text)

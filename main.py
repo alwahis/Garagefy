@@ -195,7 +195,7 @@ async def diagnose_car(
             # Try reading as JSON
             body = await request.json()
             car_brand = body.get('car_brand')
-            car_model = body.get('model')
+            car_model = body.get('car_model')
             year = body.get('year')
             symptoms = body.get('symptoms', '')
         except:
