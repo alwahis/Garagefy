@@ -8,10 +8,10 @@ const colors = {
     300: '#4da6ff',
     400: '#1a8cff',
     500: '#0073e6',
-    600: '#0066cc', // Primary Blue
-    700: '#0052a3',
-    800: '#003d7a',
-    900: '#002952',
+    600: '#0052a3', // Primary Blue - Darkened for better contrast
+    700: '#003d7a',
+    800: '#002952',
+    900: '#001a33',
   },
   secondary: {
     50: '#f2f9ff',
@@ -20,10 +20,10 @@ const colors = {
     300: '#a6d4ff',
     400: '#8dc7ff',
     500: '#73bbff',
-    600: '#5a9ecc',
-    700: '#407299',
-    800: '#264566',
-    900: '#0d1933',
+    600: '#407299', // Darkened for better contrast
+    700: '#264566',
+    800: '#0d1933',
+    900: '#060d1a',
   },
   accent: {
     50: '#fff8e6',
@@ -31,11 +31,11 @@ const colors = {
     200: '#ffdc80',
     300: '#ffce4d',
     400: '#ffc01a',
-    500: '#ffb200', // Vibrant Orange Accent
-    600: '#cc8f00',
-    700: '#996b00',
-    800: '#664700',
-    900: '#332300',
+    500: '#cc8f00', // Darkened for better contrast
+    600: '#996b00',
+    700: '#664700',
+    800: '#332300',
+    900: '#1a1200',
   },
   text: {
     50: '#ffffff', // Pure White
@@ -43,11 +43,11 @@ const colors = {
     200: '#f0f0f0',
     300: '#e0e0e0',
     400: '#cccccc',
-    500: '#b8b8b8',
-    600: '#a0a0a0',
-    700: '#787878',
-    800: '#505050',
-    900: '#1a1a1a', // Darker black for better contrast
+    500: '#a0a0a0', // Darkened for better contrast
+    600: '#787878',
+    700: '#505050',
+    800: '#2d2d2d',
+    900: '#1A202C',
   },
   success: {
     50: '#e6f9f0',
@@ -102,57 +102,79 @@ const fonts = {
 const components = {
   Button: {
     baseStyle: {
-      fontWeight: 'semibold',
+      fontWeight: 'bold',
       borderRadius: 'md',
+      boxShadow: 'md',
     },
     variants: {
       solid: (props) => ({
         bg: props.colorScheme === 'accent' 
-          ? 'accent.500' 
-          : `${props.colorScheme}.600`,
-        color: props.colorScheme === 'accent' 
-          ? 'text.900' 
-          : 'text.50',
+          ? 'accent.600' 
+          : `${props.colorScheme}.700`,
+        color: 'white',
         _hover: {
           bg: props.colorScheme === 'accent' 
-            ? 'accent.400' 
-            : `${props.colorScheme}.700`,
+            ? 'accent.700' 
+            : `${props.colorScheme}.800`,
+          transform: 'translateY(-2px)',
+          boxShadow: 'lg',
           _disabled: {
             bg: props.colorScheme === 'accent' 
-              ? 'accent.500' 
-              : `${props.colorScheme}.600`,
+              ? 'accent.600' 
+              : `${props.colorScheme}.700`,
+            transform: 'none',
+            boxShadow: 'none',
           },
         },
         _active: {
           bg: props.colorScheme === 'accent' 
-            ? 'accent.600' 
-            : `${props.colorScheme}.800`,
+            ? 'accent.800' 
+            : `${props.colorScheme}.900`,
+          transform: 'translateY(0)',
         },
       }),
       outline: (props) => ({
         border: '2px solid',
         borderColor: props.colorScheme === 'accent' 
-          ? 'accent.500' 
-          : `${props.colorScheme}.600`,
+          ? 'accent.600' 
+          : `${props.colorScheme}.700`,
         color: props.colorScheme === 'accent' 
-          ? 'accent.500' 
-          : `${props.colorScheme}.600`,
+          ? 'accent.700' 
+          : `${props.colorScheme}.700`,
+        fontWeight: 'bold',
         _hover: {
-          bg: 'rgba(255, 255, 255, 0.08)',
+          bg: props.colorScheme === 'accent' 
+            ? 'accent.50' 
+            : `${props.colorScheme}.50`,
+          borderColor: props.colorScheme === 'accent' 
+            ? 'accent.700' 
+            : `${props.colorScheme}.800`,
+          transform: 'translateY(-2px)',
+          boxShadow: 'md',
         },
         _active: {
-          bg: 'rgba(255, 255, 255, 0.12)',
+          bg: props.colorScheme === 'accent' 
+            ? 'accent.100' 
+            : `${props.colorScheme}.100`,
+          transform: 'translateY(0)',
         },
       }),
       ghost: (props) => ({
         color: props.colorScheme === 'accent' 
-          ? 'accent.500' 
-          : `${props.colorScheme}.600`,
+          ? 'accent.700' 
+          : `${props.colorScheme}.700`,
+        fontWeight: 'bold',
         _hover: {
-          bg: 'rgba(255, 255, 255, 0.08)',
+          bg: props.colorScheme === 'accent' 
+            ? 'accent.50' 
+            : `${props.colorScheme}.50`,
+          transform: 'translateY(-2px)',
         },
         _active: {
-          bg: 'rgba(255, 255, 255, 0.12)',
+          bg: props.colorScheme === 'accent' 
+            ? 'accent.100' 
+            : `${props.colorScheme}.100`,
+          transform: 'translateY(0)',
         },
       }),
     },
@@ -164,69 +186,99 @@ const components = {
     baseStyle: {
       field: {
         color: 'text.900',
-        borderColor: 'secondary.200',
+        backgroundColor: 'white',
+        borderColor: 'gray.300',
+        borderWidth: '2px',
         _focus: {
-          borderColor: 'accent.500',
-          boxShadow: '0 0 0 1px var(--chakra-colors-accent-500)',
+          borderColor: 'brand.600',
+          boxShadow: '0 0 0 1px var(--chakra-colors-brand-600)',
         },
         _hover: {
-          borderColor: 'accent.500',
+          borderColor: 'brand.500',
         },
         _placeholder: {
-          color: 'text.500',
+          color: 'text.600',
+          opacity: 0.8,
+        },
+        _disabled: {
+          opacity: 0.7,
+          cursor: 'not-allowed',
+          color: 'text.700',
+          backgroundColor: 'gray.50',
+          borderColor: 'gray.200',
         },
       },
     },
     defaultProps: {
       variant: 'outline',
-      focusBorderColor: 'accent.500',
+      focusBorderColor: 'brand.600',
     },
   },
   Select: {
     baseStyle: {
       field: {
         color: 'text.900',
-        borderColor: 'secondary.200',
+        backgroundColor: 'white',
+        borderColor: 'gray.300',
+        borderWidth: '2px',
         _focus: {
-          borderColor: 'accent.500',
-          boxShadow: '0 0 0 1px var(--chakra-colors-accent-500)',
+          borderColor: 'brand.600',
+          boxShadow: '0 0 0 1px var(--chakra-colors-brand-600)',
         },
         _hover: {
-          borderColor: 'accent.500',
+          borderColor: 'brand.500',
         },
         _disabled: {
           opacity: 0.7,
           cursor: 'not-allowed',
           color: 'text.700',
+          backgroundColor: 'gray.50',
+          borderColor: 'gray.200',
+        },
+        option: {
+          color: 'text.900',
+          backgroundColor: 'white',
+          fontWeight: 'normal',
         },
       },
       icon: {
-        color: 'accent.500',
+        color: 'brand.600',
+        fontSize: '1.25em',
       },
     },
     defaultProps: {
       variant: 'outline',
-      focusBorderColor: 'accent.500',
+      focusBorderColor: 'brand.600',
     },
   },
   Textarea: {
     baseStyle: {
       color: 'text.900',
-      borderColor: 'secondary.200',
+      backgroundColor: 'white',
+      borderColor: 'gray.300',
+      borderWidth: '2px',
       _focus: {
-        borderColor: 'accent.500',
-        boxShadow: '0 0 0 1px var(--chakra-colors-accent-500)',
+        borderColor: 'brand.600',
+        boxShadow: '0 0 0 1px var(--chakra-colors-brand-600)',
       },
       _hover: {
-        borderColor: 'accent.500',
+        borderColor: 'brand.500',
       },
       _placeholder: {
-        color: 'text.500',
+        color: 'text.600',
+        opacity: 0.8,
+      },
+      _disabled: {
+        opacity: 0.7,
+        cursor: 'not-allowed',
+        color: 'text.700',
+        backgroundColor: 'gray.50',
+        borderColor: 'gray.200',
       },
     },
     defaultProps: {
       variant: 'outline',
-      focusBorderColor: 'accent.500',
+      focusBorderColor: 'brand.600',
     },
   },
   Card: {
@@ -235,53 +287,92 @@ const components = {
         borderRadius: 'lg',
         overflow: 'hidden',
         boxShadow: 'lg',
-        bg: 'rgba(0, 0, 0, 0.3)',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        bg: 'white',
+        borderColor: 'gray.300',
+        borderWidth: '1px',
       },
       header: {
-        padding: '4',
-        bg: 'rgba(0, 0, 0, 0.2)',
-        borderBottomWidth: '1px',
-        borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+        padding: '5',
+        bg: 'gray.50',
+        borderBottomWidth: '2px',
+        borderBottomColor: 'gray.200',
       },
       body: {
-        padding: '4',
+        padding: '5',
       },
       footer: {
-        padding: '4',
-        borderTopWidth: '1px',
-        borderTopColor: 'rgba(255, 255, 255, 0.1)',
+        padding: '5',
+        borderTopWidth: '2px',
+        borderTopColor: 'gray.200',
+        bg: 'gray.50',
       },
     },
   },
   Heading: {
     baseStyle: {
-      color: 'text.50',
+      color: 'text.900',
+      fontWeight: 'bold',
+    },
+    sizes: {
+      xl: {
+        fontSize: ['3xl', '4xl'],
+        lineHeight: 1.2,
+      },
+      lg: {
+        fontSize: ['2xl', '3xl'],
+        lineHeight: 1.2,
+      },
+      md: {
+        fontSize: ['xl', '2xl'],
+        lineHeight: 1.3,
+      },
+      sm: {
+        fontSize: ['lg', 'xl'],
+        lineHeight: 1.4,
+      },
     },
   },
   Text: {
     baseStyle: {
-      color: 'text.50',
+      color: 'text.700',
+    },
+    variants: {
+      primary: {
+        color: 'text.900',
+        fontWeight: 'medium',
+      },
+      secondary: {
+        color: 'text.700',
+      },
+      muted: {
+        color: 'text.600',
+        fontSize: 'sm',
+      },
     },
   },
   FormLabel: {
     baseStyle: {
-      color: 'text.100',
+      color: 'text.900',
       marginBottom: '2',
+      fontWeight: 'medium',
     },
   },
   Badge: {
     baseStyle: {
       borderRadius: 'md',
+      fontWeight: 'medium',
+      px: 2,
+      py: 1,
     },
     variants: {
       solid: (props) => ({
         bg: `${props.colorScheme}.600`,
-        color: 'text.50',
+        color: 'white',
       }),
       outline: (props) => ({
         borderColor: `${props.colorScheme}.600`,
-        color: `${props.colorScheme}.600`,
+        color: `${props.colorScheme}.700`,
+        borderWidth: '2px',
       }),
     },
   },

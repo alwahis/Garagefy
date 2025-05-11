@@ -12,6 +12,7 @@ import {
   Select,
   Textarea,
   VStack,
+  HStack,
   useToast,
   Text,
   Alert,
@@ -73,7 +74,11 @@ import {
   FaClock,
   FaTools,
   FaCalendarCheck,
-  FaArrowRight
+  FaArrowRight,
+  FaEuroSign,
+  FaMoneyBill,
+  FaWrench,
+  FaInfoCircle
 } from 'react-icons/fa';
 
 // We'll use FaCar instead of FaCarSide to avoid issues
@@ -967,7 +972,13 @@ const DiagnosisForm = () => {
                     <option value="Diesel">Diesel</option>
                     <option value="Electric">Electric</option>
                     <option value="Hybrid">Hybrid</option>
+                    <option value="Plug-in Hybrid">Plug-in Hybrid</option>
+                    <option value="Mild Hybrid">Mild Hybrid</option>
                     <option value="LPG">LPG</option>
+                    <option value="CNG">CNG</option>
+                    <option value="Hydrogen">Hydrogen</option>
+                    <option value="Ethanol">Ethanol</option>
+                    <option value="Biodiesel">Biodiesel</option>
                   </Select>
                 </FormControl>
                 
@@ -994,8 +1005,13 @@ const DiagnosisForm = () => {
                   >
                     <option value="Automatic">Automatic</option>
                     <option value="Manual">Manual</option>
-                    <option value="CVT">CVT</option>
+                    <option value="CVT">CVT (Continuously Variable Transmission)</option>
+                    <option value="DCT">DCT (Dual Clutch Transmission)</option>
                     <option value="Semi-Automatic">Semi-Automatic</option>
+                    <option value="AMT">AMT (Automated Manual Transmission)</option>
+                    <option value="DSG">DSG (Direct Shift Gearbox)</option>
+                    <option value="Tiptronic">Tiptronic</option>
+                    <option value="Single-Speed">Single-Speed (Electric Vehicles)</option>
                   </Select>
                 </FormControl>
               </SimpleGrid>
@@ -1057,7 +1073,16 @@ const DiagnosisForm = () => {
     if (!diagnosis) return null;
     
     // Add default values for vehicle_info if it's undefined
-    const { vehicle_info = {}, possible_issues = [], recommendations = [], analysis = '', severity = '', diagnosis_method = '' } = diagnosis;
+    const { 
+      vehicle_info = {}, 
+      possible_issues = [], 
+      recommendations = [], 
+      analysis = '', 
+      severity = '', 
+      repair_costs = [], 
+      common_issues = [],
+      diagnosis_method = '' 
+    } = diagnosis;
     
     // Add default empty object for vehicle_info properties
     const {
@@ -1067,6 +1092,38 @@ const DiagnosisForm = () => {
       fuel_type = '',
       transmission_type = ''
     } = vehicle_info;
+    
+    // Calculate total repair cost estimate
+    const calculateTotalCost = () => {
+      let minTotal = 0;
+      let maxTotal = 0;
+      
+      repair_costs.forEach(item => {
+        if (item.total_cost) {
+          const costRange = item.total_cost.replace('€', '').split(' - ');
+          if (costRange.length === 2) {
+            minTotal += parseInt(costRange[0], 10) || 0;
+            maxTotal += parseInt(costRange[1], 10) || 0;
+          }
+        }
+      });
+      
+      return `€${minTotal} - €${maxTotal}`;
+    };
+    
+    // Calculate total labor time
+    const calculateTotalTime = () => {
+      let totalHours = 0;
+      
+      repair_costs.forEach(item => {
+        if (item.labor_time) {
+          const hours = parseFloat(item.labor_time.split(' ')[0]) || 0;
+          totalHours += hours;
+        }
+      });
+      
+      return `${totalHours.toFixed(1)} hours`;
+    };
     
     return (
       <VStack spacing={6} align="stretch">
@@ -1086,7 +1143,23 @@ const DiagnosisForm = () => {
           }
         >
           <VStack align="stretch" spacing={4}>
-            <Heading as="h4" size="md" color="text.900">Vehicle Information</Heading>
+            <Flex justify="space-between" align="center">
+              <Heading as="h4" size="md" color="text.900">Vehicle Information</Heading>
+              <Badge 
+                colorScheme={
+                  severity === 'high' ? 'red' : 
+                  severity === 'medium' ? 'orange' : 
+                  severity === 'low' ? 'green' : 
+                  'blue'
+                }
+                fontSize="md"
+                px={3}
+                py={1}
+                borderRadius="md"
+              >
+                {severity.toUpperCase()} SEVERITY
+              </Badge>
+            </Flex>
             
             <Box bg="gray.50" p={4} borderRadius="md">
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
@@ -1119,29 +1192,8 @@ const DiagnosisForm = () => {
             
             <Divider />
             
-            <Heading as="h4" size="md" color="text.900">Analysis</Heading>
-            <Text color="text.900" whiteSpace="pre-wrap">{analysis}</Text>
-            
-            {severity && (
-              <>
-                <Heading as="h4" size="md" color="text.900">Severity</Heading>
-                <Badge 
-                  colorScheme={
-                    severity === 'high' ? 'red' : 
-                    severity === 'medium' ? 'orange' : 
-                    severity === 'low' ? 'green' : 
-                    'blue'
-                  }
-                  fontSize="md"
-                  px={3}
-                  py={1}
-                  borderRadius="md"
-                  alignSelf="flex-start"
-                >
-                  {severity.toUpperCase()}
-                </Badge>
-              </>
-            )}
+            <Heading as="h4" size="md" color="text.900">Diagnosis</Heading>
+            <Text color="text.900" fontWeight="medium">{analysis}</Text>
             
             {possible_issues && possible_issues.length > 0 && (
               <>
@@ -1149,9 +1201,11 @@ const DiagnosisForm = () => {
                 <UnorderedList spacing={2} pl={4}>
                   {possible_issues.map((issue, index) => (
                     <ListItem key={index} color="text.900">
-                      {typeof issue === 'object' ? issue.name : issue}
+                      <Text fontWeight="semibold">
+                        {typeof issue === 'object' ? issue.name : issue}
+                      </Text>
                       {typeof issue === 'object' && issue.description && (
-                        <Text fontSize="sm" color="text.700" mt={1}>{issue.description}</Text>
+                        <Text fontSize="sm" color="text.700">{issue.description}</Text>
                       )}
                     </ListItem>
                   ))}
@@ -1159,41 +1213,90 @@ const DiagnosisForm = () => {
               </>
             )}
             
-            {recommendations && recommendations.length > 0 && (
+            {common_issues && common_issues.length > 0 && (
               <>
-                <Heading as="h4" size="md" color="text.900">Recommendations</Heading>
-                <OrderedList spacing={2} pl={4}>
-                  {recommendations.map((rec, index) => (
-                    <ListItem key={index} color="text.900">{rec}</ListItem>
+                <Heading as="h4" size="md" color="text.900">Known Issues for This Model</Heading>
+                <UnorderedList spacing={2} pl={4}>
+                  {common_issues.map((issue, index) => (
+                    <ListItem key={index} color="text.900">
+                      <Text>{issue}</Text>
+                    </ListItem>
                   ))}
-                </OrderedList>
+                </UnorderedList>
               </>
             )}
             
-            {diagnosis_method && (
-              <Text fontSize="sm" color="gray.500" mt={2}>
-                Diagnosis method: {diagnosis_method}
+            <Divider />
+            <Heading as="h4" size="md" color="text.900">Repair Costs & Time Estimates</Heading>
+            <Box bg="blue.50" p={4} borderRadius="md" borderWidth="1px" borderColor="blue.200">
+              {repair_costs && repair_costs.length > 0 ? (
+                <>
+                  <Box 
+                    bg="white" 
+                    p={4} 
+                    mb={4} 
+                    borderRadius="md" 
+                    borderWidth="2px" 
+                    borderColor="blue.300"
+                    boxShadow="md"
+                  >
+                    <Flex justify="space-between" align="center">
+                      <Text fontWeight="bold" fontSize="lg" color="blue.700">
+                        <Icon as={FaWrench} mr={2} />
+                        Total Repair Estimate:
+                      </Text>
+                      <Text fontWeight="bold" fontSize="xl" color="blue.700">
+                        {calculateTotalCost()}
+                      </Text>
+                    </Flex>
+                    <Text fontSize="sm" color="gray.600" mt={1}>
+                      Estimated time: {calculateTotalTime()}
+                    </Text>
+                  </Box>
+                  
+                  <Text fontWeight="semibold" mb={2} color="text.900">Breakdown by Repair Item:</Text>
+                  <VStack align="stretch" spacing={3}>
+                    {repair_costs.map((item, index) => (
+                      <Box key={index} p={3} bg="white" borderRadius="md" borderWidth="1px" borderColor="gray.200">
+                        <Flex justify="space-between" align="center" mb={2}>
+                          <Text fontWeight="bold" color="text.900">{item.repair}</Text>
+                          <Badge colorScheme="blue">{item.labor_time}</Badge>
+                        </Flex>
+                        <Flex justify="space-between" align="center">
+                          <Text color="text.700">Parts Cost:</Text>
+                          <Text color="blue.600" fontWeight="medium">{item.parts_cost}</Text>
+                        </Flex>
+                        <Flex justify="space-between" align="center" mt={1}>
+                          <Text color="text.700">Total Cost:</Text>
+                          <Text color="blue.600" fontWeight="bold">{item.total_cost}</Text>
+                        </Flex>
+                      </Box>
+                    ))}
+                  </VStack>
+                </>
+              ) : (
+                <Text color="text.700">No specific cost estimates available for the identified issues.</Text>
+              )}
+              
+              <Text fontSize="sm" color="gray.600" mt={3}>
+                <Icon as={FaInfoCircle} mr={1} />
+                Costs based on OEM data and may vary by location and specific vehicle condition.
               </Text>
-            )}
+            </Box>
+            
+            <Button 
+              colorScheme="brand" 
+              size="lg" 
+              mt={4}
+              leftIcon={<Icon as={FaMapMarkerAlt} />}
+              onClick={() => handleFindGarages(possible_issues[0])}
+            >
+              Find Garages That Can Fix This
+            </Button>
           </VStack>
         </Box>
         
-        <Button 
-          colorScheme="accent" 
-          size="lg" 
-          leftIcon={<Icon as={FaMapMarkerAlt} />}
-          onClick={() => navigate('/garages', { 
-            state: { 
-              vehicleInfo: {
-                brand,
-                model,
-                year
-              }
-            } 
-          })}
-        >
-          Find Garages Near Me
-        </Button>
+
       </VStack>
     );
   };

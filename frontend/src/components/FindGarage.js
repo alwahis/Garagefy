@@ -159,7 +159,7 @@ const BookingModal = ({ isOpen, onClose, garage, onSubmit }) => {
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader bg="brand.500" color="white">
+        <ModalHeader bg="brand.600" color="white">
           Book Appointment at {garage?.name}
         </ModalHeader>
         <ModalCloseButton color="white" />
@@ -168,30 +168,34 @@ const BookingModal = ({ isOpen, onClose, garage, onSubmit }) => {
           <form onSubmit={handleSubmit}>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Your Name</FormLabel>
+                <FormLabel color="text.900" fontWeight="medium">Your Name</FormLabel>
                 <Input 
                   name="name" 
                   value={formData.name} 
                   onChange={handleChange} 
                   placeholder="Enter your full name"
                   focusBorderColor="brand.500"
+                  color="text.900"
+                  bg="white"
                 />
               </FormControl>
               
               <HStack w="full">
                 <FormControl isRequired>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel color="text.900" fontWeight="medium">Phone</FormLabel>
                   <Input 
                     name="phone" 
                     value={formData.phone} 
                     onChange={handleChange}
                     placeholder="Your phone number" 
                     focusBorderColor="brand.500"
+                    color="text.900"
+                    bg="white"
                   />
                 </FormControl>
                 
                 <FormControl isRequired>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel color="text.900" fontWeight="medium">Email</FormLabel>
                   <Input 
                     name="email" 
                     type="email" 
@@ -199,13 +203,15 @@ const BookingModal = ({ isOpen, onClose, garage, onSubmit }) => {
                     onChange={handleChange}
                     placeholder="Your email address" 
                     focusBorderColor="brand.500"
+                    color="text.900"
+                    bg="white"
                   />
                 </FormControl>
               </HStack>
               
               <HStack w="full">
                 <FormControl isRequired>
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel color="text.900" fontWeight="medium">Date</FormLabel>
                   <Input 
                     name="date" 
                     type="date" 
@@ -213,61 +219,76 @@ const BookingModal = ({ isOpen, onClose, garage, onSubmit }) => {
                     onChange={handleChange}
                     min={new Date().toISOString().split('T')[0]}
                     focusBorderColor="brand.500"
+                    color="text.900"
+                    bg="white"
                   />
                 </FormControl>
                 
                 <FormControl isRequired>
-                  <FormLabel>Time</FormLabel>
+                  <FormLabel color="text.900" fontWeight="medium">Time</FormLabel>
                   <Input 
                     name="time" 
                     type="time" 
                     value={formData.time} 
                     onChange={handleChange} 
                     focusBorderColor="brand.500"
+                    color="text.900"
+                    bg="white"
                   />
                 </FormControl>
               </HStack>
               
               <FormControl isRequired>
-                <FormLabel>Service Needed</FormLabel>
+                <FormLabel color="text.900" fontWeight="medium">Service Needed</FormLabel>
                 <Select 
                   name="service" 
                   value={formData.service} 
                   onChange={handleChange}
                   placeholder="Select a service"
                   focusBorderColor="brand.500"
+                  color="text.900"
+                  bg="white"
+                  sx={{
+                    option: {
+                      color: '#1a1a1a',
+                      background: 'white'
+                    }
+                  }}
                 >
-                  <option value="diagnosis">Diagnostic Check</option>
-                  <option value="repair">Repair Service</option>
-                  <option value="maintenance">Maintenance Service</option>
-                  <option value="inspection">Vehicle Inspection</option>
-                  <option value="other">Other</option>
+                  <option value="diagnosis" style={{color: '#1a1a1a', background: 'white'}}>Diagnostic Check</option>
+                  <option value="repair" style={{color: '#1a1a1a', background: 'white'}}>Repair Service</option>
+                  <option value="maintenance" style={{color: '#1a1a1a', background: 'white'}}>Maintenance Service</option>
+                  <option value="inspection" style={{color: '#1a1a1a', background: 'white'}}>Vehicle Inspection</option>
+                  <option value="other" style={{color: '#1a1a1a', background: 'white'}}>Other</option>
                 </Select>
               </FormControl>
               
               <FormControl>
-                <FormLabel>Additional Comments</FormLabel>
+                <FormLabel color="text.900" fontWeight="medium">Additional Comments</FormLabel>
                 <Textarea 
                   name="comments" 
                   value={formData.comments} 
                   onChange={handleChange}
-                  placeholder="Describe your car issue or any special requests"
+                  placeholder="Any specific details about your vehicle or service needs"
                   focusBorderColor="brand.500"
+                  rows={4}
+                  color="text.900"
+                  bg="white"
                 />
               </FormControl>
             </VStack>
           </form>
         </ModalBody>
         
-        <ModalFooter>
-          <Button variant="outline" mr={3} onClick={onClose}>
+        <ModalFooter bg="gray.50">
+          <Button variant="outline" mr={3} onClick={onClose} color="text.700">
             Cancel
           </Button>
           <Button 
             colorScheme="brand" 
-            onClick={handleSubmit}
             isLoading={isSubmitting}
-            loadingText="Booking..."
+            type="submit"
+            onClick={handleSubmit}
           >
             Book Appointment
           </Button>

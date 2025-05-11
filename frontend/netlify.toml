@@ -6,3 +6,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[context.production.environment]
+  REACT_APP_API_URL = "https://garagefy-backend.vercel.app"
