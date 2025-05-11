@@ -4,35 +4,33 @@ import {
   Container, 
   Heading, 
   VStack, 
-  Button, 
   Text, 
   SimpleGrid, 
-  Flex, 
-  Icon, 
-  useBreakpointValue
+  useBreakpointValue, 
+  Icon
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { FaTools, FaCar, FaArrowRight, FaCarCrash } from 'react-icons/fa';
+import { FaTools, FaCar } from 'react-icons/fa';
 
 const BigButton = ({ icon, title, description, onClick, bgColor, hoverBgColor }) => {
   const buttonSize = useBreakpointValue({ base: "100%", md: "400px" });
-  const buttonHeight = useBreakpointValue({ base: "200px", md: "250px" });
   const iconSize = useBreakpointValue({ base: 12, md: 16 });
   const headingSize = useBreakpointValue({ base: "xl", md: "2xl" });
   const descSize = useBreakpointValue({ base: "sm", md: "md" });
   
   return (
-    <Button
+    <Box
+      as="button"
       width={buttonSize}
-      height={buttonHeight}
       display="flex"
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      p={6}
+      py={8}
+      px={6}
       borderRadius="xl"
       bg={bgColor}
-      color="white"
+      color="black" // Changed to black
       _hover={{ bg: hoverBgColor, transform: 'translateY(-5px)', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
       _active={{ bg: hoverBgColor }}
       transition="all 0.3s ease"
@@ -40,13 +38,24 @@ const BigButton = ({ icon, title, description, onClick, bgColor, hoverBgColor })
       onClick={onClick}
       border="1px solid rgba(255,255,255,0.1)"
       backgroundImage="linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)"
-      overflow="hidden"
-      textOverflow="ellipsis"
+      role="button"
+      tabIndex={0}
+      aria-label={title}
     >
-      <Icon as={icon} boxSize={iconSize} mb={3} />
-      <Heading size={headingSize} mb={2} letterSpacing="tight" width="100%" textAlign="center" overflowWrap="break-word">{title}</Heading>
-      <Text textAlign="center" fontSize={descSize} opacity="0.9" width="100%" px={2} overflowWrap="break-word">{description}</Text>
-    </Button>
+      <Icon as={icon} boxSize={iconSize} mb={4} color="black" /> {/* Changed to black */}
+      <Heading size={headingSize} mb={4} letterSpacing="tight" textAlign="center" color="black">{title}</Heading> {/* Changed to black */}
+      <Text 
+        textAlign="center" 
+        fontSize={descSize} 
+        opacity="0.9" 
+        px={4} 
+        lineHeight="1.6"
+        maxW="100%"
+        color="black" // Changed to black
+      >
+        {description}
+      </Text>
+    </Box>
   );
 };
 

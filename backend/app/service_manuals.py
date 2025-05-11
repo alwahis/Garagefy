@@ -2,162 +2,163 @@
 Service manual database for car diagnostics.
 This module contains diagnostic information from various car service manuals.
 """
+import os
+import json
+import logging
+from pathlib import Path
+from typing import Dict, List, Optional, Any
 
-# Service manual database structure
-SERVICE_MANUALS = {
-    'BMW': {
-        'models': {
-            '3 Series': {
-                'engine': {
-                    'noise': {
-                        'potential_issues': [
-                            {
-                                'issue': 'Timing Chain Wear',
-                                'probability': 'High',
-                                'actions': [
-                                    'Check timing chain tensioner',
-                                    'Inspect chain guides for wear',
-                                    'Listen for rattling noise at startup'
-                                ],
-                                'estimated_cost': '$800-1500',
-                                'manual_section': 'Engine > Timing Components > Section 11-30'
-                            },
-                            {
-                                'issue': 'VANOS System Failure',
-                                'probability': 'Medium',
-                                'actions': [
-                                    'Check VANOS solenoids',
-                                    'Inspect seals for leaks',
-                                    'Verify timing with diagnostic tool'
-                                ],
-                                'estimated_cost': '$600-1200',
-                                'manual_section': 'Engine > VANOS > Section 11-34'
-                            }
-                        ],
-                        'severity': 'Medium',
-                        'service_code': 'BMW-ENG-001'
-                    },
-                    'overheating': {
-                        'potential_issues': [
-                            {
-                                'issue': 'Electric Water Pump Failure',
-                                'probability': 'High',
-                                'actions': [
-                                    'Check pump operation',
-                                    'Test electrical connections',
-                                    'Verify coolant circulation'
-                                ],
-                                'estimated_cost': '$800-1200',
-                                'manual_section': 'Cooling > Water Pump > Section 17-10'
-                            }
-                        ],
-                        'severity': 'High',
-                        'service_code': 'BMW-ENG-002'
-                    }
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Path to service manual JSON files
+MANUALS_DIR = Path(__file__).parent / "data" / "manuals"
+
+# Cache for loaded service manuals
+LOADED_MANUALS = {}
+
+def load_service_manual(brand: str) -> Dict:
+    """Load service manual for a specific brand"""
+    brand = brand.lower()
+    
+    # Return from cache if already loaded
+    if brand in LOADED_MANUALS:
+        return LOADED_MANUALS[brand]
+    
+    # Try to find the manual file
+    manual_path = MANUALS_DIR / f"{brand}.json"
+    if not manual_path.exists():
+        logger.warning(f"Service manual for {brand} not found at {manual_path}")
+        return {}
+    
+    try:
+        with open(manual_path, 'r') as f:
+            manual_data = json.load(f)
+            LOADED_MANUALS[brand] = manual_data
+            logger.info(f"Loaded service manual for {brand}")
+            return manual_data
+    except Exception as e:
+        logger.error(f"Error loading service manual for {brand}: {str(e)}")
+        return {}
+
+def get_available_manuals() -> List[str]:
+    """Get list of available service manuals"""
+    try:
+        return [f.stem for f in MANUALS_DIR.glob("*.json")]
+    except Exception as e:
+        logger.error(f"Error listing available manuals: {str(e)}")
+        return []
+
+def find_matching_subsystem(manual_data: Dict, symptoms: str) -> Optional[Dict]:
+    """Find the subsystem that best matches the symptoms"""
+    if not manual_data or "systems" not in manual_data:
+        return None
+    
+    symptoms_lower = symptoms.lower()
+    best_match = None
+    max_matches = 0
+    
+    # Check each system and subsystem for symptom matches
+    for system in manual_data.get("systems", []):
+        for subsystem in system.get("subsystems", []):
+            subsystem_data = subsystem.get("data", {})
+            symptom_list = subsystem_data.get("symptoms", [])
+            
+            # Count how many symptoms match
+            matches = sum(1 for symptom in symptom_list if symptom.lower() in symptoms_lower)
+            
+            if matches > max_matches:
+                max_matches = matches
+                best_match = {
+                    "system": system.get("system", "Unknown"),
+                    "subsystem": subsystem.get("name", "Unknown"),
+                    "data": subsystem_data,
+                    "matches": matches
                 }
-            }
+    
+    return best_match
+
+def get_manual_diagnosis(brand: str, model: str, year: int, symptoms: str) -> Dict:
+    """Get diagnosis from service manual with document references"""
+    # Load the service manual for the brand
+    manual_data = load_service_manual(brand)
+    
+    # If no manual data is available, return a generic response
+    if not manual_data:
+        logger.warning(f"No service manual data available for {brand}")
+        return {
+            'severity': 'Unknown',
+            'potential_issues': [{
+                'issue': 'No service manual data available',
+                'description': f'No manufacturer service manual data available for {brand} {model} {year}',
+                'probability': 'Unknown',
+                'reference': f"Generic automotive troubleshooting guide"
+            }],
+            'service_code': 'GENERIC-001',
+            'manual_section': 'General Diagnostics'
         }
-    },
-    'Mercedes-Benz': {
-        'models': {
-            'C-Class': {
-                'transmission': {
-                    'shifting': {
-                        'potential_issues': [
-                            {
-                                'issue': '13-Pin Connector Failure',
-                                'probability': 'High',
-                                'actions': [
-                                    'Check connector for corrosion',
-                                    'Test pin continuity',
-                                    'Inspect transmission fluid'
-                                ],
-                                'estimated_cost': '$400-800',
-                                'manual_section': 'Transmission > Electrical > Section 27-15'
-                            },
-                            {
-                                'issue': 'Valve Body Issues',
-                                'probability': 'Medium',
-                                'actions': [
-                                    'Perform transmission adaptation',
-                                    'Check solenoid operation',
-                                    'Inspect valve body assembly'
-                                ],
-                                'estimated_cost': '$1500-2500',
-                                'manual_section': 'Transmission > Valve Body > Section 27-20'
-                            }
-                        ],
-                        'severity': 'Medium',
-                        'service_code': 'MB-TRN-001'
-                    }
-                }
-            }
+    
+    # Find the subsystem that best matches the symptoms
+    matching_subsystem = find_matching_subsystem(manual_data, symptoms)
+    
+    if not matching_subsystem:
+        # If no specific match found, return a generic response with the brand manual reference
+        return {
+            'severity': 'Medium',
+            'potential_issues': [{
+                'issue': 'General diagnosis required',
+                'description': f'Based on the symptoms for {brand} {model} {year}: {symptoms}',
+                'probability': 'Medium',
+                'reference': f"{brand} Service Manual {year} - General Diagnostics"
+            }],
+            'service_code': f'{brand[:3].upper()}-GEN',
+            'manual_section': 'General Diagnostics'
         }
-    },
-    'Toyota': {
-        'models': {
-            'Camry': {
-                'engine': {
-                    'vibration': {
-                        'potential_issues': [
-                            {
-                                'issue': 'Motor Mounts',
-                                'probability': 'High',
-                                'actions': [
-                                    'Inspect all engine mounts',
-                                    'Check for rubber deterioration',
-                                    'Test under load conditions'
-                                ],
-                                'estimated_cost': '$300-600',
-                                'manual_section': 'Engine Mechanical > Mounts > Section EM-60'
-                            }
-                        ],
-                        'severity': 'Medium',
-                        'service_code': 'TOY-ENG-001'
-                    }
-                }
-            }
+    
+    # Extract the matched subsystem data
+    system = matching_subsystem["system"]
+    subsystem = matching_subsystem["subsystem"]
+    subsystem_data = matching_subsystem["data"]
+    
+    # Extract potential issues from the matched subsystem
+    potential_issues = []
+    for cause in subsystem_data.get("causes", []):
+        issue = {
+            'issue': cause.get("issue", "Unknown issue"),
+            'description': f'Symptoms match {system} > {subsystem} issues in the {brand} service manual',
+            'probability': cause.get("severity", "MEDIUM").capitalize(),
+            'estimated_cost': f"${cause.get('cost_range', {}).get('min', 0)}-${cause.get('cost_range', {}).get('max', 0)}",
+            'reference': cause.get("reference", f"{brand} Service Manual - {system} > {subsystem}")
         }
+        potential_issues.append(issue)
+    
+    # Extract diagnostic steps from the matched subsystem
+    diagnostic_steps = []
+    for step in subsystem_data.get("diagnostic_steps", []):
+        diagnostic_step = {
+            'step': step.get("action", "Unknown action"),
+            'tools_needed': step.get("tools_needed", []),
+            'specifications': step.get("specifications", {}),
+            'reference': step.get("reference", f"{brand} Service Manual - {system} > {subsystem}")
+        }
+        diagnostic_steps.append(diagnostic_step)
+    
+    # Create the diagnosis response
+    diagnosis = {
+        'severity': 'High' if any(issue['probability'] == 'High' for issue in potential_issues) else 'Medium',
+        'potential_issues': potential_issues,
+        'diagnostic_steps': diagnostic_steps,
+        'system': system,
+        'subsystem': subsystem,
+        'service_code': f'{brand[:3].upper()}-{system[:3].upper()}-{subsystem[:3].upper()}',
+        'manual_section': f"{brand} Service Manual - {system} > {subsystem}"
     }
-}
+    
+    return diagnosis
 
-def get_manual_diagnosis(brand, model, year, symptoms):
-    """Get diagnosis from service manual"""
-    # This is a mock implementation. In a real app, this would query a database of service manuals
-    return {
-        'severity': 'Medium',
-        'potential_issues': [{
-            'issue': 'Service Manual Diagnosis',
-            'description': f'Based on the symptoms for {brand} {model} {year}: {symptoms}',
-            'probability': 'Medium',
-            'technical_details': {
-                'system_affected': 'Engine',
-                'components': ['Engine Control Module', 'Sensors'],
-                'common_causes': ['Faulty sensor', 'Wiring issues']
-            },
-            'diagnostic_steps': [
-                {
-                    'step': 'Visual Inspection',
-                    'details': 'Check for obvious signs of damage or wear',
-                    'warning_signs': ['Corrosion', 'Loose connections'],
-                    'expected_values': 'No visible damage'
-                }
-            ],
-            'actions': [
-                'Perform diagnostic scan',
-                'Check sensor connections',
-                'Verify wiring integrity'
-            ],
-            'safety_notes': [
-                'Ensure engine is cool before inspection',
-                'Disconnect battery before working on electrical components'
-            ]
-        }],
-        'service_code': f'{brand[:3].upper()}-001',
-        'manual_section': 'Engine Diagnostics'
-    }
-
-def get_manual_reference(brand, model, year):
-    """Get manual reference"""
-    # This is a mock implementation
-    return f"{brand} {model} {year} Service Manual - Section 3.2"
+def get_manual_reference(brand: str, model: str, year: int, system: str = None, subsystem: str = None) -> str:
+    """Get manual reference with specific section if available"""
+    if system and subsystem:
+        return f"{brand} {model} {year} Service Manual - {system} > {subsystem}"
+    return f"{brand} {model} {year} Service Manual"

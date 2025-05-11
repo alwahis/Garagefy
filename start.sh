@@ -34,8 +34,8 @@ backend_pid=$!
 sleep 5
 
 # Start frontend
-echo "Starting frontend on port 3006..."
-echo "Once the frontend is started, you can access the application at: http://localhost:3006"
+echo "Starting frontend on port 3009..."
+echo "Once the frontend is started, you can access the application at: http://localhost:3009"
 ./start_frontend.sh
 
 # Cleanup when the script is terminated

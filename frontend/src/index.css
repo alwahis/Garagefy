@@ -29,22 +29,27 @@ textarea,
 .chakra-select__wrapper select,
 .chakra-input,
 .chakra-textarea {
-  color: #1a1a1a !important; /* text.900 equivalent - ensuring high contrast */
+  color: #0a0a0a !important; /* text.900 equivalent - ensuring maximum contrast */
   background-color: white !important;
+  border-color: #CBD5E0 !important; /* gray.300 equivalent */
+  border-width: 2px !important;
 }
 
 select option {
-  color: #1a1a1a !important;
+  color: #0a0a0a !important;
   background-color: white !important;
+  font-weight: normal !important;
 }
 
 /* Fix select options */
 select option,
 .chakra-select option,
 .chakra-select__wrapper select option {
-  color: black !important;
+  color: #0a0a0a !important; /* text.900 - maximum contrast */
   background-color: white !important;
   background: white !important;
+  font-weight: normal !important;
+  padding: 8px !important;
 }
 
 /* Ensure select options in dropdown have proper styling for ALL browsers */
@@ -53,30 +58,35 @@ select option,
   .chakra-select option,
   .chakra-select__wrapper select option {
     background-color: white !important;
-    color: black !important;
+    color: #0a0a0a !important;
+    padding: 8px !important;
   }
 }
 
 option {
   background-color: white !important;
-  color: black !important;
+  color: #0a0a0a !important;
   font-weight: normal !important;
+  padding: 8px !important;
 }
 
 /* Placeholder styles with proper contrast */
 ::placeholder {
-  color: #718096 !important; /* text.500 equivalent - balanced contrast for placeholders */
+  color: #4A5568 !important; /* gray.600 - darker for better contrast */
   opacity: 1;
+  font-weight: normal !important;
 }
 
 :-ms-input-placeholder {
-  color: #718096 !important;
+  color: #4A5568 !important;
   opacity: 1;
+  font-weight: normal !important;
 }
 
 ::-ms-input-placeholder {
-  color: #718096 !important;
+  color: #4A5568 !important;
   opacity: 1;
+  font-weight: normal !important;
 }
 
 /* App container */
@@ -94,8 +104,8 @@ option {
   select,
   input[type="checkbox"],
   input[type="radio"] {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
   }
   
   /* Improve form elements on mobile */
@@ -103,23 +113,36 @@ option {
   select, 
   textarea {
     font-size: 16px !important; /* Prevent zoom on focus in iOS */
+    border-width: 2px !important;
   }
   
   /* Add more spacing between elements */
   .chakra-stack > * {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
   
   /* Adjust container padding */
   .chakra-container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
   }
   
   /* Ensure buttons are easier to tap */
   .chakra-button {
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+    font-weight: bold !important;
+  }
+  
+  /* Improve headings contrast on mobile */
+  .chakra-heading {
+    color: #0a0a0a !important;
+    font-weight: bold !important;
+  }
+  
+  /* Improve text contrast on mobile */
+  .chakra-text {
+    color: #2d2d2d !important;
   }
 }
 
@@ -166,4 +189,105 @@ div[style*="position: absolute"][style*="bottom"] {
 div[style*="position: fixed"][style*="transform: translate"],
 div[style*="position: absolute"][style*="transform: translate"] {
   display: none !important;
+}
+
+/* Leaflet map styles */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+}
+
+/* Improve map contrast */
+
+/* Ensure Leaflet markers are visible */
+.leaflet-marker-icon {
+  z-index: 1000 !important;
+  visibility: visible !important;
+}
+
+.leaflet-marker-shadow {
+  z-index: 999 !important;
+  visibility: visible !important;
+}
+
+/* Ensure map panes remain visible */
+.leaflet-map-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-pane,
+.leaflet-overlay-pane,
+.leaflet-shadow-pane,
+.leaflet-marker-pane,
+.leaflet-popup-pane,
+.leaflet-tooltip-pane {
+  visibility: visible !important;
+  display: block !important;
+  z-index: auto !important;
+}
+.leaflet-tile-pane {
+  filter: contrast(1.1) saturate(1.1);
+}
+
+/* Make sure map controls are visible */
+.leaflet-control-container .leaflet-control {
+  background-color: white !important;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  border-radius: 4px;
+  clear: both;
+}
+
+/* Ensure popups have good contrast */
+.leaflet-popup-content {
+  color: #1a1a1a !important;
+  background-color: white !important;
+  margin: 13px 19px;
+  line-height: 1.4;
+}
+
+/* Fix custom markers */
+.custom-garage-marker {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 600 !important;
+}
+
+/* Ensure text on colored backgrounds is black */
+.navbar,
+.navbar-container,
+.header,
+.header-container,
+.nav-link,
+.nav-item,
+.feature-card,
+.feature-title,
+.feature-description,
+.banner,
+.banner-text,
+.section-header,
+.section-title,
+.section-description {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+/* Ensure links in navigation are also black */
+.navbar a,
+.header a,
+.nav-link a,
+.banner a {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+/* Make sure buttons have black text */
+.btn,
+.button,
+.chakra-button {
+  color: #000000 !important;
 }
