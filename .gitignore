@@ -124,3 +124,6 @@ Thumbs.db
 pdf24_images_merged.pdf
 *.zip
 garagefy_essential/
+
+# Local Netlify folder
+.netlify

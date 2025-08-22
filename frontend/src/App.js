@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import DiagnosisForm from './components/DiagnosisForm';
 import GarageList from './pages/GarageList';
 import UsedCarCheck from './pages/UsedCarCheck';
+import FixIt from './pages/FixIt';
 import Navbar from './components/Navbar';
 import { Box } from '@chakra-ui/react';
 import theme from './theme';
@@ -23,6 +24,7 @@ function App() {
               <Route path="/garages" element={<GarageList />} />
               <Route path="/find-garage" element={<GarageList />} />
               <Route path="/used-car-check" element={<UsedCarCheck />} />
+              <Route path="/fix-it" element={<FixIt />} />
             </Routes>
           </Box>
         </Box>
