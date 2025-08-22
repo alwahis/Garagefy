@@ -10,7 +10,7 @@ import {
   Icon
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { FaTools, FaCar } from 'react-icons/fa';
+import { FaTools, FaCar, FaCarCrash } from 'react-icons/fa';
 
 const BigButton = ({ icon, title, description, onClick, bgColor, hoverBgColor }) => {
   const buttonSize = useBreakpointValue({ base: "100%", md: "400px" });
@@ -90,7 +90,7 @@ const Home = () => {
             </Text>
           </VStack>
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={spacing} width="100%" justifyItems="center">
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={spacing} width="100%" justifyItems="center">
             <BigButton
               icon={FaCar}
               title="Car Diagnosis"
@@ -98,6 +98,14 @@ const Home = () => {
               bgColor="#2C5282" /* Darker blue for better contrast */
               hoverBgColor="#1A365D"
               onClick={() => navigate('/diagnose-car')}
+            />
+            <BigButton
+              icon={FaCarCrash}
+              title="Fix It"
+              description="Find professional help for car body repairs and dents"
+              bgColor="#9F7AEA" /* Purple color for Fix It button */
+              hoverBgColor="#805AD5"
+              onClick={() => navigate('/fix-it')}
             />
             <BigButton
               icon={FaTools}
