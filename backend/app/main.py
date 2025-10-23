@@ -124,6 +124,10 @@ async def shutdown_event():
 
 # Configure CORS
 origins = [
+    # Production domains
+    "https://garagefy.app",
+    "https://www.garagefy.app",
+    # Local development
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
