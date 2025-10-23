@@ -1,8 +1,14 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 import os
 from dotenv import load_dotenv
+
+# First define Base
+Base = declarative_base()
+
+# Then import models to register them with Base
+from ..models import garage, booking, quote
 
 # Load environment variables
 load_dotenv()
@@ -17,9 +23,6 @@ engine = create_engine(
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create Base class
-Base = declarative_base()
 
 # Dependency
 def get_db():

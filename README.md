@@ -91,3 +91,59 @@ The backend provides various API endpoints:
 
 ## License
 MIT License
+
+---
+
+# Fix It System End-to-End Test Results & Verification
+
+## 1. Customer Form Submission
+- ✅ Verified: Customer form submissions are correctly stored in the Airtable Customer details table.
+- **How tested:** Submitted a test form. Checked Airtable for new record with expected fields.
+
+## 2. Email Notification to Garages
+- ✅ Verified: Email notifications are sent to all garage emails listed in the Fix it Garages Airtable table upon form submission.
+- **How tested:** Submitted a form, checked outbox and recipient inboxes for notification emails.
+
+## 3. Garage Reply Capture & VIN Linking
+- ✅ Verified: Garage replies are captured and stored in the "Recevied email" Airtable table, with each reply linked to the correct VIN.
+- **How tested:**
+    - Sent a reply from a garage email with a VIN in the subject/body.
+    - Ran the `ingest_garage_replies.py` script.
+    - Checked Airtable for a new row in "Recevied email" with the correct VIN and email content.
+
+## 4. Error Handling
+- ✅ Verified: The previous backend error on Fix it form submission ("Error processing request") is resolved. Submissions now succeed.
+
+## 5. Email Ingestion Logic
+- ✅ Implemented: Backend script (`backend/scripts/ingest_garage_replies.py`) fetches recent emails from Microsoft 365, extracts VIN from subject/body, and stores replies in Airtable with correct VIN linkage.
+- **How tested:** Ran script, verified new records in Airtable for garage replies.
+
+## 6. Integration Points
+- All integration points (form, email, Airtable, reply linkage) function correctly end-to-end.
+
+---
+
+# Verification Steps (for future reference)
+1. Submit a test Fix it form with a unique VIN.
+2. Check Airtable Customer details table for new entry.
+3. Check all garage inboxes for notification email.
+4. Send a reply email from a garage, including the VIN in subject or body.
+5. Run the ingestion script: `python3 backend/scripts/ingest_garage_replies.py`
+6. Check "Recevied email" Airtable table for new row with correct VIN and email content.
+
+---
+
+# Known Issues
+- Table name in Airtable is misspelled as "Recevied email" (should be "Received email").
+- VIN must be present in subject or body for linkage.
+
+---
+
+# Next Steps
+- Consider automating the ingestion script (e.g., with a cron job or webhook).
+- Fix Airtable table name typo if possible.
+
+---
+
+# Summary
+The Fix It system now works end-to-end: form submissions, notifications, and garage replies are all reliably tracked and linked by VIN in Airtable.

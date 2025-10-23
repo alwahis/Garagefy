@@ -1,98 +1,789 @@
-import React from 'react';
-import { Box, Heading, Text, VStack, Button, useColorModeValue } from '@chakra-ui/react';
-import { FaTools } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Box, 
+  Heading, 
+  Text, 
+  VStack, 
+  Button, 
+  Input,
+  Textarea,
+  FormControl,
+  FormLabel,
+  useColorModeValue,
+  useToast,
+  InputGroup,
+  InputLeftElement,
+  Icon,
+  Flex,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  SimpleGrid,
+  Image,
+  Select,
+  Checkbox,
+  FormErrorMessage
+} from '@chakra-ui/react';
+import { FaUser, FaEnvelope, FaPhone, FaCar, FaImage, FaTimes } from 'react-icons/fa';
+import axios from 'axios';
+import config from '../config';
 
 const FixIt = () => {
-  const bgColor = useColorModeValue('white', 'gray.800');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    carBrand: '',
+    vin: '',
+    notes: '',
+    images: [],
+    consent: false
+  });
+  
+  const [previewImages, setPreviewImages] = useState([]);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiStatus, setApiStatus] = useState('unknown');
+  const isSubmittingRef = useRef(false);
+  const requestIdRef = useRef('');
+  const toast = useToast();
+  
   const textColor = useColorModeValue('gray.800', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const clearForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      carBrand: '',
+      vin: '',
+      notes: '',
+      images: [],
+      consent: false
+    });
+    setPreviewImages([]);
+  };
+  
+  const carBrands = [
+    'Audi', 'BMW', 'Mercedes-Benz', 'Volkswagen', 'Opel', 'Ford', 'Peugeot',
+    'Renault', 'Citroën', 'Fiat', 'Toyota', 'Honda', 'Nissan', 'Mazda',
+    'Hyundai', 'Kia', 'Volvo', 'SEAT', 'Skoda', 'Dacia', 'Tesla', 'Other'
+  ];
+  
+  const validateVIN = (vin) => {
+    // VIN must be 17 alphanumeric characters, excluding I, O, Q
+    const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+    return vinRegex.test(vin.toUpperCase());
+  };
+  
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Check total image count (max 5)
+    if (formData.images.length + files.length > 5) {
+      toast({
+        title: 'Too many images',
+        description: 'You can upload a maximum of 5 images',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    files.forEach(file => {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: `${file.name} is larger than 10MB`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+      
+      // Check file type (JPEG/PNG/WebP)
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        toast({
+          title: 'Invalid file type',
+          description: `${file.name} is not a JPEG, PNG, or WebP image`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.readyState === 2) {
+          setPreviewImages(prev => [...prev, reader.result]);
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, file]
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  const removeImage = (index) => {
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
 
+  const validateForm = () => {
+    const errors = [];
+    
+    if (!formData.name.trim()) {
+      errors.push('Full name is required');
+    }
+    
+    if (!formData.email.trim()) {
+      errors.push('Email is required');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.push('Email is invalid');
+    }
+    
+    if (!formData.carBrand) {
+      errors.push('Car brand is required');
+    }
+    
+    if (!formData.vin.trim()) {
+      errors.push('VIN is required');
+    } else if (!validateVIN(formData.vin)) {
+      errors.push('VIN must be 17 alphanumeric characters (excluding I, O, Q)');
+    }
+    
+    if (formData.images.length === 0) {
+      errors.push('At least 1 damage photo is required');
+    }
+    
+    if (!formData.consent) {
+      errors.push('You must consent to data processing');
+    }
+    
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
+    console.log('Form submission started');
+    
+    // Prevent default form submission
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      console.warn('Event object missing preventDefault method');
+    }
+    
+    // Prevent double submission
+    if (isSubmittingRef.current) {
+      console.warn('Prevented duplicate submission');
+      return;
+    }
+    
+    // Set submitting state early
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    
+    try {
+      // Validate form
+      console.log('Validating form...');
+      const errors = validateForm();
+      if (errors.length > 0) {
+        console.warn('Form validation errors:', errors);
+        
+        // Show a single toast with all errors
+        toast({
+          title: 'Please complete all required fields',
+          description: (
+            <Box>
+              {errors.map((error, idx) => (
+                <Text key={idx} mb={1}>• {error}</Text>
+              ))}
+            </Box>
+          ),
+          status: 'error',
+          duration: 7000,
+          isClosable: true,
+          position: 'top',
+        });
+        
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+        return;
+      }
+      
+      console.log('Form validation passed');
+      
+      // Generate a unique request ID for this submission
+      requestIdRef.current = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log('Generated request ID:', requestIdRef.current);
+      
+      // Prepare form data
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone || '');
+      formDataToSend.append('carBrand', formData.carBrand);
+      formDataToSend.append('vin', formData.vin.toUpperCase());
+      formDataToSend.append('notes', formData.notes || '');
+      formDataToSend.append('requestId', requestIdRef.current);
+
+      // Add images if any
+      formData.images.forEach((image, index) => {
+        formDataToSend.append(`images`, image);
+      });
+
+      console.log('Sending form data:', {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        vin: formData.vin,
+        notes: formData.notes,
+        imagesCount: formData.images.length
+      });
+      
+      console.log('About to POST to:', `${config.API_BASE_URL}${config.ENDPOINTS.SERVICE_REQUESTS}`);
+      
+      // Send the request to our backend API
+      const response = await axios({
+        method: 'post',
+        url: `${config.API_BASE_URL}${config.ENDPOINTS.SERVICE_REQUESTS}`,
+        data: formDataToSend,
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'X-Request-ID': requestIdRef.current,
+          'Accept': 'application/json'
+          // Let the browser set the Content-Type header with the correct boundary
+        }
+      });
+      
+      console.log('Server response:', response.data);
+      
+      // Show success message
+      toast({
+        title: 'Success!',
+        description: 'Your service request has been submitted successfully.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      
+      // Clear the form
+      clearForm();
+    } catch (error) {
+      console.error('Error submitting form:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config ? {
+          url: error.config.url,
+          method: error.config.method,
+          headers: error.config.headers
+        } : null
+      });
+      
+      // Show error toast
+      let errorMessage = 'Failed to submit form. Please try again.';
+      
+      if (error.response) {
+        errorMessage = error.response.data?.detail || 
+                      error.response.data?.message || 
+                      `Server responded with status ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = 'No response from server. Please check your connection.';
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        status: 'error',
+        duration: 10000,
+        isClosable: true,
+        position: 'top-right'
+      });
+    } finally {
+      // Reset the submission state
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  };
+
+  // Test log to check if component is rendering
+  console.log('FixIt component rendered');
+
+  // Ping API on mount to show connectivity status
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const url = `${config.API_BASE_URL}/health`;
+        console.log('Pinging API health:', url);
+        const res = await fetch(url, { credentials: 'include' });
+        setApiStatus(res.ok ? 'online' : 'error');
+      } catch (e) {
+        console.warn('API health check failed', e);
+        setApiStatus('offline');
+      }
+    };
+    checkHealth();
+  }, []);
+  
   return (
-    <Box p={4} maxW="1200px" mx="auto">
-      <VStack spacing={6} align="stretch">
-        <Box textAlign="center" py={8}>
-          <Heading as="h1" size="2xl" mb={4} color={textColor}>
-            Car Body Repair Services
-          </Heading>
-          <Text fontSize="lg" color="gray.500">
-            Professional car body repair services to get your vehicle looking like new
-          </Text>
-        </Box>
-
-        <Box 
-          bg={cardBg} 
-          p={6} 
-          borderRadius="lg" 
-          boxShadow="md"
-          border="1px"
-          borderColor={borderColor}
+    <Box bg="#FFD700" minH="100vh" p={4} position="relative" overflow="hidden">
+      {/* Background Car Body Shop Imagery - Subtle Shadows */}
+      <Box
+        position="absolute"
+        top="10%"
+        left="2%"
+        fontSize="8xl"
+        opacity="0.04"
+        transform="rotate(-20deg)"
+        display={{ base: "none", lg: "block" }}
+        pointerEvents="none"
+      >
+        🚗💥
+      </Box>
+      <Box
+        position="absolute"
+        top="30%"
+        right="5%"
+        fontSize="7xl"
+        opacity="0.05"
+        transform="rotate(15deg)"
+        display={{ base: "none", lg: "block" }}
+        pointerEvents="none"
+      >
+        🔧
+      </Box>
+      <Box
+        position="absolute"
+        bottom="25%"
+        left="3%"
+        fontSize="9xl"
+        opacity="0.03"
+        transform="rotate(10deg)"
+        display={{ base: "none", lg: "block" }}
+        pointerEvents="none"
+      >
+        🚙
+      </Box>
+      <Box
+        position="absolute"
+        bottom="15%"
+        right="8%"
+        fontSize="6xl"
+        opacity="0.04"
+        transform="rotate(-12deg)"
+        display={{ base: "none", lg: "block" }}
+        pointerEvents="none"
+      >
+        🛠️
+      </Box>
+      <Box
+        position="absolute"
+        top="60%"
+        left="50%"
+        fontSize="10xl"
+        opacity="0.02"
+        transform="translateX(-50%) rotate(-5deg)"
+        display={{ base: "none", xl: "block" }}
+        pointerEvents="none"
+      >
+        🚗
+      </Box>
+      
+      <Box maxW="900px" mx="auto" position="relative" zIndex={1}>
+        <VStack 
+          spacing={8} 
+          align="stretch"
         >
-          <VStack spacing={6}>
-            <Box textAlign="center">
-              <Box 
-                display="inline-flex" 
-                p={4} 
-                bg="purple.100" 
-                borderRadius="full"
-                mb={4}
-              >
-                <FaTools size={40} color="#805AD5" />
-              </Box>
-              <Heading as="h2" size="lg" mb={4} color={textColor}>
-                Body Repair Services
-              </Heading>
-              <Text color="gray.500" mb={6}>
-                Our expert technicians can handle all types of car body repairs, from minor dents to major collision damage.
+          {/* Hero Header */}
+          <Box textAlign="center" py={{ base: 6, md: 10 }} px={4}>
+            <Box
+              display="inline-block"
+              bg="#0078D4"
+              px={6}
+              py={2}
+              borderRadius="full"
+              mb={4}
+            >
+              <Text fontSize="sm" color="white" fontWeight="black" textTransform="uppercase" letterSpacing="wide">
+                💰 Save up to 70% on Body Damage Repairs
               </Text>
             </Box>
-
-            <Box width="100%" mt={8}>
-              <Heading as="h3" size="md" mb={4} color={textColor}>
-                Services We Offer:
-              </Heading>
-              <VStack spacing={4} align="stretch">
-                {[
-                  'Dent Repair & Removal',
-                  'Scratch & Paint Repair',
-                  'Bumper Repair',
-                  'Collision Repair',
-                  'Paintless Dent Repair',
-                  'Frame Straightening',
-                  'Rust Repair',
-                  'Full Body Painting'
-                ].map((service, index) => (
-                  <Box 
-                    key={index}
-                    p={4}
-                    border="1px"
-                    borderColor={borderColor}
-                    borderRadius="md"
-                    _hover={{
-                      bg: 'purple.50',
-                      borderColor: 'purple.200',
-                      transform: 'translateX(4px)',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <Text>{service}</Text>
-                  </Box>
-                ))}
-              </VStack>
-            </Box>
-
-            <Button 
-              colorScheme="purple" 
-              size="lg" 
-              mt={8}
-              onClick={() => window.location.href = 'tel:+1234567890'}
-              leftIcon={<FaTools />}
+            <Heading 
+              as="h1" 
+              fontSize={{ base: "3xl", md: "5xl" }} 
+              mb={4} 
+              color="#1A202C"
+              fontWeight="black"
+              lineHeight="1.2"
             >
-              Call for a Free Estimate
-            </Button>
+              Car Body Damage? Get Free Quotes from Luxembourg's Best Body Shops
+            </Heading>
+            <Text fontSize={{ base: "lg", md: "xl" }} color="#1A202C" maxW="2xl" mx="auto" fontWeight="medium">
+              Dents, scratches, collision repairs - fill out one form and receive multiple competitive quotes!
+            </Text>
+          </Box>
+
+          {/* Info Cards */}
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={8} position="relative">
+            {/* Dent/scratch icon shadow */}
+            <Box
+              position="absolute"
+              right="-60px"
+              top="-40px"
+              fontSize="8xl"
+              opacity="0.03"
+              transform="rotate(20deg)"
+              display={{ base: "none", lg: "block" }}
+              pointerEvents="none"
+            >
+              💥
+            </Box>
+            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
+              <Text fontSize="4xl" mb={2}>⚡</Text>
+              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Fast Response</Text>
+              <Text color="gray.600" fontSize="sm">Get quotes within 2 business days</Text>
+            </Box>
+            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
+              <Text fontSize="4xl" mb={2}>💰</Text>
+              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Huge Savings</Text>
+              <Text color="gray.600" fontSize="sm">Save up to 70% on body repairs</Text>
+            </Box>
+            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
+              <Text fontSize="4xl" mb={2}>✓</Text>
+              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Certified Shops</Text>
+              <Text color="gray.600" fontSize="sm">Only trusted professionals</Text>
+            </Box>
+          </SimpleGrid>
+
+          {/* Main Form */}
+          <Box 
+            bg="white" 
+            p={{ base: 6, md: 10 }} 
+            borderRadius="2xl" 
+            boxShadow="0 20px 60px rgba(0,0,0,0.15)"
+            border="3px solid"
+            borderColor="#0078D4"
+            position="relative"
+          >
+            {/* Subtle wrench/tool shadow behind form */}
+            <Box
+              position="absolute"
+              bottom="-30px"
+              left="50%"
+              transform="translateX(-50%)"
+              fontSize="12xl"
+              opacity="0.02"
+              display={{ base: "none", md: "block" }}
+              pointerEvents="none"
+              zIndex={0}
+            >
+              🔧
+            </Box>
+          <VStack spacing={6} as="form" onSubmit={handleSubmit} noValidate position="relative" zIndex={1}>
+              <FormControl isRequired>
+                <FormLabel>Full Name</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaUser} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    pl={10}
+                  />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Email Address</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaEnvelope} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="john@example.com"
+                    pl={10}
+                  />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Phone Number (Optional)</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaPhone} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+352 123 456 789"
+                    pl={10}
+                  />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Car Brand</FormLabel>
+                <Select
+                  name="carBrand"
+                  value={formData.carBrand}
+                  onChange={handleChange}
+                  placeholder="Select car brand"
+                >
+                  {carBrands.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl isRequired isInvalid={formData.vin && !validateVIN(formData.vin)}>
+                <FormLabel>Vehicle Identification Number (VIN)</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaCar} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="text"
+                    name="vin"
+                    value={formData.vin}
+                    onChange={handleChange}
+                    placeholder="Enter 17-character VIN (no I, O, Q)"
+                    pl={10}
+                    maxLength={17}
+                    textTransform="uppercase"
+                  />
+                </InputGroup>
+                <FormErrorMessage>
+                  VIN must be 17 alphanumeric characters (excluding I, O, Q)
+                </FormErrorMessage>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Upload Body Damage Photos (1-5 images, max 10MB each)</FormLabel>
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleImageUpload}
+                  display="none"
+                  id="image-upload"
+                />
+                <Button
+                  as="label"
+                  htmlFor="image-upload"
+                  leftIcon={<FaImage />}
+                  variant="outline"
+                  cursor="pointer"
+                  w="100%"
+                  isDisabled={formData.images.length >= 5}
+                >
+                  {formData.images.length === 0 ? 'Choose Images (Required)' : `Choose More Images (${formData.images.length}/5)`}
+                </Button>
+                {previewImages.length > 0 && (
+                  <SimpleGrid columns={[2, 3, 4]} spacing={4} mt={4}>
+                    {previewImages.map((src, index) => (
+                      <Box key={index} position="relative">
+                        <Image
+                          src={src}
+                          alt={`Preview ${index + 1}`}
+                          borderRadius="md"
+                          boxSize="100px"
+                          objectFit="cover"
+                          cursor="pointer"
+                          onClick={() => {
+                            setSelectedImage(src);
+                            onOpen();
+                          }}
+                        />
+                        <Icon
+                          as={FaTimes}
+                          position="absolute"
+                          top={1}
+                          right={1}
+                          color="white"
+                          bg="red.500"
+                          borderRadius="full"
+                          p={1}
+                          boxSize={5}
+                          cursor="pointer"
+                          _hover={{ bg: 'red.600' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(index);
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </SimpleGrid>
+                )}
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Describe the Body Damage (Optional)</FormLabel>
+                <Textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  placeholder="Describe the body damage: dents, scratches, collision damage, paint issues, etc..."
+                  rows={4}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <Box 
+                  p={6} 
+                  bg="yellow.100" 
+                  borderRadius="lg" 
+                  border="3px solid" 
+                  borderColor="#0078D4"
+                  boxShadow="0 4px 12px rgba(30,136,229,0.2)"
+                >
+                  <Flex align="flex-start" gap={3}>
+                    <Box flexShrink={0} mt={1}>
+                      <Checkbox
+                        name="consent"
+                        isChecked={formData.consent}
+                        onChange={(e) => setFormData(prev => ({ ...prev, consent: e.target.checked }))}
+                        size="lg"
+                        colorScheme="blue"
+                        borderColor="#0078D4"
+                        iconColor="white"
+                      />
+                    </Box>
+                    <Box flex={1}>
+                      <Text fontWeight="black" color="#1A202C" fontSize="lg">
+                        <Text as="span" color="red.500" fontSize="xl" mr={1}>*</Text>
+                        Required: I consent to the processing of my data
+                      </Text>
+                      <Text fontSize="sm" color="gray.700" mt={2}>
+                        By checking this box, you agree to share your information with certified body shops in Luxembourg for the purpose of receiving repair quotes.
+                      </Text>
+                    </Box>
+                  </Flex>
+                </Box>
+              </FormControl>
+
+              <Button 
+                type="submit" 
+                bg="#0078D4"
+                color="white"
+                size="lg" 
+                width="full"
+                mt={6}
+                py={8}
+                fontSize={{ base: "xl", md: "2xl" }}
+                fontWeight="black"
+                borderRadius="full"
+                isLoading={isSubmitting}
+                loadingText="Submitting..."
+                _hover={{ 
+                  bg: "#1565C0",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 12px 30px rgba(30,136,229,0.5)"
+                }}
+                _active={{ bg: "#0D47A1" }}
+                transition="all 0.3s ease"
+                boxShadow="0 8px 25px rgba(30,136,229,0.4)"
+              >
+                Get My Free Quotes Now →
+              </Button>
+              
+              {/* Trust Badge */}
+              <Box textAlign="center" mt={6}>
+                <Text fontSize="sm" color="gray.600">
+                  🔒 Your information is secure and will only be shared with certified body shops
+                </Text>
+              </Box>
           </VStack>
-        </Box>
-      </VStack>
+          </Box>
+
+          {/* Image Preview Modal */}
+          <Modal isOpen={isOpen} onClose={onClose} size="xl">
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>Image Preview</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody p={4} display="flex" justifyContent="center">
+                <Image 
+                  src={selectedImage} 
+                  alt="Full size preview" 
+                  maxH="70vh"
+                  objectFit="contain"
+                />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+          {/* Bottom CTA Section */}
+          <Box 
+            bg="#0078D4" 
+            p={{ base: 8, md: 12 }} 
+            borderRadius="2xl"
+            textAlign="center"
+            boxShadow="0 20px 60px rgba(30,136,229,0.4)"
+          >
+            <Heading size="xl" color="white" mb={4}>
+              Why Choose Garagefy for Body Repairs?
+            </Heading>
+            <Text fontSize="lg" color="whiteAlpha.900" mb={6} maxW="700px" mx="auto">
+              We connect you with multiple certified body shops in Luxembourg for dents, scratches, and collision repairs - ensuring you get the best price for quality work. No more overpaying!
+            </Text>
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+              <VStack>
+                <Text fontSize="3xl">🎯</Text>
+                <Text fontWeight="bold" color="white">Compare Prices</Text>
+                <Text fontSize="sm" color="whiteAlpha.800">Get multiple quotes to compare</Text>
+              </VStack>
+              <VStack>
+                <Text fontSize="3xl">⭐</Text>
+                <Text fontWeight="bold" color="white">Quality Guaranteed</Text>
+                <Text fontSize="sm" color="whiteAlpha.800">All shops are certified</Text>
+              </VStack>
+              <VStack>
+                <Text fontSize="3xl">💵</Text>
+                <Text fontWeight="bold" color="white">Save Money</Text>
+                <Text fontSize="sm" color="whiteAlpha.800">Up to 70% savings</Text>
+              </VStack>
+            </SimpleGrid>
+          </Box>
+        </VStack>
+      </Box>
     </Box>
   );
 };

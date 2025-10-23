@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Service Request - {{ vin }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4a6fa5;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>New Service Request</h2>
+    </div>
+    
+    <div class="content">
+        <p>Hello,</p>
+        <p>You have received a new service request through Garagefy. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Vehicle VIN:</strong> {{ vin }}</p>
+            <p><strong>Issue Description:</strong><br>{{ issue|linebreaks }}</p>
+            <p><strong>Request Date:</strong> {{ request_date }}</p>
+            
+            {% if image_urls %}
+                <p><strong>Attached Images:</strong></p>
+                <div style="margin-top: 10px;">
+                    {% for url in image_urls %}
+                        <img src="{{ url }}" alt="Vehicle Image" style="max-width: 100%; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <p>Please review this request and provide a quote at your earliest convenience.</p>
+        
+        <p>Best regards,<br>The Garagefy Team</p>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; {{ current_year }} Garagefy. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

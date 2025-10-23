@@ -2,9 +2,6 @@ import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import DiagnosisForm from './components/DiagnosisForm';
-import GarageList from './pages/GarageList';
-import UsedCarCheck from './pages/UsedCarCheck';
 import FixIt from './pages/FixIt';
 import Navbar from './components/Navbar';
 import { Box } from '@chakra-ui/react';
@@ -19,11 +16,6 @@ function App() {
           <Box flex="1" pb={16}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/diagnosis" element={<DiagnosisForm />} />
-              <Route path="/diagnose-car" element={<DiagnosisForm />} />
-              <Route path="/garages" element={<GarageList />} />
-              <Route path="/find-garage" element={<GarageList />} />
-              <Route path="/used-car-check" element={<UsedCarCheck />} />
               <Route path="/fix-it" element={<FixIt />} />
             </Routes>
           </Box>
