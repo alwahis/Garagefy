@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, JSON, DateTime
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-from ..core.database import Base
+
+# Get the Base class directly from SQLAlchemy to avoid circular imports
+Base = declarative_base()
 
 class Garage(Base):
     __tablename__ = "garages"

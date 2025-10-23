@@ -6,12 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8099';
 // Endpoints
 const ENDPOINTS = {
     HEALTH: '/health',
-    DIAGNOSE: '/api/diagnose',
-    CAR_DATA: '/api/car-data',
-    GARAGES: '/api/garages',
-    TEST: '/api/test',
-    USED_CAR_CHECK: '/api/used-car/check',
-    USED_CAR_OPTIONS: '/api/used-car/options'
+    SERVICE_REQUESTS: '/api/service-requests'
 };
 
 const config = {

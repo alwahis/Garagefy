@@ -18,7 +18,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "cross-env PORT=3009 react-scripts start",
+    "start": "cross-env PORT=3000 react-scripts start",
     "build": "CI=false react-scripts build",
     "vercel-build": "CI=false react-scripts build",
     "test": "react-scripts test",

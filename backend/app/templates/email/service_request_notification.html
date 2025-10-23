@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Service Request - Garagefy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #dddddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777777;
+            text-align: center;
+        }
+        .details {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>New Service Request</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello,</p>
+        <p>A new service request has been submitted through Garagefy. Here are the details:</p>
+        
+        <div class="details">
+            <h3>Customer Information</h3>
+            <p><strong>Name:</strong> {{ customer_name }}</p>
+            <p><strong>Email:</strong> {{ customer_email }}</p>
+            <p><strong>Phone:</strong> {{ customer_phone }}</p>
+            {% if customer_vin %}
+            <p><strong>VIN:</strong> {{ customer_vin }}</p>
+            {% endif %}
+            
+            <h3>Service Details</h3>
+            <p><strong>Request Date:</strong> {{ request_date }}</p>
+            {% if customer_notes %}
+            <p><strong>Notes:</strong><br>{{ customer_notes|linebreaks }}</p>
+            {% endif %}
+            
+            {% if image_urls %}
+            <h3>Attached Images</h3>
+            {% for url in image_urls %}
+            <img src="{{ url }}" alt="Attached image" class="image-preview">
+            {% endfor %}
+            {% endif %}
+        </div>
+        
+        <p>Please respond to this request as soon as possible. You can contact the customer directly using the information provided above.</p>
+        
+        <p>Best regards,<br>The Garagefy Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; {{ current_year }} Garagefy. All rights reserved.</p>
+    </div>
+</body>
+</html>

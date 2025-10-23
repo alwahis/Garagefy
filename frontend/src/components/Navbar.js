@@ -16,9 +16,11 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
+  Button,
+  Image
 } from '@chakra-ui/react';
-import { HamburgerIcon } from '@chakra-ui/icons';
-import { FaMapMarkerAlt, FaTools, FaCheckCircle, FaWrench } from 'react-icons/fa';
+import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
+import { FaCarCrash } from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 
 const NavLink = ({ children, to, icon, isMobile = false, ...rest }) => (
@@ -31,20 +33,19 @@ const NavLink = ({ children, to, icon, isMobile = false, ...rest }) => (
     width={isMobile ? "full" : "auto"}
     _hover={{
       textDecoration: 'none',
-      bg: isMobile ? 'accent.500' : 'rgba(255, 255, 255, 0.15)',
-      color: isMobile ? 'black' : 'black',
+      bg: isMobile ? '#0078D4' : 'rgba(30, 136, 229, 0.1)',
+      color: isMobile ? 'white' : '#0078D4',
       transform: isMobile ? 'none' : 'translateY(-2px)',
-      boxShadow: isMobile ? 'none' : '0 4px 6px rgba(0, 0, 0, 0.3)',
     }}
-    color={isMobile ? "black" : "black"}
-    fontWeight="medium"
+    color={isMobile ? "#1A202C" : "#1A202C"}
+    fontWeight="bold"
     transition="all 0.2s"
     display="flex"
     alignItems="center"
-    fontSize={isMobile ? "lg" : "md"}
+    fontSize={isMobile ? "xl" : "md"}
     {...rest}
   >
-    {icon && <Icon as={icon} mr={2} boxSize={isMobile ? "5" : "4"} color={isMobile ? "black" : "black"} />}
+    {icon && <Icon as={icon} mr={2} boxSize={isMobile ? "6" : "5"} />}
     {children}
   </Link>
 );
@@ -53,22 +54,38 @@ const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
-    <Box as="nav" bg="brand.600" color="black" boxShadow="md" position="sticky" top="0" zIndex="999">
-      <Container maxW="container.xl" py={2}>
-        <Flex h={16} alignItems="center" justifyContent="space-between">
+    <Box as="nav" bg="#FFD700" color="#1A202C" boxShadow="0 2px 10px rgba(0,0,0,0.1)" position="sticky" top="0" zIndex="999">
+      <Container maxW="container.xl" py={3}>
+        <Flex h={12} alignItems="center" justifyContent="space-between">
           <HStack spacing={8} alignItems="center">
-            <Box fontWeight="bold" fontSize="xl" color="black">
-              <Link as={RouterLink} to="/" _hover={{ textDecoration: 'none', color: 'black' }}>
-                <Flex align="center">
-                  <Icon as={FaWrench} mr={2} color="black" />
-                  <Text color="black">Garagefy</Text>
-                </Flex>
+            <Box>
+              <Link as={RouterLink} to="/" _hover={{ opacity: 0.8 }} display="flex" alignItems="center">
+                <Image 
+                  src="/garagefy-logo.svg"
+                  alt="Garagefy"
+                  h={{ base: "30px", md: "40px" }}
+                  w="auto"
+                />
               </Link>
             </Box>
-            <HStack as="nav" spacing={4} display={{ base: 'none', md: 'flex' }}>
-              <NavLink to="/find-garage" icon={FaMapMarkerAlt} color="black">Find Garage</NavLink>
-              <NavLink to="/diagnose-car" icon={FaTools} color="black">Diagnose Car</NavLink>
-              <NavLink to="/used-car-check" icon={FaCheckCircle} color="black">Used Car Check</NavLink>
+            <HStack as="nav" spacing={2} display={{ base: 'none', md: 'flex' }}>
+              <Button
+                as={RouterLink}
+                to="/fix-it"
+                leftIcon={<Icon as={FaCarCrash} />}
+                bg="#0078D4"
+                color="white"
+                size="md"
+                fontWeight="bold"
+                _hover={{ 
+                  bg: "#1565C0",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 4px 8px rgba(30,136,229,0.3)"
+                }}
+                transition="all 0.2s"
+              >
+                Get Free Quotes
+              </Button>
             </HStack>
           </HStack>
           <IconButton
@@ -77,23 +94,52 @@ const Navbar = () => {
             aria-label="Open Menu"
             display={{ md: 'none' }}
             onClick={onOpen}
-            bg="transparent"
-            color="black"
-            _hover={{ bg: 'rgba(255, 255, 255, 0.15)' }}
+            bg="#0078D4"
+            color="white"
+            _hover={{ bg: '#1565C0' }}
           />
         </Flex>
       </Container>
 
-      <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="full">
+      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent bg="brand.600">
-          <DrawerCloseButton color="black" />
-          <DrawerHeader color="black">Menu</DrawerHeader>
+        <DrawerContent bg="#FFD700">
+          <DrawerCloseButton color="#1A202C" size="lg" />
+          <DrawerHeader display="flex" justifyContent="center" py={4}>
+            <Image 
+              src="/garagefy-logo.svg"
+              alt="Garagefy"
+              h="35px"
+              w="auto"
+            />
+          </DrawerHeader>
           <DrawerBody>
-            <VStack spacing={4} align="stretch">
-              <NavLink to="/find-garage" icon={FaMapMarkerAlt} isMobile color="black">Find Garage</NavLink>
-              <NavLink to="/diagnose-car" icon={FaTools} isMobile color="black">Diagnose Car</NavLink>
-              <NavLink to="/used-car-check" icon={FaCheckCircle} isMobile color="black">Used Car Check</NavLink>
+            <VStack spacing={4} align="stretch" mt={8}>
+              <Button
+                as={RouterLink}
+                to="/"
+                size="lg"
+                bg="white"
+                color="#1A202C"
+                fontWeight="bold"
+                _hover={{ bg: "gray.100" }}
+                onClick={onClose}
+              >
+                Home
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/fix-it"
+                leftIcon={<Icon as={FaCarCrash} />}
+                size="lg"
+                bg="#0078D4"
+                color="white"
+                fontWeight="bold"
+                _hover={{ bg: "#1565C0" }}
+                onClick={onClose}
+              >
+                Get Free Quotes
+              </Button>
             </VStack>
           </DrawerBody>
         </DrawerContent>
