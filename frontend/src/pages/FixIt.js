@@ -31,8 +31,10 @@ import {
 import { FaUser, FaEnvelope, FaPhone, FaCar, FaImage, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import config from '../config';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const FixIt = () => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -447,7 +449,7 @@ const FixIt = () => {
             </Box>
           <VStack spacing={6} as="form" onSubmit={handleSubmit} noValidate position="relative" zIndex={1}>
               <FormControl isRequired>
-                <FormLabel>Full Name</FormLabel>
+                <FormLabel>{t('fixItName')}</FormLabel>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none">
                     <Icon as={FaUser} color="gray.400" />
@@ -457,14 +459,14 @@ const FixIt = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="John Doe"
+                    placeholder={t('fixItNamePlaceholder')}
                     pl={10}
                   />
                 </InputGroup>
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>{t('fixItEmail')}</FormLabel>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none">
                     <Icon as={FaEnvelope} color="gray.400" />
@@ -474,14 +476,14 @@ const FixIt = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="john@example.com"
+                    placeholder={t('fixItEmailPlaceholder')}
                     pl={10}
                   />
                 </InputGroup>
               </FormControl>
 
               <FormControl>
-                <FormLabel>Phone Number (Optional)</FormLabel>
+                <FormLabel>{t('fixItPhone')}</FormLabel>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none">
                     <Icon as={FaPhone} color="gray.400" />
@@ -491,19 +493,19 @@ const FixIt = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="+352 123 456 789"
+                    placeholder={t('fixItPhonePlaceholder')}
                     pl={10}
                   />
                 </InputGroup>
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>Car Brand</FormLabel>
+                <FormLabel>{t('fixItCarBrand')}</FormLabel>
                 <Select
                   name="carBrand"
                   value={formData.carBrand}
                   onChange={handleChange}
-                  placeholder="Select car brand"
+                  placeholder={t('fixItCarBrandPlaceholder')}
                 >
                   {carBrands.map(brand => (
                     <option key={brand} value={brand}>{brand}</option>
@@ -512,7 +514,7 @@ const FixIt = () => {
               </FormControl>
 
               <FormControl isRequired isInvalid={formData.vin && !validateVIN(formData.vin)}>
-                <FormLabel>Vehicle Identification Number (VIN)</FormLabel>
+                <FormLabel>{t('fixItVin')}</FormLabel>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none">
                     <Icon as={FaCar} color="gray.400" />
@@ -522,7 +524,7 @@ const FixIt = () => {
                     name="vin"
                     value={formData.vin}
                     onChange={handleChange}
-                    placeholder="Enter 17-character VIN (no I, O, Q)"
+                    placeholder={t('fixItVinPlaceholder')}
                     pl={10}
                     maxLength={17}
                     textTransform="uppercase"
@@ -534,7 +536,8 @@ const FixIt = () => {
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>Upload Body Damage Photos (1-5 images, max 10MB each)</FormLabel>
+                <FormLabel>{t('fixItPhotos')}</FormLabel>
+                <Text fontSize="sm" color="gray.600" mb={2}>{t('fixItPhotosDesc')}</Text>
                 <Input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -552,7 +555,7 @@ const FixIt = () => {
                   w="100%"
                   isDisabled={formData.images.length >= 5}
                 >
-                  {formData.images.length === 0 ? 'Choose Images (Required)' : `Choose More Images (${formData.images.length}/5)`}
+                  {formData.images.length === 0 ? t('fixItPhotos') : `Choose More Images (${formData.images.length}/5)`}
                 </Button>
                 {previewImages.length > 0 && (
                   <SimpleGrid columns={[2, 3, 4]} spacing={4} mt={4}>
@@ -594,12 +597,12 @@ const FixIt = () => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>Describe the Body Damage (Optional)</FormLabel>
+                <FormLabel>{t('fixItNotes')}</FormLabel>
                 <Textarea
                   name="notes"
                   value={formData.notes}
                   onChange={handleChange}
-                  placeholder="Describe the body damage: dents, scratches, collision damage, paint issues, etc..."
+                  placeholder={t('fixItNotesPlaceholder')}
                   rows={4}
                 />
               </FormControl>
@@ -628,10 +631,7 @@ const FixIt = () => {
                     <Box flex={1}>
                       <Text fontWeight="black" color="#1A202C" fontSize="lg">
                         <Text as="span" color="red.500" fontSize="xl" mr={1}>*</Text>
-                        Required: I consent to the processing of my data
-                      </Text>
-                      <Text fontSize="sm" color="gray.700" mt={2}>
-                        By checking this box, you agree to share your information with certified body shops in Luxembourg for the purpose of receiving repair quotes.
+                        {t('fixItConsentRequired')}: {t('fixItConsent')}
                       </Text>
                     </Box>
                   </Flex>
@@ -650,7 +650,7 @@ const FixIt = () => {
                 fontWeight="black"
                 borderRadius="full"
                 isLoading={isSubmitting}
-                loadingText="Submitting..."
+                loadingText={t('fixItSubmitting')}
                 _hover={{ 
                   bg: "#1565C0",
                   transform: "translateY(-2px)",
@@ -660,7 +660,7 @@ const FixIt = () => {
                 transition="all 0.3s ease"
                 boxShadow="0 8px 25px rgba(30,136,229,0.4)"
               >
-                Get My Free Quotes Now →
+                {t('fixItSubmit')} →
               </Button>
               
               {/* Trust Badge */}
@@ -676,7 +676,7 @@ const FixIt = () => {
           <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay />
             <ModalContent>
-              <ModalHeader>Image Preview</ModalHeader>
+              <ModalHeader>{t('fixItPhotos')}</ModalHeader>
               <ModalCloseButton />
               <ModalBody p={4} display="flex" justifyContent="center">
                 <Image 
