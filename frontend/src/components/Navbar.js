@@ -8,12 +8,9 @@ import {
   Icon,
   Button,
   Image,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem
+  Select
 } from '@chakra-ui/react';
-import { FaCarCrash, FaGlobe, FaChevronDown } from 'react-icons/fa';
+import { FaCarCrash, FaChevronDown } from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -68,46 +65,25 @@ const Navbar = () => {
             </Button>
 
             {/* Language Selector */}
-            <Menu>
-              <MenuButton
-                as={Button}
-                rightIcon={<FaChevronDown />}
-                leftIcon={<FaGlobe />}
-                bg="white"
-                color="#1A202C"
-                size="md"
-                fontWeight="bold"
-                _hover={{ bg: "gray.100" }}
-                _active={{ bg: "gray.200" }}
-                minW={{ base: "auto", md: "140px" }}
-                px={{ base: 3, md: 4 }}
-              >
-                <HStack spacing={2} display={{ base: 'none', sm: 'flex' }}>
-                  <Box as="span">{currentLang.flag}</Box>
-                  <Box as="span" display={{ base: 'none', md: 'inline' }}>{currentLang.name}</Box>
-                </HStack>
-                <Box display={{ base: 'inline', sm: 'none' }}>{currentLang.flag}</Box>
-              </MenuButton>
-              <MenuList bg="white" borderColor="gray.200" zIndex={1000}>
-                {languages.map((lang) => (
-                  <MenuItem
-                    key={lang.code}
-                    onClick={() => changeLanguage(lang.code)}
-                    bg={language === lang.code ? "#0078D4" : "white"}
-                    color={language === lang.code ? "white" : "#1A202C"}
-                    _hover={{ 
-                      bg: language === lang.code ? "#1565C0" : "gray.100" 
-                    }}
-                    fontWeight={language === lang.code ? "bold" : "normal"}
-                  >
-                    <HStack spacing={3}>
-                      <Box fontSize="xl">{lang.flag}</Box>
-                      <Box>{lang.name}</Box>
-                    </HStack>
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </Menu>
+            <Select
+              value={language}
+              onChange={(e) => {
+                console.log('Language changed to:', e.target.value);
+                changeLanguage(e.target.value);
+              }}
+              bg="white"
+              borderColor="gray.300"
+              size="md"
+              w={{ base: "auto", md: "160px" }}
+              icon={<FaChevronDown />}
+              _hover={{ borderColor: "gray.400" }}
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.flag} {lang.name}
+                </option>
+              ))}
+            </Select>
           </HStack>
         </Flex>
 
