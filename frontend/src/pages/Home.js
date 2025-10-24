@@ -6,379 +6,340 @@ import {
   VStack, 
   Text, 
   Button,
+  useBreakpointValue, 
   Icon,
   Badge,
   Image,
   SimpleGrid,
   HStack,
-  Flex,
-  Avatar
+  Flex
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { FaCamera, FaCheckCircle, FaArrowRight, FaWrench, FaCar } from 'react-icons/fa';
-import { MdDirectionsCar, MdBuild, MdLocalCarWash } from 'react-icons/md';
-import { BsFillCarFrontFill } from 'react-icons/bs';
+import { FaCar, FaCamera, FaEnvelope, FaCheckCircle, FaArrowRight } from 'react-icons/fa';
+import { MdDirectionsCar } from 'react-icons/md';
 
 const Home = () => {
   const navigate = useNavigate();
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
     <Box 
-      bg="linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)"
+      bg="#FFD700" 
       minH="100vh"
       position="relative"
       overflow="hidden"
     >
-      {/* App-like Header with gradient */}
+      {/* Decorative car damage icons - desktop only */}
       <Box
-        bg="linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)"
-        pt={8}
-        pb={20}
-        position="relative"
-        boxShadow="0 4px 20px rgba(255,107,0,0.3)"
+        position="absolute"
+        top="10%"
+        left="5%"
+        fontSize="8xl"
+        opacity="0.05"
+        display={{ base: "none", lg: "block" }}
       >
-        {/* Garage/Workshop Pattern Overlay */}
-        <Box
-          position="absolute"
-          top="0"
-          left="0"
-          right="0"
-          bottom="0"
-          opacity="0.1"
-          backgroundImage="repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px)"
-        />
-        
-        <Container maxW="container.md" position="relative" zIndex={1}>
-          <VStack spacing={4} align="center">
-            {/* Logo with garage icon */}
-            <HStack spacing={3}>
-              <Icon as={MdBuild} boxSize={10} color="white" />
-              <Heading 
-                fontSize="4xl"
-                fontWeight="black"
-                color="white"
-                letterSpacing="tight"
-              >
-                Garagefy
-              </Heading>
-            </HStack>
-            
-            <Badge
-              fontSize="sm"
-              px={4}
-              py={1}
-              borderRadius="full"
-              bg="rgba(255,255,255,0.2)"
-              color="white"
-              textTransform="uppercase"
-              fontWeight="bold"
-              backdropFilter="blur(10px)"
-            >
-              🔧 Body Shop Network
-            </Badge>
-
-            <Text 
-              fontSize="2xl" 
-              color="white" 
-              fontWeight="bold"
-              textAlign="center"
-              textShadow="0 2px 10px rgba(0,0,0,0.3)"
-            >
-              Car Body Damage?
-            </Text>
-            
-            <Text 
-              fontSize="lg" 
-              color="whiteAlpha.900" 
-              textAlign="center"
-            >
-              Connect with Luxembourg's best body shops instantly
-            </Text>
-          </VStack>
-        </Container>
+        🚗💥
+      </Box>
+      <Box
+        position="absolute"
+        bottom="15%"
+        right="5%"
+        fontSize="8xl"
+        opacity="0.05"
+        display={{ base: "none", lg: "block" }}
+      >
+        🔧🚙
       </Box>
 
-      {/* Main Content Card - App-like floating card */}
-      <Container maxW="container.md" mt={-16} position="relative" zIndex={2} px={4}>
-        <VStack spacing={6}>
+      <Container maxW="container.xl" py={{ base: 6, md: 12 }} position="relative" zIndex={1}>
+        <VStack spacing={{ base: 8, md: 12 }} align="center">
           
-          {/* Main Action Card */}
+          {/* Hero Section - Mobile Optimized */}
+          <VStack spacing={4} textAlign="center" w="100%" pt={{ base: 4, md: 8 }}>
+            {/* Logo */}
+            <Image 
+              src="/garagefy-logo.svg"
+              alt="Garagefy"
+              maxW={{ base: "180px", md: "280px" }}
+              w="100%"
+              h="auto"
+              mx="auto"
+              mb={2}
+            />
+
+            {/* Main Headline - Larger on mobile */}
+            <Heading 
+              as="h1" 
+              fontSize={{ base: "4xl", md: "5xl", lg: "6xl" }}
+              fontWeight="black"
+              lineHeight="1.1"
+              color="#1A202C"
+              px={4}
+            >
+              Car Damaged?
+              <Text as="span" color="#0078D4" display="block" mt={2}>
+                Get Best Quotes Fast!
+              </Text>
+            </Heading>
+
+            {/* Subheadline */}
+            <Text 
+              fontSize={{ base: "xl", md: "2xl" }} 
+              color="#1A202C" 
+              fontWeight="semibold"
+              px={4}
+            >
+              🚗 Dents • Scratches • Collision Damage
+            </Text>
+
+            {/* Save Badge */}
+            <Badge 
+              fontSize={{ base: "xl", md: "2xl" }}
+              px={{ base: 6, md: 8 }}
+              py={{ base: 3, md: 4 }}
+              borderRadius="full"
+              bg="#0078D4"
+              color="white"
+              textTransform="uppercase"
+              fontWeight="black"
+              boxShadow="0 8px 20px rgba(0,120,212,0.4)"
+            >
+              💰 Save Up to 70%
+            </Badge>
+          </VStack>
+
+          {/* MEGA CTA Button - Impossible to Miss */}
           <Box
             w="100%"
-            bg="white"
-            borderRadius="3xl"
-            p={8}
-            boxShadow="0 20px 60px rgba(0,0,0,0.3)"
-            border="1px solid"
-            borderColor="gray.100"
+            maxW="600px"
+            px={4}
           >
-            <VStack spacing={6}>
-              {/* Car damage types with icons */}
-              <SimpleGrid columns={3} spacing={4} w="100%">
-                <VStack spacing={2}>
-                  <Box
-                    bg="orange.50"
-                    borderRadius="2xl"
-                    p={4}
-                    border="2px solid"
-                    borderColor="orange.200"
-                  >
-                    <Icon as={BsFillCarFrontFill} boxSize={8} color="orange.500" />
-                  </Box>
-                  <Text fontSize="sm" fontWeight="bold" color="gray.700" textAlign="center">
-                    Dents
-                  </Text>
-                </VStack>
-                
-                <VStack spacing={2}>
-                  <Box
-                    bg="orange.50"
-                    borderRadius="2xl"
-                    p={4}
-                    border="2px solid"
-                    borderColor="orange.200"
-                  >
-                    <Icon as={MdLocalCarWash} boxSize={8} color="orange.500" />
-                  </Box>
-                  <Text fontSize="sm" fontWeight="bold" color="gray.700" textAlign="center">
-                    Scratches
-                  </Text>
-                </VStack>
-                
-                <VStack spacing={2}>
-                  <Box
-                    bg="orange.50"
-                    borderRadius="2xl"
-                    p={4}
-                    border="2px solid"
-                    borderColor="orange.200"
-                  >
-                    <Icon as={FaWrench} boxSize={8} color="orange.500" />
-                  </Box>
-                  <Text fontSize="sm" fontWeight="bold" color="gray.700" textAlign="center">
-                    Collision
-                  </Text>
-                </VStack>
-              </SimpleGrid>
-
-              {/* Value proposition */}
-              <Box
-                w="100%"
-                bg="gradient-to-r from-orange-50 to-yellow-50"
-                borderRadius="2xl"
-                p={6}
-                border="2px solid"
-                borderColor="orange.200"
-              >
-                <VStack spacing={3}>
-                  <Text fontSize="3xl" fontWeight="black" color="orange.600">
-                    Save up to 70%
-                  </Text>
-                  <Text fontSize="md" color="gray.700" textAlign="center">
-                    Compare quotes from all body shops in Luxembourg
-                  </Text>
-                </VStack>
-              </Box>
-
-              {/* MEGA CTA Button - App-style */}
-              <Button
-                size="lg"
-                w="100%"
-                h="70px"
-                fontSize="xl"
-                fontWeight="black"
-                bg="linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)"
-                color="white"
-                borderRadius="2xl"
-                boxShadow="0 10px 30px rgba(255,107,0,0.4)"
-                _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 15px 40px rgba(255,107,0,0.5)",
-                }}
-                _active={{
-                  transform: "translateY(0px)"
-                }}
-                transition="all 0.2s"
-                onClick={() => navigate('/fix-it')}
-                rightIcon={<Icon as={FaArrowRight} boxSize={6} />}
-                leftIcon={<Icon as={FaCamera} boxSize={6} />}
-              >
-                GET QUOTES NOW
-              </Button>
-
-              <HStack spacing={3} justify="center">
-                <HStack spacing={1}>
-                  <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                  <Text fontSize="sm" color="gray.600" fontWeight="semibold">Free</Text>
-                </HStack>
-                <Text color="gray.400">•</Text>
-                <HStack spacing={1}>
-                  <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                  <Text fontSize="sm" color="gray.600" fontWeight="semibold">2 Days</Text>
-                </HStack>
-                <Text color="gray.400">•</Text>
-                <HStack spacing={1}>
-                  <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                  <Text fontSize="sm" color="gray.600" fontWeight="semibold">No Obligation</Text>
-                </HStack>
-              </HStack>
-            </VStack>
+            <Button
+              size="lg"
+              w="100%"
+              h={{ base: "80px", md: "100px" }}
+              fontSize={{ base: "2xl", md: "3xl" }}
+              fontWeight="black"
+              bg="#0078D4"
+              color="white"
+              borderRadius="2xl"
+              boxShadow="0 15px 40px rgba(0,120,212,0.5)"
+              _hover={{
+                transform: "translateY(-4px)",
+                boxShadow: "0 20px 50px rgba(0,120,212,0.6)",
+                bg: "#0066B8"
+              }}
+              _active={{
+                transform: "translateY(-2px)"
+              }}
+              transition="all 0.3s"
+              onClick={() => navigate('/fix-it')}
+              rightIcon={<Icon as={FaArrowRight} boxSize={{ base: 6, md: 8 }} />}
+              leftIcon={<Icon as={FaCar} boxSize={{ base: 6, md: 8 }} />}
+            >
+              GET FREE QUOTES NOW
+            </Button>
+            
+            <Text 
+              textAlign="center" 
+              fontSize={{ base: "sm", md: "md" }}
+              color="#1A202C"
+              mt={3}
+              fontWeight="semibold"
+            >
+              ✓ Free • ✓ Fast • ✓ No Obligation
+            </Text>
           </Box>
 
-          {/* How it works - App-style steps */}
+          {/* How It Works - Mobile Friendly */}
           <Box
             w="100%"
+            maxW="900px"
             bg="white"
-            borderRadius="3xl"
-            p={8}
+            p={{ base: 6, md: 10 }}
+            borderRadius="2xl"
             boxShadow="0 10px 30px rgba(0,0,0,0.1)"
+            border="3px solid #0078D4"
           >
             <Heading
-              fontSize="2xl"
-              color="gray.800"
+              fontSize={{ base: "2xl", md: "3xl" }}
+              color="#1A202C"
               textAlign="center"
               mb={6}
               fontWeight="black"
             >
-              How It Works
+              🚀 How It Works
             </Heading>
 
-            <VStack spacing={6} align="stretch">
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 6, md: 8 }}>
               {/* Step 1 */}
-              <HStack spacing={4} align="start">
+              <VStack spacing={3}>
                 <Box
-                  bg="orange.500"
+                  bg="#FFD700"
                   borderRadius="full"
-                  w="50px"
-                  h="50px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  flexShrink={0}
-                  boxShadow="0 4px 15px rgba(255,107,0,0.3)"
+                  p={4}
+                  boxShadow="0 4px 15px rgba(255,215,0,0.3)"
                 >
-                  <Text fontSize="xl" fontWeight="black" color="white">1</Text>
+                  <Icon as={FaCamera} boxSize={{ base: 8, md: 10 }} color="#0078D4" />
                 </Box>
-                <VStack align="start" spacing={1} flex={1}>
-                  <HStack spacing={2}>
-                    <Icon as={FaCamera} color="orange.500" boxSize={5} />
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      Take Photos
-                    </Text>
-                  </HStack>
-                  <Text fontSize="md" color="gray.600">
-                    Snap pictures of your car damage with your phone
-                  </Text>
-                </VStack>
-              </HStack>
-
-              {/* Connector line */}
-              <Box w="2px" h="30px" bg="gray.200" ml="24px" />
+                <Badge
+                  fontSize={{ base: "lg", md: "xl" }}
+                  px={4}
+                  py={2}
+                  borderRadius="full"
+                  bg="#0078D4"
+                  color="white"
+                  fontWeight="black"
+                >
+                  STEP 1
+                </Badge>
+                <Text 
+                  fontSize={{ base: "lg", md: "xl" }}
+                  fontWeight="bold"
+                  color="#1A202C"
+                  textAlign="center"
+                >
+                  📸 Upload Photos
+                </Text>
+                <Text 
+                  fontSize={{ base: "md", md: "lg" }}
+                  color="gray.600"
+                  textAlign="center"
+                >
+                  Take pictures of your car damage
+                </Text>
+              </VStack>
 
               {/* Step 2 */}
-              <HStack spacing={4} align="start">
+              <VStack spacing={3}>
                 <Box
-                  bg="orange.500"
+                  bg="#FFD700"
                   borderRadius="full"
-                  w="50px"
-                  h="50px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  flexShrink={0}
-                  boxShadow="0 4px 15px rgba(255,107,0,0.3)"
+                  p={4}
+                  boxShadow="0 4px 15px rgba(255,215,0,0.3)"
                 >
-                  <Text fontSize="xl" fontWeight="black" color="white">2</Text>
+                  <Icon as={FaEnvelope} boxSize={{ base: 8, md: 10 }} color="#0078D4" />
                 </Box>
-                <VStack align="start" spacing={1} flex={1}>
-                  <HStack spacing={2}>
-                    <Icon as={MdBuild} color="orange.500" boxSize={5} />
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      We Contact Body Shops
-                    </Text>
-                  </HStack>
-                  <Text fontSize="md" color="gray.600">
-                    Your request goes to every certified body shop in Luxembourg
-                  </Text>
-                </VStack>
-              </HStack>
-
-              {/* Connector line */}
-              <Box w="2px" h="30px" bg="gray.200" ml="24px" />
+                <Badge
+                  fontSize={{ base: "lg", md: "xl" }}
+                  px={4}
+                  py={2}
+                  borderRadius="full"
+                  bg="#0078D4"
+                  color="white"
+                  fontWeight="black"
+                >
+                  STEP 2
+                </Badge>
+                <Text 
+                  fontSize={{ base: "lg", md: "xl" }}
+                  fontWeight="bold"
+                  color="#1A202C"
+                  textAlign="center"
+                >
+                  📧 We Send to ALL Garages
+                </Text>
+                <Text 
+                  fontSize={{ base: "md", md: "lg" }}
+                  color="gray.600"
+                  textAlign="center"
+                >
+                  Your request goes to every body shop
+                </Text>
+              </VStack>
 
               {/* Step 3 */}
-              <HStack spacing={4} align="start">
+              <VStack spacing={3}>
                 <Box
-                  bg="orange.500"
+                  bg="#FFD700"
                   borderRadius="full"
-                  w="50px"
-                  h="50px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  flexShrink={0}
-                  boxShadow="0 4px 15px rgba(255,107,0,0.3)"
+                  p={4}
+                  boxShadow="0 4px 15px rgba(255,215,0,0.3)"
                 >
-                  <Text fontSize="xl" fontWeight="black" color="white">3</Text>
+                  <Icon as={FaCheckCircle} boxSize={{ base: 8, md: 10 }} color="#0078D4" />
                 </Box>
-                <VStack align="start" spacing={1} flex={1}>
-                  <HStack spacing={2}>
-                    <Icon as={FaCheckCircle} color="orange.500" boxSize={5} />
-                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                      Compare & Choose
-                    </Text>
-                  </HStack>
-                  <Text fontSize="md" color="gray.600">
-                    Get quotes in 2 days, pick the best price and service
-                  </Text>
-                </VStack>
-              </HStack>
-            </VStack>
+                <Badge
+                  fontSize={{ base: "lg", md: "xl" }}
+                  px={4}
+                  py={2}
+                  borderRadius="full"
+                  bg="#0078D4"
+                  color="white"
+                  fontWeight="black"
+                >
+                  STEP 3
+                </Badge>
+                <Text 
+                  fontSize={{ base: "lg", md: "xl" }}
+                  fontWeight="bold"
+                  color="#1A202C"
+                  textAlign="center"
+                >
+                  💰 Compare & Save
+                </Text>
+                <Text 
+                  fontSize={{ base: "md", md: "lg" }}
+                  color="gray.600"
+                  textAlign="center"
+                >
+                  Get quotes in 2 days, choose the best
+                </Text>
+              </VStack>
+            </SimpleGrid>
           </Box>
 
-          {/* Garage Network Badge */}
+          {/* Second CTA - Bottom of page */}
           <Box
             w="100%"
-            bg="linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)"
-            borderRadius="2xl"
-            p={6}
-            boxShadow="0 10px 30px rgba(0,0,0,0.3)"
+            maxW="600px"
+            px={4}
+            pb={8}
           >
-            <VStack spacing={3}>
-              <HStack spacing={2}>
-                <Icon as={MdBuild} color="orange.500" boxSize={6} />
-                <Text fontSize="lg" fontWeight="bold" color="white">
-                  Certified Body Shop Network
-                </Text>
-              </HStack>
-              <Text fontSize="sm" color="gray.400" textAlign="center">
-                All garages verified • Professional service • Best prices
-              </Text>
-            </VStack>
+            <Button
+              size="lg"
+              w="100%"
+              h={{ base: "70px", md: "90px" }}
+              fontSize={{ base: "xl", md: "2xl" }}
+              fontWeight="black"
+              bg="#0078D4"
+              color="white"
+              borderRadius="2xl"
+              boxShadow="0 15px 40px rgba(0,120,212,0.5)"
+              _hover={{
+                transform: "translateY(-4px)",
+                boxShadow: "0 20px 50px rgba(0,120,212,0.6)",
+                bg: "#0066B8"
+              }}
+              transition="all 0.3s"
+              onClick={() => navigate('/fix-it')}
+              rightIcon={<Icon as={FaArrowRight} boxSize={{ base: 5, md: 7 }} />}
+            >
+              START NOW - IT'S FREE!
+            </Button>
           </Box>
 
-          {/* Bottom CTA */}
-          <Button
-            size="lg"
-            w="100%"
-            h="65px"
-            fontSize="xl"
-            fontWeight="black"
-            bg="linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)"
-            color="white"
-            borderRadius="2xl"
-            boxShadow="0 10px 30px rgba(255,107,0,0.4)"
-            _hover={{
-              transform: "translateY(-2px)",
-              boxShadow: "0 15px 40px rgba(255,107,0,0.5)",
-            }}
-            transition="all 0.2s"
-            onClick={() => navigate('/fix-it')}
-            rightIcon={<Icon as={FaArrowRight} boxSize={5} />}
-            mb={8}
+          {/* Trust Indicators */}
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            gap={4}
+            justify="center"
+            align="center"
+            flexWrap="wrap"
+            pb={8}
           >
-            START NOW - IT'S FREE
-          </Button>
+            <HStack spacing={2} bg="white" px={6} py={3} borderRadius="full" boxShadow="md">
+              <Icon as={FaCheckCircle} color="green.500" boxSize={5} />
+              <Text fontWeight="bold" color="#1A202C">100% Free</Text>
+            </HStack>
+            <HStack spacing={2} bg="white" px={6} py={3} borderRadius="full" boxShadow="md">
+              <Icon as={FaCheckCircle} color="green.500" boxSize={5} />
+              <Text fontWeight="bold" color="#1A202C">No Obligation</Text>
+            </HStack>
+            <HStack spacing={2} bg="white" px={6} py={3} borderRadius="full" boxShadow="md">
+              <Icon as={FaCheckCircle} color="green.500" boxSize={5} />
+              <Text fontWeight="bold" color="#1A202C">2 Days Response</Text>
+            </HStack>
+          </Flex>
 
         </VStack>
       </Container>

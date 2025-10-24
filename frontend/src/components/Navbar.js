@@ -54,7 +54,7 @@ const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
-    <Box as="nav" bg="linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)" color="white" boxShadow="0 4px 20px rgba(255,107,0,0.3)" position="sticky" top="0" zIndex="999">
+    <Box as="nav" bg="#FFD700" color="#1A202C" boxShadow="0 2px 10px rgba(0,0,0,0.1)" position="sticky" top="0" zIndex="999">
       <Container maxW="container.xl" py={3}>
         <Flex h={12} alignItems="center" justifyContent="space-between">
           <HStack spacing={8} alignItems="center">
@@ -73,14 +73,14 @@ const Navbar = () => {
                 as={RouterLink}
                 to="/fix-it"
                 leftIcon={<Icon as={FaCarCrash} />}
-                bg="white"
-                color="orange.600"
+                bg="#0078D4"
+                color="white"
                 size="md"
                 fontWeight="bold"
                 _hover={{ 
-                  bg: "whiteAlpha.900",
+                  bg: "#1565C0",
                   transform: "translateY(-2px)",
-                  boxShadow: "0 4px 8px rgba(255,255,255,0.3)"
+                  boxShadow: "0 4px 8px rgba(30,136,229,0.3)"
                 }}
                 transition="all 0.2s"
               >
@@ -94,17 +94,17 @@ const Navbar = () => {
             aria-label="Open Menu"
             display={{ md: 'none' }}
             onClick={onOpen}
-            bg="white"
-            color="orange.600"
-            _hover={{ bg: 'whiteAlpha.900' }}
+            bg="#0078D4"
+            color="white"
+            _hover={{ bg: '#1565C0' }}
           />
         </Flex>
       </Container>
 
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent bg="linear-gradient(180deg, #FF6B00 0%, #FF8C00 100%)">
-          <DrawerCloseButton color="white" size="lg" />
+        <DrawerContent bg="#FFD700">
+          <DrawerCloseButton color="#1A202C" size="lg" />
           <DrawerHeader display="flex" justifyContent="center" py={4}>
             <Image 
               src="/garagefy-logo.svg"
@@ -120,9 +120,9 @@ const Navbar = () => {
                 to="/"
                 size="lg"
                 bg="white"
-                color="orange.600"
+                color="#1A202C"
                 fontWeight="bold"
-                _hover={{ bg: "whiteAlpha.900" }}
+                _hover={{ bg: "gray.100" }}
                 onClick={onClose}
               >
                 Home
@@ -132,10 +132,10 @@ const Navbar = () => {
                 to="/fix-it"
                 leftIcon={<Icon as={FaCarCrash} />}
                 size="lg"
-                bg="white"
-                color="orange.600"
+                bg="#0078D4"
+                color="white"
                 fontWeight="bold"
-                _hover={{ bg: "whiteAlpha.900" }}
+                _hover={{ bg: "#1565C0" }}
                 onClick={onClose}
               >
                 Get Free Quotes
