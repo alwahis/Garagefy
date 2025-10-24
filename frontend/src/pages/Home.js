@@ -17,10 +17,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaCamera, FaEnvelope, FaCheckCircle, FaArrowRight } from 'react-icons/fa';
 import { MdDirectionsCar } from 'react-icons/md';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const { t } = useLanguage();
 
   return (
     <Box 
@@ -76,9 +78,9 @@ const Home = () => {
               color="#1A202C"
               px={4}
             >
-              Car Damaged?
+              {t('homeTitle')}
               <Text as="span" color="#0078D4" display="block" mt={2}>
-                Get Best Quotes Fast!
+                {t('homeSubtitle')}
               </Text>
             </Heading>
 
@@ -89,7 +91,7 @@ const Home = () => {
               fontWeight="semibold"
               px={4}
             >
-              🚗 Dents • Scratches • Collision Damage
+              {t('homeDamageTypes')}
             </Text>
 
             {/* Save Badge */}
@@ -104,7 +106,7 @@ const Home = () => {
               fontWeight="black"
               boxShadow="0 8px 20px rgba(0,120,212,0.4)"
             >
-              💰 Save Up to 70%
+              {t('homeSaveBadge')}
             </Badge>
           </VStack>
 
@@ -117,13 +119,17 @@ const Home = () => {
             <Button
               size="lg"
               w="100%"
-              h={{ base: "80px", md: "100px" }}
-              fontSize={{ base: "2xl", md: "3xl" }}
+              h={{ base: "75px", md: "100px" }}
+              fontSize={{ base: "lg", sm: "xl", md: "3xl" }}
               fontWeight="black"
               bg="#0078D4"
               color="white"
               borderRadius="2xl"
               boxShadow="0 15px 40px rgba(0,120,212,0.5)"
+              px={{ base: 4, md: 8 }}
+              whiteSpace="normal"
+              textAlign="center"
+              lineHeight="1.2"
               _hover={{
                 transform: "translateY(-4px)",
                 boxShadow: "0 20px 50px rgba(0,120,212,0.6)",
@@ -134,10 +140,10 @@ const Home = () => {
               }}
               transition="all 0.3s"
               onClick={() => navigate('/fix-it')}
-              rightIcon={<Icon as={FaArrowRight} boxSize={{ base: 6, md: 8 }} />}
-              leftIcon={<Icon as={FaCar} boxSize={{ base: 6, md: 8 }} />}
+              rightIcon={<Icon as={FaArrowRight} boxSize={{ base: 5, md: 8 }} />}
+              leftIcon={<Icon as={FaCar} boxSize={{ base: 5, md: 8 }} />}
             >
-              GET FREE QUOTES NOW
+              {t('homeCtaButton')}
             </Button>
             
             <Text 
@@ -147,7 +153,7 @@ const Home = () => {
               mt={3}
               fontWeight="semibold"
             >
-              ✓ Free • ✓ Fast • ✓ No Obligation
+              ✓ {t('homeTrustFree')} • ✓ {t('homeTrustFast')} • ✓ {t('homeTrustNoObligation')}
             </Text>
           </Box>
 
@@ -168,7 +174,7 @@ const Home = () => {
               mb={6}
               fontWeight="black"
             >
-              🚀 How It Works
+              {t('homeHowItWorks')}
             </Heading>
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 6, md: 8 }}>
@@ -199,14 +205,14 @@ const Home = () => {
                   color="#1A202C"
                   textAlign="center"
                 >
-                  📸 Upload Photos
+                  {t('homeStep1Title')}
                 </Text>
                 <Text 
                   fontSize={{ base: "md", md: "lg" }}
                   color="gray.600"
                   textAlign="center"
                 >
-                  Take pictures of your car damage
+                  {t('homeStep1Desc')}
                 </Text>
               </VStack>
 
@@ -237,14 +243,14 @@ const Home = () => {
                   color="#1A202C"
                   textAlign="center"
                 >
-                  📧 We Send to ALL Garages
+                  {t('homeStep2Title')}
                 </Text>
                 <Text 
                   fontSize={{ base: "md", md: "lg" }}
                   color="gray.600"
                   textAlign="center"
                 >
-                  Your request goes to every body shop
+                  {t('homeStep2Desc')}
                 </Text>
               </VStack>
 
@@ -275,14 +281,14 @@ const Home = () => {
                   color="#1A202C"
                   textAlign="center"
                 >
-                  💰 Compare & Save
+                  {t('homeStep3Title')}
                 </Text>
                 <Text 
                   fontSize={{ base: "md", md: "lg" }}
                   color="gray.600"
                   textAlign="center"
                 >
-                  Get quotes in 2 days, choose the best
+                  {t('homeStep3Desc')}
                 </Text>
               </VStack>
             </SimpleGrid>
@@ -314,7 +320,7 @@ const Home = () => {
               onClick={() => navigate('/fix-it')}
               rightIcon={<Icon as={FaArrowRight} boxSize={{ base: 5, md: 7 }} />}
             >
-              START NOW - IT'S FREE!
+              {t('homeCtaBottom')}
             </Button>
           </Box>
 
