@@ -17,10 +17,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { FaCar, FaCamera, FaEnvelope, FaCheckCircle, FaArrowRight } from 'react-icons/fa';
 import { MdDirectionsCar } from 'react-icons/md';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const Home = () => {
   const navigate = useNavigate();
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const { t } = useLanguage();
 
   return (
     <Box 
