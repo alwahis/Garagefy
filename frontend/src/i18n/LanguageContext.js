@@ -27,8 +27,12 @@ export const LanguageProvider = ({ children }) => {
   };
 
   const changeLanguage = (lang) => {
+    console.log('changeLanguage called with:', lang);
     if (translations[lang]) {
+      console.log('Setting language to:', lang);
       setLanguage(lang);
+    } else {
+      console.log('Language not found in translations:', lang);
     }
   };
 
