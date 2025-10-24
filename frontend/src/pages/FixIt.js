@@ -421,67 +421,6 @@ const FixIt = () => {
           spacing={8} 
           align="stretch"
         >
-          {/* Hero Header */}
-          <Box textAlign="center" py={{ base: 6, md: 10 }} px={4}>
-            <Box
-              display="inline-block"
-              bg="#0078D4"
-              px={6}
-              py={2}
-              borderRadius="full"
-              mb={4}
-            >
-              <Text fontSize="sm" color="white" fontWeight="black" textTransform="uppercase" letterSpacing="wide">
-                💰 Save up to 70% on Body Damage Repairs
-              </Text>
-            </Box>
-            <Heading 
-              as="h1" 
-              fontSize={{ base: "3xl", md: "5xl" }} 
-              mb={4} 
-              color="#1A202C"
-              fontWeight="black"
-              lineHeight="1.2"
-            >
-              Car Body Damage? Get Free Quotes from Luxembourg's Best Body Shops
-            </Heading>
-            <Text fontSize={{ base: "lg", md: "xl" }} color="#1A202C" maxW="2xl" mx="auto" fontWeight="medium">
-              Dents, scratches, collision repairs - fill out one form and receive multiple competitive quotes!
-            </Text>
-          </Box>
-
-          {/* Info Cards */}
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={8} position="relative">
-            {/* Dent/scratch icon shadow */}
-            <Box
-              position="absolute"
-              right="-60px"
-              top="-40px"
-              fontSize="8xl"
-              opacity="0.03"
-              transform="rotate(20deg)"
-              display={{ base: "none", lg: "block" }}
-              pointerEvents="none"
-            >
-              💥
-            </Box>
-            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
-              <Text fontSize="4xl" mb={2}>⚡</Text>
-              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Fast Response</Text>
-              <Text color="gray.600" fontSize="sm">Get quotes within 2 business days</Text>
-            </Box>
-            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
-              <Text fontSize="4xl" mb={2}>💰</Text>
-              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Huge Savings</Text>
-              <Text color="gray.600" fontSize="sm">Save up to 70% on body repairs</Text>
-            </Box>
-            <Box bg="white" p={6} borderRadius="xl" textAlign="center" boxShadow="lg" border="3px solid" borderColor="#0078D4">
-              <Text fontSize="4xl" mb={2}>✓</Text>
-              <Text fontWeight="bold" color="#1A202C" fontSize="lg" mb={1}>Certified Shops</Text>
-              <Text color="gray.600" fontSize="sm">Only trusted professionals</Text>
-            </Box>
-          </SimpleGrid>
-
           {/* Main Form */}
           <Box 
             bg="white" 
