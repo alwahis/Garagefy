@@ -319,15 +319,25 @@ async def create_service_request(
             
             logger.info(f"🔵 DEBUG: Extracted {len(image_urls)} image URLs")
             
-            # Send quote requests to garages in the background
-            background_tasks.add_task(
-                _send_notifications,
-                request_id=requestId,
-                car_brand=carBrand,
-                vin=vin,
-                notes=notes,
-                image_urls=image_urls
-            )
+            # Send quote requests to garages IMMEDIATELY (not in background)
+            # This ensures emails are sent even on Render free tier
+            logger.info(f"📧 Sending quote requests to garages for VIN: {vin}")
+            try:
+                email_result = await fix_it_service.send_quote_requests(
+                    request_id=requestId,
+                    car_brand=carBrand,
+                    vin=vin,
+                    damage_notes=notes,
+                    image_urls=image_urls
+                )
+                
+                if email_result.get('success'):
+                    logger.info(f"✅ Sent quote requests to {email_result.get('garages_contacted', 0)} garages")
+                else:
+                    logger.error(f"❌ Failed to send quote requests: {email_result.get('error', 'Unknown error')}")
+            except Exception as email_error:
+                logger.error(f"❌ Error sending quote requests: {str(email_error)}", exc_info=True)
+                # Don't fail the whole request if email sending fails
             
             # Log success
             logger.info(f"Successfully processed request from {email}")
