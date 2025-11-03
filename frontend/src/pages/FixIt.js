@@ -41,6 +41,7 @@ const FixIt = () => {
     phone: '',
     carBrand: '',
     vin: '',
+    plateNumber: '',
     notes: '',
     images: [],
     consent: false
@@ -75,6 +76,7 @@ const FixIt = () => {
       phone: '',
       carBrand: '',
       vin: '',
+      plateNumber: '',
       notes: '',
       images: [],
       consent: false
@@ -177,6 +179,10 @@ const FixIt = () => {
       errors.push('VIN is required');
     } else if (!validateVIN(formData.vin)) {
       errors.push('VIN must be 17 alphanumeric characters (excluding I, O, Q)');
+    }
+    
+    if (!formData.plateNumber.trim()) {
+      errors.push('License plate number is required');
     }
     
     if (formData.images.length === 0) {
@@ -495,6 +501,24 @@ const FixIt = () => {
                     onChange={handleChange}
                     placeholder={t('fixItPhonePlaceholder')}
                     pl={10}
+                  />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>License Plate Number</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaCar} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="text"
+                    name="plateNumber"
+                    value={formData.plateNumber}
+                    onChange={handleChange}
+                    placeholder="e.g., AB123CD"
+                    pl={10}
+                    maxLength="15"
                   />
                 </InputGroup>
               </FormControl>
