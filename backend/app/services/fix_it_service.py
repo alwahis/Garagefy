@@ -37,6 +37,8 @@ class FixItService:
             Dict with success status and details
         """
         try:
+            import asyncio
+            
             # Get all garages from Fix it table
             logger.info("⚡ Fetching garages from Airtable 'Fix it' table...")
             garages = self.airtable.get_fix_it_garages()
@@ -54,15 +56,23 @@ class FixItService:
                 }
             
             logger.info(f"✅ Found {len(garages)} garages in Fix it table")
-            logger.info(f"📧 Sending quote requests to {len(garages)} garages...")
+            logger.info(f"📧 Sending quote requests to {len(garages)} garages in parallel batches...")
             
-            # Send email to each garage
+            # Send emails in parallel batches to avoid timeout
+            # Process in batches of 10 to avoid overwhelming the email service
+            BATCH_SIZE = 10
             successful_sends = 0
             failed_sends = 0
             
-            for garage in garages:
-                try:
-                    success = await self._send_garage_quote_request(
+            # Split garages into batches
+            for i in range(0, len(garages), BATCH_SIZE):
+                batch = garages[i:i + BATCH_SIZE]
+                logger.info(f"Processing batch {i//BATCH_SIZE + 1} of {(len(garages) + BATCH_SIZE - 1)//BATCH_SIZE} ({len(batch)} garages)")
+                
+                # Create tasks for parallel sending
+                tasks = []
+                for garage in batch:
+                    task = self._send_garage_quote_request(
                         garage=garage,
                         request_id=request_id,
                         car_brand=car_brand,
@@ -71,19 +81,34 @@ class FixItService:
                         damage_notes=damage_notes,
                         image_urls=image_urls
                     )
+                    tasks.append(task)
+                
+                # Send all emails in this batch in parallel
+                try:
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
                     
-                    if success:
-                        successful_sends += 1
-                        logger.info(f"Successfully sent quote request to {garage['name']} ({garage['email']})")
-                    else:
-                        failed_sends += 1
-                        logger.error(f"Failed to send quote request to {garage['name']} ({garage['email']})")
+                    # Count successes and failures
+                    for idx, result in enumerate(results):
+                        garage = batch[idx]
+                        if isinstance(result, Exception):
+                            failed_sends += 1
+                            logger.error(f"Error sending to {garage['name']}: {str(result)}")
+                        elif result:
+                            successful_sends += 1
+                            logger.info(f"✅ Sent to {garage['name']} ({garage['email']})")
+                        else:
+                            failed_sends += 1
+                            logger.error(f"❌ Failed to send to {garage['name']} ({garage['email']})")
+                    
+                    # Small delay between batches to avoid rate limiting
+                    if i + BATCH_SIZE < len(garages):
+                        await asyncio.sleep(1)
                         
                 except Exception as e:
-                    failed_sends += 1
-                    logger.error(f"Error sending quote request to {garage['name']}: {str(e)}", exc_info=True)
+                    logger.error(f"Error processing batch: {str(e)}", exc_info=True)
+                    failed_sends += len(batch)
             
-            logger.info(f"Quote requests sent: {successful_sends} successful, {failed_sends} failed")
+            logger.info(f"✅ Quote requests sent: {successful_sends} successful, {failed_sends} failed out of {len(garages)} total")
             
             return {
                 'success': True,
