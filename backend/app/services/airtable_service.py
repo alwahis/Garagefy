@@ -136,8 +136,12 @@ class AirtableService:
             List of garage dictionaries with name, email, and address
         """
         try:
+            self.logger.info("🔍 Attempting to access 'Fix it' table in Airtable...")
             table = self._get_table('Fix it')
+            self.logger.info("✅ Successfully accessed 'Fix it' table")
+            
             records = table.all()
+            self.logger.info(f"📊 Found {len(records)} total records in 'Fix it' table")
             
             garages = []
             for record in records:
@@ -158,13 +162,19 @@ class AirtableService:
                 # Only add garages with valid email addresses
                 if garage['email'] and '@' in garage['email']:
                     garages.append(garage)
-                    self.logger.info(f"Loaded Fix it garage: {garage['name']} - {garage['email']}")
+                    self.logger.info(f"✅ Loaded garage: {garage['name']} ({garage['email']})")
+                else:
+                    self.logger.warning(f"⚠️ Skipping garage '{garage['name']}' - missing or invalid email: '{garage['email']}'")
             
-            self.logger.info(f"Successfully loaded {len(garages)} Fix it garages from Airtable")
+            self.logger.info(f"📧 Total valid garages with emails: {len(garages)}/{len(records)}")
             return garages
             
         except Exception as e:
-            self.logger.error(f"Error fetching Fix it garages from Airtable: {str(e)}")
+            self.logger.error(f"❌ ERROR fetching Fix it garages from Airtable: {str(e)}", exc_info=True)
+            self.logger.error(f"❌ Make sure:")
+            self.logger.error("   1. Table 'Fix it' exists in Airtable")
+            self.logger.error("   2. AIRTABLE_API_KEY is correct")
+            self.logger.error("   3. AIRTABLE_BASE_ID is correct")
             # Return empty list if error
             return []
     
