@@ -527,6 +527,7 @@ class AirtableService:
                 - phone (str, optional): Customer phone number
                 - VIN (str, optional): Vehicle identification number
                 - car_brand (str, optional): Car brand
+                - Plate Number (str, optional): License plate number
                 - Note (str, optional): Additional notes
                 - Image (str or list, optional): URL(s) to customer's image(s)
                 
@@ -573,6 +574,11 @@ class AirtableService:
             
             if 'car_brand' in data and data['car_brand']:
                 record_data['Brand'] = data['car_brand'].strip()
+            
+            # Add license plate number if present
+            plate_number = data.get('Plate Number', '').strip()
+            if plate_number:
+                record_data['Plate Number'] = plate_number
             
             # Add timestamp - try different field name variants
             record_data['Date and Time'] = current_datetime
