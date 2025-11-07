@@ -38,17 +38,23 @@ class FixItService:
         """
         try:
             # Get all garages from Fix it table
+            logger.info("⚡ Fetching garages from Airtable 'Fix it' table...")
             garages = self.airtable.get_fix_it_garages()
             
             if not garages:
-                logger.warning("No garages found in Fix it table")
+                logger.error("❌ NO GARAGES FOUND IN FIX IT TABLE!")
+                logger.error("❌ Please check:")
+                logger.error("   1. Airtable base has a table named 'Fix it' (exact spelling)")
+                logger.error("   2. Table contains garage records")
+                logger.error("   3. Each garage has a valid Email field")
                 return {
                     'success': False,
-                    'error': 'No garages available',
+                    'error': 'No garages available in Fix it table',
                     'garages_contacted': 0
                 }
             
-            logger.info(f"Sending quote requests to {len(garages)} garages")
+            logger.info(f"✅ Found {len(garages)} garages in Fix it table")
+            logger.info(f"📧 Sending quote requests to {len(garages)} garages...")
             
             # Send email to each garage
             successful_sends = 0
