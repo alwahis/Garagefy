@@ -103,3 +103,36 @@ async def get_fix_it_status() -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+@router.get("/fix-it/test-garages", response_model=Dict[str, Any])
+async def test_garages() -> Dict[str, Any]:
+    """Test endpoint to check if garages are accessible in Airtable"""
+    try:
+        from ...services.airtable_service import airtable_service
+        
+        logger.info("🧪 TEST: Fetching garages from Airtable...")
+        garages = airtable_service.get_fix_it_garages()
+        
+        garage_list = []
+        for garage in garages:
+            garage_list.append({
+                'name': garage.get('name'),
+                'email': garage.get('email'),
+                'has_valid_email': bool(garage.get('email') and '@' in garage.get('email'))
+            })
+        
+        return {
+            'success': True,
+            'total_garages': len(garages),
+            'garages': garage_list,
+            'message': f"Found {len(garages)} garage(s) in Fix it table"
+        }
+    except Exception as e:
+        logger.error(f"Error testing garages: {str(e)}", exc_info=True)
+        return {
+            'success': False,
+            'error': str(e),
+            'total_garages': 0,
+            'garages': [],
+            'message': 'Failed to fetch garages from Airtable'
+        }
