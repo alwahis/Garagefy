@@ -120,54 +120,55 @@ class FixItService:
             bool: True if email sent successfully
         """
         try:
-            # Build friendly, human-like email content in English
-            subject = f"Quote Request - {car_brand} Repair"
+            # Professional subject line with VIN for legitimacy and tracking
+            subject = f"Repair Quote Request - VIN: {vin}"
             
             # Build embedded image section
             images_html = ""
             if image_urls:
-                images_html = '<div style="margin: 15px 0;">'
+                images_html = '<p style="margin: 15px 0;"><strong>Damage Photos:</strong></p>'
                 for i, url in enumerate(image_urls, 1):
-                    images_html += f'<div style="margin-bottom: 10px;"><img src="{url}" alt="Damage photo {i}" style="max-width: 100%; height: auto; border-radius: 5px;" /></div>'
-                images_html += "</div>"
+                    images_html += f'<p style="margin: 8px 0;"><a href="{url}" style="color: #0066cc; text-decoration: none;">View Photo {i}</a></p>'
             
             # Build damage description
-            damage_description = damage_notes if damage_notes else "Please see photos for details"
+            damage_description = damage_notes if damage_notes else "See attached photos"
             
             html_content = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px;">
-                <div style="max-width: 600px; margin: 0 auto;">
-                    <p>Hi there,</p>
-                    
-                    <p>I hope this email finds you well. I'm reaching out to get a quote for repairing my car.</p>
-                    
-                    <p><strong>Vehicle Details:</strong></p>
-                    <ul style="list-style: none; padding-left: 0;">
-                        <li>🚗 <strong>Brand:</strong> {car_brand}</li>
-                        <li>🔢 <strong>License Plate:</strong> {license_plate if license_plate else 'Not provided'}</li>
-                        <li>🆔 <strong>VIN:</strong> {vin}</li>
-                    </ul>
-                    
-                    <p><strong>Damage Description:</strong><br>{damage_description}</p>
-                    
-                    {images_html}
-                    
-                    <p>Could you please provide me with:</p>
-                    <ul>
-                        <li>An estimated cost for the repair</li>
-                        <li>How long the repair would take</li>
-                    </ul>
-                    
-                    <p>Just reply to this email with your quote whenever you get a chance. I appreciate your help!</p>
-                    
-                    <p>Thanks so much,<br>Best regards</p>
-                    
-                    <p style="font-size: 12px; color: #666; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px;">
-                        <em>Ref: {request_id}</em><br>
-                        Sent via Garagefy
-                    </p>
-                </div>
+            <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+                <p>Good day,</p>
+                
+                <p>I am writing to request a repair quotation for the following vehicle:</p>
+                
+                <p style="margin: 12px 0;">
+                    <strong>Vehicle Information:</strong><br>
+                    Brand: {car_brand}<br>
+                    License Plate: {license_plate if license_plate else 'N/A'}<br>
+                    VIN: {vin}
+                </p>
+                
+                <p style="margin: 12px 0;">
+                    <strong>Damage Details:</strong><br>
+                    {damage_description}
+                </p>
+                
+                {images_html}
+                
+                <p>Please provide:</p>
+                <p style="margin-left: 20px;">
+                    1. Estimated repair cost<br>
+                    2. Expected repair duration
+                </p>
+                
+                <p>Please reply to this email with your quotation at your earliest convenience.</p>
+                
+                <p>Thank you for your time and assistance.</p>
+                
+                <p>Best regards</p>
+                
+                <p style="font-size: 11px; color: #888; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd;">
+                    Reference: {request_id}
+                </p>
             </body>
             </html>
             """

@@ -131,7 +131,7 @@ class EmailService:
             # Get access token first
             access_token = self._ensure_token()
             
-            # Prepare the email message
+            # Prepare the email message with professional sender name
             message = {
                 "message": {
                     "subject": subject,
@@ -139,7 +139,14 @@ class EmailService:
                         "contentType": "HTML",
                         "content": html_content
                     },
-                    "toRecipients": [{"emailAddress": {"address": email}} for email in to_emails]
+                    "from": {
+                        "emailAddress": {
+                            "address": self.user_email,
+                            "name": "Garagefy"
+                        }
+                    },
+                    "toRecipients": [{"emailAddress": {"address": email}} for email in to_emails],
+                    "importance": "normal"
                 },
                 "saveToSentItems": "true"
             }
