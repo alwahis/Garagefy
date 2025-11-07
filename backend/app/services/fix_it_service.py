@@ -18,6 +18,7 @@ class FixItService:
         request_id: str,
         car_brand: str,
         vin: str,
+        license_plate: str,
         damage_notes: str,
         image_urls: List[str]
     ) -> Dict[str, Any]:
@@ -28,6 +29,7 @@ class FixItService:
             request_id: Unique identifier for this request
             car_brand: Car brand
             vin: Vehicle Identification Number
+            license_plate: Vehicle license plate number
             damage_notes: Notes describing the damage
             image_urls: List of Cloudinary URLs for damage photos
             
@@ -59,6 +61,7 @@ class FixItService:
                         request_id=request_id,
                         car_brand=car_brand,
                         vin=vin,
+                        license_plate=license_plate,
                         damage_notes=damage_notes,
                         image_urls=image_urls
                     )
@@ -97,17 +100,19 @@ class FixItService:
         request_id: str,
         car_brand: str,
         vin: str,
+        license_plate: str,
         damage_notes: str,
         image_urls: List[str]
     ) -> bool:
         """
-        Send a quote request email to a single garage in French
+        Send a quote request email to a single garage in English
         
         Args:
             garage: Garage information dict
             request_id: Unique request identifier
             car_brand: Car brand
             vin: Vehicle Identification Number
+            license_plate: Vehicle license plate number
             damage_notes: Description of damage
             image_urls: List of image URLs
             
@@ -115,89 +120,55 @@ class FixItService:
             bool: True if email sent successfully
         """
         try:
-            # Calculate response deadline (2 business days)
-            deadline = self._calculate_business_days_deadline(2)
-            
-            # Build French email content
-            subject = f"🚗 Demande de devis - {car_brand} (Ref: {request_id})"
+            # Professional subject line with VIN for legitimacy and tracking
+            subject = f"Repair Quote Request - VIN: {vin}"
             
             # Build embedded image section
             images_html = ""
             if image_urls:
-                images_html = '<div style="margin: 20px 0;"><h3 style="color: #0078D4; margin-bottom: 15px;">📸 Photos des dommages:</h3>'
+                images_html = '<p style="margin: 15px 0;"><strong>Damage Photos:</strong></p>'
                 for i, url in enumerate(image_urls, 1):
-                    images_html += f'''
-                    <div style="margin-bottom: 15px;">
-                        <img src="{url}" alt="Dommage photo {i}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
-                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Photo {i}</p>
-                    </div>
-                    '''
-                images_html += "</div>"
+                    images_html += f'<p style="margin: 8px 0;"><a href="{url}" style="color: #0066cc; text-decoration: none;">View Photo {i}</a></p>'
+            
+            # Build damage description
+            damage_description = damage_notes if damage_notes else "See attached photos"
             
             html_content = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; padding: 20px;">
-                <div style="max-width: 650px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    
-                    <!-- Header -->
-                    <div style="background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%); padding: 30px 20px; text-align: center;">
-                        <h1 style="color: #0078D4; margin: 0; font-size: 28px; font-weight: bold;">Garagefy</h1>
-                        <p style="color: #1A202C; margin: 10px 0 0 0; font-size: 16px;">Nouvelle demande de devis</p>
-                    </div>
-                    
-                    <div style="padding: 30px 20px;">
-                        <p style="font-size: 16px; margin-bottom: 20px;">Bonjour <strong>{garage['name']}</strong>,</p>
-                        
-                        <!-- Vehicle Info Box -->
-                        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; border-left: 4px solid #0078D4; margin: 20px 0;">
-                            <h3 style="color: #0078D4; margin-top: 0;">📋 Informations du véhicule</h3>
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <tr>
-                                    <td style="padding: 8px 0; font-weight: bold; width: 140px;">Marque:</td>
-                                    <td style="padding: 8px 0;">{car_brand}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px 0; font-weight: bold;">VIN:</td>
-                                    <td style="padding: 8px 0; font-family: monospace; font-size: 14px;">{vin}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Description:</td>
-                                    <td style="padding: 8px 0;">{damage_notes if damage_notes else "Non spécifié"}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px 0; font-weight: bold;">Référence:</td>
-                                    <td style="padding: 8px 0;"><code style="background: #e2e8f0; padding: 4px 8px; border-radius: 4px;">{request_id}</code></td>
-                                </tr>
-                            </table>
-                        </div>
-                        
-                        {images_html}
-                        
-                        <!-- Deadline Box -->
-                        <div style="background-color: #FFF5E1; padding: 20px; border-radius: 8px; border-left: 4px solid #F59E0B; margin: 20px 0;">
-                            <p style="margin: 0; font-size: 16px;"><strong>⏰ Répondre avant le:</strong> <span style="color: #C05621; font-weight: bold;">{deadline.strftime('%d/%m/%Y à %H:%M')}</span></p>
-                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Délai: 2 jours ouvrables</p>
-                        </div>
-                        
-                        <!-- Action Required -->
-                        <div style="background-color: #0078D4; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h3 style="margin-top: 0; color: white;">💼 Répondez simplement à cet email avec:</h3>
-                            <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.8;">
-                                <li style="margin: 8px 0;"><strong>Coût de réparation:</strong> Prix total estimé</li>
-                                <li style="margin: 8px 0;"><strong>Délai nécessaire:</strong> Temps pour effectuer la réparation</li>
-                                <li style="margin: 8px 0;"><strong>Notes:</strong> (optionnel) Toute clarification nécessaire</li>
-                            </ul>
-                        </div>
-                        
-                        <p style="margin-top: 30px; color: #666; font-size: 14px;">Cordialement,<br><strong>L'équipe Garagefy</strong></p>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div style="background-color: #f7fafc; padding: 20px; text-align: center; font-size: 12px; color: #718096;">
-                        <p style="margin: 0;">📧 Répondez directement à cet email avec votre devis</p>
-                        <p style="margin: 10px 0 0 0;">Garagefy - Plateforme de comparaison de devis carrosserie</p>
-                    </div>
-                </div>
+            <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+                <p>Good day,</p>
+                
+                <p>I am writing to request a repair quotation for the following vehicle:</p>
+                
+                <p style="margin: 12px 0;">
+                    <strong>Vehicle Information:</strong><br>
+                    Brand: {car_brand}<br>
+                    License Plate: {license_plate if license_plate else 'N/A'}<br>
+                    VIN: {vin}
+                </p>
+                
+                <p style="margin: 12px 0;">
+                    <strong>Damage Details:</strong><br>
+                    {damage_description}
+                </p>
+                
+                {images_html}
+                
+                <p>Please provide:</p>
+                <p style="margin-left: 20px;">
+                    1. Estimated repair cost<br>
+                    2. Expected repair duration
+                </p>
+                
+                <p>Please reply to this email with your quotation at your earliest convenience.</p>
+                
+                <p>Thank you for your time and assistance.</p>
+                
+                <p>Best regards</p>
+                
+                <p style="font-size: 11px; color: #888; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd;">
+                    Reference: {request_id}
+                </p>
             </body>
             </html>
             """
