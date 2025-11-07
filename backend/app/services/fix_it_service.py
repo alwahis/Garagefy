@@ -139,51 +139,96 @@ class FixItService:
             # Build damage description
             damage_description = damage_notes if damage_notes else "See attached photos"
             
+            # Create plain text version for better deliverability
+            plain_text = f"""
+Good day,
+
+I am writing to request a repair quotation for the following vehicle:
+
+Vehicle Information:
+Brand: {car_brand}
+License Plate: {license_plate if license_plate else 'N/A'}
+VIN: {vin}
+
+Damage Details:
+{damage_description}
+
+{"Damage Photos: " + ", ".join([url for url in image_urls]) if image_urls else ""}
+
+Please provide:
+1. Estimated repair cost
+2. Expected repair duration
+
+Please reply to this email with your quotation at your earliest convenience.
+
+Thank you for your time and assistance.
+
+Best regards,
+Garagefy Quote Service
+
+Reference: {request_id}
+            """
+            
             html_content = f"""
             <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
                 <p>Good day,</p>
                 
                 <p>I am writing to request a repair quotation for the following vehicle:</p>
                 
-                <p style="margin: 12px 0;">
-                    <strong>Vehicle Information:</strong><br>
-                    Brand: {car_brand}<br>
-                    License Plate: {license_plate if license_plate else 'N/A'}<br>
-                    VIN: {vin}
-                </p>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold; width: 150px;">Vehicle Brand:</td>
+                        <td style="padding: 8px;">{car_brand}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">License Plate:</td>
+                        <td style="padding: 8px;">{license_plate if license_plate else 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">VIN:</td>
+                        <td style="padding: 8px;">{vin}</td>
+                    </tr>
+                </table>
                 
-                <p style="margin: 12px 0;">
+                <p style="margin: 15px 0;">
                     <strong>Damage Details:</strong><br>
                     {damage_description}
                 </p>
                 
                 {images_html}
                 
-                <p>Please provide:</p>
-                <p style="margin-left: 20px;">
-                    1. Estimated repair cost<br>
-                    2. Expected repair duration
-                </p>
+                <p><strong>Please provide:</strong></p>
+                <ol style="margin: 10px 0; padding-left: 20px;">
+                    <li>Estimated repair cost</li>
+                    <li>Expected repair duration</li>
+                </ol>
                 
                 <p>Please reply to this email with your quotation at your earliest convenience.</p>
                 
                 <p>Thank you for your time and assistance.</p>
                 
-                <p>Best regards</p>
+                <p>Best regards,<br>
+                <strong>Garagefy Quote Service</strong></p>
                 
-                <p style="font-size: 11px; color: #888; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd;">
-                    Reference: {request_id}
-                </p>
+                <div style="font-size: 11px; color: #888; margin-top: 25px; padding-top: 15px; border-top: 1px solid #ddd;">
+                    <p>Reference ID: {request_id}</p>
+                    <p>This is an automated quote request. Please reply directly to this email.</p>
+                </div>
             </body>
             </html>
             """
             
-            # Send the email
+            # Send the email with both HTML and plain text versions
             success = await self.email_service.send_email(
                 to_emails=[garage['email']],
                 subject=subject,
-                html_content=html_content
+                html_content=html_content,
+                text_content=plain_text
             )
             
             return success
