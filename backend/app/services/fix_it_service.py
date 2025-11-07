@@ -129,12 +129,18 @@ class FixItService:
             # Professional subject line with VIN for legitimacy and tracking
             subject = f"Repair Quote Request - VIN: {vin}"
             
-            # Build embedded image section
+            # Build embedded image section - show images directly in email
             images_html = ""
             if image_urls:
-                images_html = '<p style="margin: 15px 0;"><strong>Damage Photos:</strong></p>'
+                images_html = '<div style="margin: 20px 0;"><p style="margin-bottom: 10px;"><strong>Damage Photos:</strong></p>'
                 for i, url in enumerate(image_urls, 1):
-                    images_html += f'<p style="margin: 8px 0;"><a href="{url}" style="color: #0066cc; text-decoration: none;">View Photo {i}</a></p>'
+                    images_html += f'''
+                    <div style="margin: 15px 0;">
+                        <p style="margin: 5px 0; font-size: 14px; color: #666;">Photo {i}:</p>
+                        <img src="{url}" alt="Damage Photo {i}" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; display: block; margin-top: 5px;" />
+                    </div>
+                    '''
+                images_html += '</div>'
             
             # Build damage description
             damage_description = damage_notes if damage_notes else "See attached photos"
