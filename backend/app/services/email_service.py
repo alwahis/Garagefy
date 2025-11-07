@@ -131,7 +131,7 @@ class EmailService:
             # Get access token first
             access_token = self._ensure_token()
             
-            # Prepare the email message with professional sender name
+            # Prepare the email message with professional sender name and anti-spam headers
             message = {
                 "message": {
                     "subject": subject,
@@ -142,11 +142,29 @@ class EmailService:
                     "from": {
                         "emailAddress": {
                             "address": self.user_email,
-                            "name": "Garagefy"
+                            "name": "Garagefy Quote Service"
                         }
                     },
+                    "replyTo": [
+                        {
+                            "emailAddress": {
+                                "address": self.user_email,
+                                "name": "Garagefy"
+                            }
+                        }
+                    ],
                     "toRecipients": [{"emailAddress": {"address": email}} for email in to_emails],
-                    "importance": "normal"
+                    "importance": "normal",
+                    "internetMessageHeaders": [
+                        {
+                            "name": "X-Auto-Response-Suppress",
+                            "value": "OOF, AutoReply"
+                        },
+                        {
+                            "name": "X-Entity-ID",
+                            "value": "garagefy-quote-request"
+                        }
+                    ]
                 },
                 "saveToSentItems": "true"
             }
