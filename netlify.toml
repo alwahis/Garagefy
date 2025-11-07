@@ -1,3 +1,4 @@
+# Netlify build configuration for Garagefy React app
 [build]
   base = "frontend"
   command = "npm install && npm run build"
