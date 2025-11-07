@@ -17,6 +17,7 @@ async def _process_service_request(
     phone: str,
     car_brand: str,
     vin: str,
+    license_plate: str,
     notes: str,
     images: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
@@ -64,6 +65,7 @@ async def _process_service_request(
                 'phone': phone,
                 'car_brand': car_brand,
                 'VIN': vin,
+                'Plate Number': license_plate,
                 'Note': notes,
                 'Image': image_urls if image_urls else None
             })
@@ -118,6 +120,7 @@ def _send_notifications(
     request_id: str,
     car_brand: str,
     vin: str,
+    license_plate: str,
     notes: str,
     image_urls: List[str]
 ):
@@ -146,6 +149,7 @@ def _send_notifications(
                     request_id=request_id,
                     car_brand=car_brand,
                     vin=vin,
+                    license_plate=license_plate,
                     damage_notes=notes,
                     image_urls=image_urls
                 )
@@ -206,6 +210,7 @@ async def create_service_request(
     phone: str = Form(""),
     carBrand: str = Form(...),
     vin: str = Form(...),
+    licensePlate: str = Form(""),
     notes: str = Form(""),
     requestId: str = Form(""),
     images: List[UploadFile] = File([])
@@ -308,6 +313,7 @@ async def create_service_request(
                 phone=phone,
                 car_brand=carBrand,
                 vin=vin,
+                license_plate=licensePlate,
                 notes=notes,
                 images=image_data
             )
@@ -327,6 +333,7 @@ async def create_service_request(
                     request_id=requestId,
                     car_brand=carBrand,
                     vin=vin,
+                    license_plate=licensePlate,
                     damage_notes=notes,
                     image_urls=image_urls
                 )
