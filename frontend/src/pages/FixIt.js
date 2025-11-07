@@ -258,6 +258,7 @@ const FixIt = () => {
       formDataToSend.append('phone', formData.phone || '');
       formDataToSend.append('carBrand', formData.carBrand);
       formDataToSend.append('vin', formData.vin.toUpperCase());
+      formDataToSend.append('licensePlate', formData.plateNumber);
       formDataToSend.append('notes', formData.notes || '');
       formDataToSend.append('requestId', requestIdRef.current);
 
@@ -271,6 +272,7 @@ const FixIt = () => {
         email: formData.email,
         phone: formData.phone,
         vin: formData.vin,
+        plateNumber: formData.plateNumber,
         notes: formData.notes,
         imagesCount: formData.images.length
       });
