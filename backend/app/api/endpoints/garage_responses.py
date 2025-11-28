@@ -3,7 +3,7 @@ from typing import Dict, Any
 from datetime import datetime
 import logging
 
-from ...services.airtable_service import airtable_service
+from ...services.baserow_service import baserow_service as airtable_service
 from ...models.garage_response import GarageResponse
 
 router = APIRouter(prefix="/api/garage-responses", tags=["garage-responses"])
@@ -33,7 +33,7 @@ async def record_garage_response(response: GarageResponse) -> Dict[str, Any]:
             'response_date': datetime.utcnow().isoformat()
         }
         
-        # Record the response in Airtable
+        # Record the response in Baserow
         result = airtable_service.record_garage_response(response_data)
         
         if not result.get('success'):
@@ -63,9 +63,8 @@ async def get_garage_responses(request_id: str) -> Dict[str, Any]:
     Get all garage responses for a specific service request
     """
     try:
-        # Get responses from Airtable
-        formula = f"{{Request ID}} = '{request_id}'"
-        responses = airtable_service.get_records('Received', formula=formula)
+        # Get responses from Baserow
+        responses = airtable_service.get_records('Recevied email')
         
         return {
             'success': True,

@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from datetime import datetime, timedelta, timezone
-from .airtable_service import airtable_service
+from .baserow_service import baserow_service as airtable_service
 from .email_service import email_service
 
 logger = logging.getLogger(__name__)

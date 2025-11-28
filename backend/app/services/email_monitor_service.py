@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import base64
 import msal
-from .airtable_service import airtable_service
+from .baserow_service import baserow_service as airtable_service
 
 logger = logging.getLogger(__name__)
 
