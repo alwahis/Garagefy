@@ -160,6 +160,12 @@ class BaserowService:
             self.logger.info(f"🔍 DEBUG: Customer details table ID: {table_id}")
             self.logger.info(f"🔍 DEBUG: All table IDs: {self.table_ids}")
             
+            # Validate table ID
+            if not table_id or table_id == 0:
+                error_msg = f"Invalid Customer details table ID: {table_id}. Check BASEROW_TABLE_CUSTOMER_DETAILS env var"
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg, 'record_id': None}
+            
             # Validate required fields
             if not data.get('Name') or not data.get('Email'):
                 error_msg = "Name and Email are required"
