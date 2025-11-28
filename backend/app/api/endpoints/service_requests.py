@@ -5,7 +5,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from ...services.airtable_service import airtable_service
+from ...services.baserow_service import baserow_service as airtable_service
 from ...services.fix_it_service import fix_it_service
 
 router = APIRouter()
@@ -58,7 +58,7 @@ async def _process_service_request(
         
         # Process the form data and create the service request
         try:
-            # Use the correct method to create a customer record in Airtable
+            # Use the correct method to create a customer record in Baserow
             result = airtable_service.create_customer({
                 'Name': name,
                 'Email': email,
@@ -71,7 +71,7 @@ async def _process_service_request(
             })
 
             if not result or 'success' not in result:
-                error_msg = "Invalid response from Airtable service"
+                error_msg = "Invalid response from Baserow service"
                 logger.error(error_msg)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
