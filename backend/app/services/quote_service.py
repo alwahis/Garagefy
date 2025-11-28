@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, status
 
 from ..models.quote import Quote, QuoteCreate, QuoteUpdate, QuoteSummary, QuoteStatus
-from .airtable_service import airtable_service
+from .baserow_service import baserow_service as airtable_service
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +22,14 @@ class QuoteService:
         try:
             # Create quote record
             quote_data = quote.dict()
-            quote_data['id'] = f"quote_{datetime.utcnow().timestamp()}"
             quote_data['created_at'] = datetime.utcnow().isoformat()
             quote_data['updated_at'] = datetime.utcnow().isoformat()
             
-            # Save to Airtable
+            # Save to Baserow via the Airtable-compatible wrapper
             record = self.airtable.create_record(self.QUOTE_TABLE, quote_data)
+            fields = record.get('fields', {}) or {}
+            # Expose the Baserow row ID as the quote ID in API responses
+            fields['id'] = str(record.get('id')) if record.get('id') is not None else fields.get('id')
             
             # Update service request with new quote count
             self._update_service_request_quote_count(quote.request_id)
@@ -35,7 +37,7 @@ class QuoteService:
             # Check if we should send quote summary
             await self._check_and_send_quote_summary(quote.request_id)
             
-            return Quote(**record['fields'])
+            return Quote(**fields)
             
         except Exception as e:
             logger.error(f"Error creating quote: {str(e)}")
@@ -47,10 +49,12 @@ class QuoteService:
     def get_quote(self, quote_id: str) -> Optional[Quote]:
         """Get a quote by ID"""
         try:
-            record = self.airtable.get_record(self.QUOTE_TABLE, quote_id)
+            record = self.airtable.get_record(self.QUOTE_TABLE, int(quote_id))
             if not record:
                 return None
-            return Quote(**record['fields'])
+            fields = record.get('fields', {}) or {}
+            fields['id'] = str(record.get('id')) if record.get('id') is not None else fields.get('id')
+            return Quote(**fields)
         except Exception as e:
             logger.error(f"Error getting quote {quote_id}: {str(e)}")
             return None
@@ -60,7 +64,12 @@ class QuoteService:
         try:
             formula = f"{{Request ID}} = '{request_id}'"
             records = self.airtable.get_records(self.QUOTE_TABLE, formula=formula)
-            return [Quote(**record['fields']) for record in records]
+            quotes: List[Quote] = []
+            for record in records:
+                fields = record.get('fields', {}) or {}
+                fields['id'] = str(record.get('id')) if record.get('id') is not None else fields.get('id')
+                quotes.append(Quote(**fields))
+            return quotes
         except Exception as e:
             logger.error(f"Error getting quotes for request {request_id}: {str(e)}")
             return []
@@ -77,21 +86,23 @@ class QuoteService:
             update_dict = update_data.dict(exclude_unset=True)
             update_dict['updated_at'] = datetime.utcnow().isoformat()
             
-            # Update in Airtable
+            # Update in Baserow via the Airtable-compatible wrapper
             updated = self.airtable.update_record(
-                self.QUOTE_TABLE, 
-                quote_id, 
+                self.QUOTE_TABLE,
+                int(quote_id),
                 update_dict
             )
-            
-            if not updated:
+
+            if not updated or not updated.get('fields'):
                 return None
                 
             # If status changed to accepted/rejected, check for summary
             if 'status' in update_dict and update_dict['status'] in [QuoteStatus.ACCEPTED, QuoteStatus.REJECTED]:
                 self._check_and_send_quote_summary(existing.request_id)
-                
-            return Quote(**updated['fields'])
+
+            fields = updated.get('fields', {}) or {}
+            fields['id'] = str(updated.get('id')) if updated.get('id') is not None else fields.get('id')
+            return Quote(**fields)
             
         except Exception as e:
             logger.error(f"Error updating quote {quote_id}: {str(e)}")
