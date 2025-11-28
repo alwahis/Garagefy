@@ -157,6 +157,8 @@ class BaserowService:
         """
         try:
             table_id = self.table_ids['Customer details']
+            self.logger.info(f"🔍 DEBUG: Customer details table ID: {table_id}")
+            self.logger.info(f"🔍 DEBUG: All table IDs: {self.table_ids}")
             
             # Validate required fields
             if not data.get('Name') or not data.get('Email'):
@@ -206,9 +208,12 @@ class BaserowService:
                     payload['Image'] = [data['Image']]
             
             self.logger.info(f"Creating customer record for {data.get('Email')}")
+            self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
             
             endpoint = f'/api/database/rows/table/{table_id}/'
+            self.logger.info(f"🔍 DEBUG: Endpoint: {endpoint}")
             response = self._make_request('POST', endpoint, data=payload)
+            self.logger.info(f"🔍 DEBUG: Response: {json.dumps(response, indent=2)}")
             
             record_id = response.get('id')
             self.logger.info(f"✅ Created customer record: {record_id}")
