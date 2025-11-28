@@ -173,10 +173,18 @@ class BaserowService:
                 return {'success': False, 'error': error_msg, 'record_id': None}
             
             # Prepare payload with flexible field mapping
-            payload = {
-                'Name': (data.get('Name') or '').strip(),
-                'Email': (data.get('Email') or '').strip(),
-            }
+            # Baserow API accepts field names (not IDs) in the request body
+            payload = {}
+            
+            # Name (required)
+            name_value = (data.get('Name') or '').strip()
+            if name_value:
+                payload['Name'] = name_value
+            
+            # Email (required)
+            email_value = (data.get('Email') or '').strip()
+            if email_value:
+                payload['Email'] = email_value
 
             # VIN
             vin_value = data.get('VIN')
@@ -193,9 +201,10 @@ class BaserowService:
             if brand_value:
                 payload['Brand'] = str(brand_value).strip()
 
-            # Plate number
-            plate_value = data.get('Plate Number')
+            # Plate number - try multiple field name variations
+            plate_value = data.get('Plate Number') or data.get('License Plate') or data.get('license_plate')
             if plate_value:
+                # Try 'Plate Number' first, then 'License Plate'
                 payload['Plate Number'] = str(plate_value).strip()
 
             # Notes can come as 'Notes', 'Note', or 'notes'
@@ -215,11 +224,14 @@ class BaserowService:
             
             self.logger.info(f"Creating customer record for {data.get('Email')}")
             self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
+            self.logger.info(f"🔍 DEBUG: Payload keys: {list(payload.keys())}")
             
             endpoint = f'/api/database/rows/table/{table_id}/'
             self.logger.info(f"🔍 DEBUG: Endpoint: {endpoint}")
+            self.logger.info(f"🔍 DEBUG: API Token present: {bool(self.api_token)}")
             response = self._make_request('POST', endpoint, data=payload)
             self.logger.info(f"🔍 DEBUG: Response: {json.dumps(response, indent=2)}")
+            self.logger.info(f"🔍 DEBUG: Response keys: {list(response.keys()) if response else 'None'}")
             
             record_id = response.get('id')
             self.logger.info(f"✅ Created customer record: {record_id}")
