@@ -135,15 +135,19 @@ def _send_notifications(
     import asyncio
     
     logger.info(f"⚡ BACKGROUND TASK STARTED - Preparing to send quote requests for request ID: {request_id}")
+    logger.info(f"🔍 DEBUG: fix_it_service type: {type(fix_it_service)}")
+    logger.info(f"🔍 DEBUG: fix_it_service has send_quote_requests: {hasattr(fix_it_service, 'send_quote_requests')}")
     
     try:
         logger.info(f"📧 Sending quote requests to garages for VIN: {vin}")
+        logger.info(f"🔍 DEBUG: Image URLs: {image_urls}")
         
         # Create a new event loop for this background task
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         try:
+            logger.info(f"🔍 DEBUG: About to call fix_it_service.send_quote_requests()")
             result = loop.run_until_complete(
                 fix_it_service.send_quote_requests(
                     request_id=request_id,
@@ -154,6 +158,7 @@ def _send_notifications(
                     image_urls=image_urls
                 )
             )
+            logger.info(f"🔍 DEBUG: Result from send_quote_requests: {result}")
             
             if result.get('success'):
                 logger.info(f"✅ BACKGROUND TASK SUCCESS - Sent quote requests to {result.get('garages_contacted', 0)} garages")

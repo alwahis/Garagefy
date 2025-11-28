@@ -40,8 +40,11 @@ class FixItService:
             import asyncio
             
             # Get all garages from Fix it table
-            logger.info("⚡ Fetching garages from Airtable 'Fix it' table...")
+            logger.info("⚡ Fetching garages from Baserow 'Fix it' table...")
+            logger.info(f"🔍 DEBUG: self.airtable type: {type(self.airtable)}")
+            logger.info(f"🔍 DEBUG: self.airtable has get_fix_it_garages: {hasattr(self.airtable, 'get_fix_it_garages')}")
             garages = self.airtable.get_fix_it_garages()
+            logger.info(f"🔍 DEBUG: Garages returned: {garages}")
             
             if not garages:
                 logger.error("❌ NO GARAGES FOUND IN FIX IT TABLE!")
