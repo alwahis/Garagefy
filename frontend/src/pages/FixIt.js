@@ -41,6 +41,7 @@ const FixIt = () => {
     phone: '',
     carBrand: '',
     vin: '',
+    plateNumber: '',
     notes: '',
     images: [],
     consent: false
@@ -75,6 +76,7 @@ const FixIt = () => {
       phone: '',
       carBrand: '',
       vin: '',
+      plateNumber: '',
       notes: '',
       images: [],
       consent: false
@@ -179,6 +181,10 @@ const FixIt = () => {
       errors.push('VIN must be 17 alphanumeric characters (excluding I, O, Q)');
     }
     
+    if (!formData.plateNumber.trim()) {
+      errors.push('License plate number is required');
+    }
+    
     if (formData.images.length === 0) {
       errors.push('At least 1 damage photo is required');
     }
@@ -252,6 +258,7 @@ const FixIt = () => {
       formDataToSend.append('phone', formData.phone || '');
       formDataToSend.append('carBrand', formData.carBrand);
       formDataToSend.append('vin', formData.vin.toUpperCase());
+      formDataToSend.append('licensePlate', formData.plateNumber);
       formDataToSend.append('notes', formData.notes || '');
       formDataToSend.append('requestId', requestIdRef.current);
 
@@ -265,6 +272,7 @@ const FixIt = () => {
         email: formData.email,
         phone: formData.phone,
         vin: formData.vin,
+        plateNumber: formData.plateNumber,
         notes: formData.notes,
         imagesCount: formData.images.length
       });
@@ -495,6 +503,24 @@ const FixIt = () => {
                     onChange={handleChange}
                     placeholder={t('fixItPhonePlaceholder')}
                     pl={10}
+                  />
+                </InputGroup>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>License Plate Number</FormLabel>
+                <InputGroup>
+                  <InputLeftElement pointerEvents="none">
+                    <Icon as={FaCar} color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    type="text"
+                    name="plateNumber"
+                    value={formData.plateNumber}
+                    onChange={handleChange}
+                    placeholder="e.g., AB123CD"
+                    pl={10}
+                    maxLength="15"
                   />
                 </InputGroup>
               </FormControl>

@@ -5,7 +5,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from ...services.airtable_service import airtable_service
+from ...services.baserow_service import baserow_service as airtable_service
 from ...services.fix_it_service import fix_it_service
 
 router = APIRouter()
@@ -17,6 +17,7 @@ async def _process_service_request(
     phone: str,
     car_brand: str,
     vin: str,
+    license_plate: str,
     notes: str,
     images: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
@@ -57,19 +58,20 @@ async def _process_service_request(
         
         # Process the form data and create the service request
         try:
-            # Use the correct method to create a customer record in Airtable
+            # Use the correct method to create a customer record in Baserow
             result = airtable_service.create_customer({
                 'Name': name,
                 'Email': email,
                 'phone': phone,
                 'car_brand': car_brand,
                 'VIN': vin,
+                'Plate Number': license_plate,
                 'Note': notes,
                 'Image': image_urls if image_urls else None
             })
 
             if not result or 'success' not in result:
-                error_msg = "Invalid response from Airtable service"
+                error_msg = "Invalid response from Baserow service"
                 logger.error(error_msg)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -118,6 +120,7 @@ def _send_notifications(
     request_id: str,
     car_brand: str,
     vin: str,
+    license_plate: str,
     notes: str,
     image_urls: List[str]
 ):
@@ -132,24 +135,30 @@ def _send_notifications(
     import asyncio
     
     logger.info(f"⚡ BACKGROUND TASK STARTED - Preparing to send quote requests for request ID: {request_id}")
+    logger.info(f"🔍 DEBUG: fix_it_service type: {type(fix_it_service)}")
+    logger.info(f"🔍 DEBUG: fix_it_service has send_quote_requests: {hasattr(fix_it_service, 'send_quote_requests')}")
     
     try:
         logger.info(f"📧 Sending quote requests to garages for VIN: {vin}")
+        logger.info(f"🔍 DEBUG: Image URLs: {image_urls}")
         
         # Create a new event loop for this background task
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         try:
+            logger.info(f"🔍 DEBUG: About to call fix_it_service.send_quote_requests()")
             result = loop.run_until_complete(
                 fix_it_service.send_quote_requests(
                     request_id=request_id,
                     car_brand=car_brand,
                     vin=vin,
+                    license_plate=license_plate,
                     damage_notes=notes,
                     image_urls=image_urls
                 )
             )
+            logger.info(f"🔍 DEBUG: Result from send_quote_requests: {result}")
             
             if result.get('success'):
                 logger.info(f"✅ BACKGROUND TASK SUCCESS - Sent quote requests to {result.get('garages_contacted', 0)} garages")
@@ -206,6 +215,7 @@ async def create_service_request(
     phone: str = Form(""),
     carBrand: str = Form(...),
     vin: str = Form(...),
+    licensePlate: str = Form(""),
     notes: str = Form(""),
     requestId: str = Form(""),
     images: List[UploadFile] = File([])
@@ -308,6 +318,7 @@ async def create_service_request(
                 phone=phone,
                 car_brand=carBrand,
                 vin=vin,
+                license_plate=licensePlate,
                 notes=notes,
                 images=image_data
             )
@@ -319,25 +330,19 @@ async def create_service_request(
             
             logger.info(f"🔵 DEBUG: Extracted {len(image_urls)} image URLs")
             
-            # Send quote requests to garages IMMEDIATELY (not in background)
-            # This ensures emails are sent even on Render free tier
-            logger.info(f"📧 Sending quote requests to garages for VIN: {vin}")
-            try:
-                email_result = await fix_it_service.send_quote_requests(
-                    request_id=requestId,
-                    car_brand=carBrand,
-                    vin=vin,
-                    damage_notes=notes,
-                    image_urls=image_urls
-                )
-                
-                if email_result.get('success'):
-                    logger.info(f"✅ Sent quote requests to {email_result.get('garages_contacted', 0)} garages")
-                else:
-                    logger.error(f"❌ Failed to send quote requests: {email_result.get('error', 'Unknown error')}")
-            except Exception as email_error:
-                logger.error(f"❌ Error sending quote requests: {str(email_error)}", exc_info=True)
-                # Don't fail the whole request if email sending fails
+            # Send quote requests to garages in BACKGROUND TASK
+            # This prevents timeout when sending to 50+ garages
+            logger.info(f"📧 Scheduling background task to send quote requests for VIN: {vin}")
+            background_tasks.add_task(
+                _send_notifications,
+                request_id=requestId,
+                car_brand=carBrand,
+                vin=vin,
+                license_plate=licensePlate,
+                notes=notes,
+                image_urls=image_urls
+            )
+            logger.info(f"✅ Background task scheduled - API will respond immediately")
             
             # Log success
             logger.info(f"Successfully processed request from {email}")

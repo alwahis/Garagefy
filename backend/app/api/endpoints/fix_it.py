@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 @router.post("/fix-it/check-emails", response_model=Dict[str, Any])
 async def check_emails(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """
-    Check inbox for new emails from garages and save to Airtable
+    Check inbox for new emails from garages and save to Baserow
     
     This endpoint triggers the email monitoring service to:
     1. Connect to info@garagefy.app inbox
     2. Fetch unread emails
     3. Extract quote information
     4. Analyze attachments with DeepSeek if present
-    5. Save to 'Recevied email' table in Airtable
+    5. Save to 'Recevied email' table in Baserow
     """
     try:
         logger.info("Starting email check process")
@@ -103,3 +103,36 @@ async def get_fix_it_status() -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+@router.get("/fix-it/test-garages", response_model=Dict[str, Any])
+async def test_garages() -> Dict[str, Any]:
+    """Test endpoint to check if garages are accessible in Baserow"""
+    try:
+        from ...services.baserow_service import baserow_service as airtable_service
+        
+        logger.info("🧪 TEST: Fetching garages from Baserow...")
+        garages = airtable_service.get_fix_it_garages()
+        
+        garage_list = []
+        for garage in garages:
+            garage_list.append({
+                'name': garage.get('name'),
+                'email': garage.get('email'),
+                'has_valid_email': bool(garage.get('email') and '@' in garage.get('email'))
+            })
+        
+        return {
+            'success': True,
+            'total_garages': len(garages),
+            'garages': garage_list,
+            'message': f"Found {len(garages)} garage(s) in Fix it table"
+        }
+    except Exception as e:
+        logger.error(f"Error testing garages: {str(e)}", exc_info=True)
+        return {
+            'success': False,
+            'error': str(e),
+            'total_garages': 0,
+            'garages': [],
+            'message': 'Failed to fetch garages from Baserow'
+        }
