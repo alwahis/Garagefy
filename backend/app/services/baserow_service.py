@@ -243,30 +243,30 @@ class BaserowService:
                 # Fallback to just the date part if datetime field doesn't work
                 payload['field_6389834'] = datetime.now().isoformat()
             
-            # Handle images - field_6389835
-            # Baserow Image field expects a list of objects with 'name' and 'url' keys
+            # Handle images - field_6389835 (Image file field) and field_6389836 (Sent Emails text field)
+            # NOTE: Baserow file/image fields require file uploads, not URLs
+            # Solution: Store Cloudinary URLs in the Sent Emails text field (field_6389836)
             if data.get('Image'):
                 images = data['Image']
                 if not isinstance(images, list):
                     images = [images]
                 
-                # Convert to proper Baserow format
-                formatted_images = []
+                # Extract URLs from image data
+                image_urls = []
                 for img in images:
-                    if isinstance(img, dict):
-                        # If it's already a dict with 'url', keep it as is
-                        if 'url' in img:
-                            formatted_images.append(img)
-                        # If it's a dict with other keys, extract URL
-                        elif 'link' in img:
-                            formatted_images.append({'url': img['link']})
+                    if isinstance(img, dict) and 'url' in img:
+                        image_urls.append(img['url'])
                     elif isinstance(img, str):
-                        # If it's a string URL, wrap it
-                        formatted_images.append({'url': img})
+                        image_urls.append(img)
                 
-                if formatted_images:
-                    payload['field_6389835'] = formatted_images
-                    self.logger.info(f"🔍 DEBUG: Formatted {len(formatted_images)} images for Baserow")
+                # Store image URLs in the Sent Emails text field (field_6389836)
+                # This allows us to preserve the image URLs while avoiding file field validation errors
+                if image_urls:
+                    # Store as newline-separated URLs for better readability
+                    image_urls_str = '\n'.join(image_urls)
+                    payload['field_6389836'] = image_urls_str
+                    self.logger.info(f"🔍 DEBUG: Stored {len(image_urls)} image URLs in field_6389836")
+                    self.logger.info(f"🔍 DEBUG: Image URLs: {image_urls_str}")
             
             self.logger.info(f"Creating customer record for {data.get('Email')}")
             self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
