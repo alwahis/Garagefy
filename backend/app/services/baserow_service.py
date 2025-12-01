@@ -249,6 +249,23 @@ class BaserowService:
                 self.logger.error(error_msg)
                 return {'success': False, 'error': error_msg, 'record_id': None}
             
+            # Validate field values
+            for field_id, value in payload.items():
+                if field_id in ['field_6389828', 'field_6389830']:  # Name and Email
+                    if not value or (isinstance(value, str) and not value.strip()):
+                        error_msg = f"Empty value for required field {field_id}"
+                        self.logger.error(error_msg)
+                        return {'success': False, 'error': error_msg, 'record_id': None}
+                
+                # Check for field type issues
+                if field_id == 'field_6389835' and isinstance(value, list):  # Image field
+                    # Ensure all items are valid URLs or file objects
+                    for item in value:
+                        if not isinstance(item, str) or not item.strip():
+                            self.logger.warning(f"Invalid image URL in list: {item}")
+            
+            self.logger.info(f"🔍 DEBUG: Payload validation passed for {len(payload)} fields")
+            
             endpoint = f'/api/database/rows/table/{table_id}/'
             self.logger.info(f"🔍 DEBUG: Endpoint: {endpoint}")
             self.logger.info(f"🔍 DEBUG: API Token present: {bool(self.api_token)}")
