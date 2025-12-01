@@ -504,15 +504,26 @@ class BaserowService:
         try:
             table_id = self.table_ids['Recevied email']
             
-            # Check for duplicates
-            existing = self.get_records(
-                'Recevied email',
-                filter_dict={'field': 'VIN', 'value': vin}
-            )
+            # Validate table ID
+            if not table_id or table_id == 0:
+                error_msg = f"Invalid Recevied email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
             
-            if existing:
-                self.logger.info(f"Duplicate email detected for VIN {vin}")
-                return existing[0]
+            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
+            
+            # Check for duplicates
+            try:
+                existing = self.get_records(
+                    'Recevied email',
+                    filter_dict={'field': 'VIN', 'value': vin}
+                )
+                
+                if existing:
+                    self.logger.info(f"Duplicate email detected for VIN {vin}")
+                    return existing[0]
+            except Exception as e:
+                self.logger.warning(f"Could not check for duplicates: {str(e)}, will proceed with save")
             
             # Prepare payload using field IDs
             # Recevied email table field mappings:
@@ -542,7 +553,7 @@ class BaserowService:
             
         except Exception as e:
             self.logger.error(f"Error storing email: {str(e)}", exc_info=True)
-            raise
+            return {'success': False, 'error': str(e)}
     
     def record_garage_response(self, response_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -556,6 +567,18 @@ class BaserowService:
         """
         try:
             table_id = self.table_ids['Recevied email']
+            
+            # Validate table ID
+            if not table_id or table_id == 0:
+                error_msg = f"Invalid Recevied email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
+                self.logger.error(error_msg)
+                return {
+                    'success': False,
+                    'record': None,
+                    'error': error_msg
+                }
+            
+            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
             
             # Map response data to Baserow field IDs
             # Recevied email table field mappings:
