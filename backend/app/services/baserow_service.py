@@ -172,55 +172,65 @@ class BaserowService:
                 self.logger.error(error_msg)
                 return {'success': False, 'error': error_msg, 'record_id': None}
             
-            # Prepare payload with flexible field mapping
-            # Baserow API accepts field names (not IDs) in the request body
+            # Prepare payload with field IDs for Customer details table
+            # Customer details table field mappings:
+            # field_6389828 = Name
+            # field_6389829 = Phone
+            # field_6389830 = Email
+            # field_6389831 = VIN
+            # field_6389832 = Notes
+            # field_6389833 = Brand
+            # field_6389834 = Date and Time
+            # field_6389835 = Image
+            # field_6389836 = Sent Emails
+            # field_6389837 = Plate Number
+            
             payload = {}
             
-            # Name (required)
+            # Name (required) - field_6389828
             name_value = (data.get('Name') or '').strip()
             if name_value:
-                payload['Name'] = name_value
+                payload['field_6389828'] = name_value
             
-            # Email (required)
+            # Email (required) - field_6389830
             email_value = (data.get('Email') or '').strip()
             if email_value:
-                payload['Email'] = email_value
+                payload['field_6389830'] = email_value
 
-            # VIN
+            # VIN - field_6389831
             vin_value = data.get('VIN')
             if vin_value:
-                payload['VIN'] = str(vin_value).strip()
+                payload['field_6389831'] = str(vin_value).strip()
 
-            # Phone can come as 'Phone' or 'phone'
+            # Phone - field_6389829
             phone_value = data.get('Phone') or data.get('phone') or data.get('phone_number')
             if phone_value:
-                payload['Phone'] = str(phone_value).strip()
+                payload['field_6389829'] = str(phone_value).strip()
 
-            # Brand can come as 'Brand', 'car_brand', or 'carBrand'
+            # Brand - field_6389833
             brand_value = data.get('Brand') or data.get('car_brand') or data.get('carBrand')
             if brand_value:
-                payload['Brand'] = str(brand_value).strip()
+                payload['field_6389833'] = str(brand_value).strip()
 
-            # Plate number - try multiple field name variations
+            # Plate Number - field_6389837
             plate_value = data.get('Plate Number') or data.get('License Plate') or data.get('license_plate')
             if plate_value:
-                # Try 'Plate Number' first, then 'License Plate'
-                payload['Plate Number'] = str(plate_value).strip()
+                payload['field_6389837'] = str(plate_value).strip()
 
-            # Notes can come as 'Notes', 'Note', or 'notes'
+            # Notes - field_6389832
             notes_value = data.get('Notes') or data.get('Note') or data.get('notes')
             if notes_value:
-                payload['Notes'] = str(notes_value).strip()
+                payload['field_6389832'] = str(notes_value).strip()
             
-            # Add timestamp
-            payload['Date and Time'] = datetime.now(timezone.utc).isoformat()
+            # Date and Time - field_6389834
+            payload['field_6389834'] = datetime.now(timezone.utc).isoformat()
             
-            # Handle images (if provided as list of URLs)
+            # Handle images - field_6389835
             if data.get('Image'):
                 if isinstance(data['Image'], list):
-                    payload['Image'] = data['Image']
+                    payload['field_6389835'] = data['Image']
                 else:
-                    payload['Image'] = [data['Image']]
+                    payload['field_6389835'] = [data['Image']]
             
             self.logger.info(f"Creating customer record for {data.get('Email')}")
             self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
