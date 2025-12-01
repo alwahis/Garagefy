@@ -59,10 +59,15 @@ class BaserowService:
             if response.status_code >= 400:
                 error_msg = response.text
                 try:
-                    error_msg = response.json().get('error', error_msg)
+                    error_json = response.json()
+                    error_msg = error_json.get('error', error_msg)
+                    # Log detailed error for debugging
+                    self.logger.error(f"API Error ({response.status_code}): {error_msg}")
+                    self.logger.error(f"Full error response: {json.dumps(error_json, indent=2)}")
+                    if 'detail' in error_json:
+                        self.logger.error(f"Error details: {error_json['detail']}")
                 except:
-                    pass
-                self.logger.error(f"API Error ({response.status_code}): {error_msg}")
+                    self.logger.error(f"Raw error response: {response.text}")
                 raise Exception(f"Baserow API error: {error_msg}")
             
             return response.json() if response.text else {}
@@ -235,6 +240,14 @@ class BaserowService:
             self.logger.info(f"Creating customer record for {data.get('Email')}")
             self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
             self.logger.info(f"🔍 DEBUG: Payload keys: {list(payload.keys())}")
+            
+            # Validate payload has required fields
+            required_fields = ['field_6389828', 'field_6389830']  # Name and Email
+            missing_fields = [f for f in required_fields if f not in payload]
+            if missing_fields:
+                error_msg = f"Missing required fields in payload: {missing_fields}"
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg, 'record_id': None}
             
             endpoint = f'/api/database/rows/table/{table_id}/'
             self.logger.info(f"🔍 DEBUG: Endpoint: {endpoint}")
