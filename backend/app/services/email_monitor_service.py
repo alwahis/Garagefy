@@ -330,6 +330,7 @@ Résumer en français de manière structurée."""
                     
                     # Try to extract Request ID from subject (format: Ref: req_XXXXX)
                     request_id = self._extract_request_id_from_subject(subject)
+                    logger.info(f"🔍 DEBUG: Extracted request ID from subject: {request_id}")
                     
                     # If we have a request ID, find the VIN from Customer details table
                     vin = None
@@ -341,7 +342,9 @@ Résumer en français de manière structurée."""
                     if not vin:
                         vin = self._extract_vin_from_text(subject + " " + body)
                         if vin:
-                            logger.info(f"Extracted VIN from email text: {vin}")
+                            logger.info(f"✅ Extracted VIN from email text: {vin}")
+                        else:
+                            logger.warning(f"⚠️ Could not extract VIN from email. Subject: {subject[:100]}")
                     
                     # Note: Duplicate checking is now handled in store_received_email()
                     # which checks by VIN to avoid storing multiple responses for the same request
@@ -471,13 +474,24 @@ Résumer en français de manière structurée."""
         import re
         
         # VIN pattern: 17 alphanumeric characters excluding I, O, Q
+        # Standard VIN pattern
         vin_pattern = r'\b[A-HJ-NPR-Z0-9]{17}\b'
         
         matches = re.findall(vin_pattern, text.upper())
         
         if matches:
+            logger.debug(f"🔍 DEBUG: Found VIN matches: {matches}")
             return matches[0]
         
+        # Fallback: Look for "VIN:" followed by alphanumeric
+        vin_label_pattern = r'(?:VIN|Vin|vin)[\s:]*([A-HJ-NPR-Z0-9]{17})'
+        label_matches = re.findall(vin_label_pattern, text.upper())
+        
+        if label_matches:
+            logger.debug(f"🔍 DEBUG: Found VIN via label pattern: {label_matches}")
+            return label_matches[0]
+        
+        logger.debug(f"🔍 DEBUG: No VIN found in text")
         return None
 
 # Singleton instance
