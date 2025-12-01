@@ -514,22 +514,30 @@ class BaserowService:
                 self.logger.info(f"Duplicate email detected for VIN {vin}")
                 return existing[0]
             
-            # Prepare payload
+            # Prepare payload using field IDs
+            # Recevied email table field mappings:
+            # field_6389838 = Email
+            # field_6389839 = Subject
+            # field_6389840 = Body
+            # field_6389841 = Received At
+            # field_6389842 = VIN
             payload = {
-                'VIN': vin or '',
-                'Email': email_data.get('from_email', '').strip().lower(),
-                'Subject': email_data.get('subject', 'No Subject'),
-                'Body': email_data.get('body', ''),
-                'Received At': email_data.get('received_at', datetime.now(timezone.utc).isoformat())
+                'field_6389842': vin or '',  # VIN
+                'field_6389838': email_data.get('from_email', '').strip().lower(),  # Email
+                'field_6389839': email_data.get('subject', 'No Subject'),  # Subject
+                'field_6389840': email_data.get('body', ''),  # Body
+                'field_6389841': email_data.get('received_at', datetime.now(timezone.utc).isoformat())  # Received At
             }
             
-            if email_data.get('quote'):
-                payload['Quote'] = email_data['quote']
+            # Remove empty values
+            payload = {k: v for k, v in payload.items() if v}
+            
+            self.logger.info(f"🔍 DEBUG: Storing email with payload: {json.dumps(payload, indent=2)}")
             
             endpoint = f'/api/database/rows/table/{table_id}/'
             response = self._make_request('POST', endpoint, data=payload)
             
-            self.logger.info(f"✅ Stored email from {payload['Email']} for VIN {vin}")
+            self.logger.info(f"✅ Stored email from {email_data.get('from_email', '')} for VIN {vin}")
             return response
             
         except Exception as e:
@@ -541,7 +549,7 @@ class BaserowService:
         Record a garage response in the 'Recevied email' table
         
         Args:
-            response_data: Dictionary with garage_name, garage_email, request_id, etc.
+            response_data: Dictionary with garage_name, garage_email, request_id, vin, subject, body, etc.
             
         Returns:
             Dict with success status
@@ -549,20 +557,31 @@ class BaserowService:
         try:
             table_id = self.table_ids['Recevied email']
             
+            # Map response data to Baserow field IDs
+            # Recevied email table field mappings:
+            # field_6389838 = Email
+            # field_6389839 = Subject
+            # field_6389840 = Body
+            # field_6389841 = Received At
+            # field_6389842 = VIN (IMPORTANT for matching responses to customers)
+            
             payload = {
-                'Email': response_data.get('garage_email', ''),
-                'Subject': f"Response from {response_data.get('garage_name', '')}",
-                'Body': response_data.get('notes', ''),
-                'Received At': response_data.get('response_date', datetime.now(timezone.utc).isoformat())
+                'field_6389838': response_data.get('garage_email', ''),  # Email
+                'field_6389839': response_data.get('subject', f"Response from {response_data.get('garage_name', '')}"),  # Subject
+                'field_6389840': response_data.get('body', ''),  # Body
+                'field_6389841': response_data.get('response_date', datetime.now(timezone.utc).isoformat()),  # Received At
+                'field_6389842': response_data.get('vin', ''),  # VIN - CRITICAL for matching
             }
             
-            # Remove None values
-            payload = {k: v for k, v in payload.items() if v is not None}
+            # Remove empty values to avoid validation errors
+            payload = {k: v for k, v in payload.items() if v}
+            
+            self.logger.info(f"🔍 DEBUG: Storing garage response with payload: {json.dumps(payload, indent=2)}")
             
             endpoint = f'/api/database/rows/table/{table_id}/'
             response = self._make_request('POST', endpoint, data=payload)
             
-            self.logger.info(f"✅ Recorded response from {response_data.get('garage_name')}")
+            self.logger.info(f"✅ Recorded response from {response_data.get('garage_email')} for VIN {response_data.get('vin')}")
             
             return {
                 'success': True,
