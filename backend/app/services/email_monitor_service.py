@@ -343,21 +343,8 @@ Résumer en français de manière structurée."""
                         if vin:
                             logger.info(f"Extracted VIN from email text: {vin}")
                     
-                    # Check if this email has already been processed
-                    # Create a unique identifier from email metadata
-                    email_identifier = f"{from_email}_{subject}_{vin}"
-                    
-                    # Check if email already exists in Airtable by searching for it
-                    try:
-                        # Escape double quotes in subject for Airtable formula
-                        escaped_subject = subject.replace('"', '\\"')
-                        existing_emails = self.airtable.get_records('Recevied email', formula=f'AND({{Email}}="{from_email}", {{Subject}}="{escaped_subject}")')
-                        
-                        if existing_emails:
-                            logger.info(f"Email from {from_email} with subject '{subject}' already exists in Airtable, skipping...")
-                            continue
-                    except Exception as check_error:
-                        logger.warning(f"Could not check for duplicate email: {str(check_error)}, will attempt to save anyway")
+                    # Note: Duplicate checking is now handled in store_received_email()
+                    # which checks by VIN to avoid storing multiple responses for the same request
                     
                     # Save to Airtable
                     email_data = {
