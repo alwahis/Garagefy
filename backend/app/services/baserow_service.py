@@ -512,16 +512,19 @@ class BaserowService:
             
             self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
             
-            # Check for duplicates
+            # Check for duplicates by VIN
             try:
-                existing = self.get_records(
-                    'Recevied email',
-                    filter_dict={'field': 'VIN', 'value': vin}
-                )
-                
-                if existing:
-                    self.logger.info(f"Duplicate email detected for VIN {vin}")
-                    return existing[0]
+                if vin:
+                    existing = self.get_records(
+                        'Recevied email',
+                        formula=f'{{VIN}} = "{vin}"'
+                    )
+                    
+                    if existing:
+                        self.logger.info(f"Duplicate email detected for VIN {vin}, skipping save")
+                        return existing[0]
+                else:
+                    self.logger.warning(f"No VIN provided, cannot check for duplicates")
             except Exception as e:
                 self.logger.warning(f"Could not check for duplicates: {str(e)}, will proceed with save")
             
