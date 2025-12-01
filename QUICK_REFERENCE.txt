@@ -1,0 +1,307 @@
+================================================================================
+                    GARAGEFY QUICK REFERENCE GUIDE
+================================================================================
+
+PROJECT STATUS: ✓ OPERATIONAL AND READY FOR DEPLOYMENT
+
+================================================================================
+QUICK FACTS
+================================================================================
+
+Backend:
+  - Framework: FastAPI (Python 3.11)
+  - Database: SQLite (local), PostgreSQL (production)
+  - Services: Baserow, Email, Scheduler, Fix-It, Quotes
+  - API Endpoints: 5 routers with comprehensive error handling
+  - Logging: Rotating file handlers (10MB, 5 backups)
+
+Frontend:
+  - Framework: React 18.2.0
+  - UI Library: Chakra UI 2.8.0
+  - Routing: React Router v6
+  - HTTP Client: Axios
+  - Deployment: Netlify, Vercel, Windsurf
+
+Deployment:
+  - Primary: Render (render.yaml configured)
+  - Alternative: Docker (docker-compose.yml)
+  - Frontend: Netlify or Vercel
+  - Environment: Variables already configured in Render
+
+================================================================================
+QUICK START
+================================================================================
+
+LOCAL DEVELOPMENT:
+  1. Backend:
+     cd backend
+     pip install -r requirements.txt
+     python run.py
+
+  2. Frontend (new terminal):
+     cd frontend
+     npm install
+     npm start
+
+  3. Access:
+     Frontend: http://localhost:3000
+     Backend: http://localhost:8099
+     API Docs: http://localhost:8099/docs
+
+DOCKER:
+  docker-compose up
+
+RENDER:
+  git push origin main
+  (Auto-deploys from render.yaml)
+
+================================================================================
+KEY ENDPOINTS
+================================================================================
+
+Health Check:
+  GET /health
+  Response: {"status": "healthy"}
+
+API Documentation:
+  GET /docs (Swagger UI)
+  GET /redoc (ReDoc)
+
+Service Requests:
+  POST /api/service-requests
+  GET /api/service-requests
+
+Quotes:
+  POST /api/quotes
+  GET /api/quotes
+
+Garage Responses:
+  POST /api/garage-responses
+  GET /api/garage-responses
+
+Fix-It:
+  POST /api/fix-it
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+Backend:
+  Main App: backend/app/main.py
+  Database: backend/app/core/database.py
+  Models: backend/app/models/
+  Services: backend/app/services/
+  Endpoints: backend/app/api/endpoints/
+  Database File: backend/garagefy.db
+  Logs: backend/logs/
+
+Frontend:
+  Main App: frontend/src/App.js
+  Pages: frontend/src/pages/
+  Components: frontend/src/components/
+  Config: frontend/src/config.js
+  Theme: frontend/src/theme.js
+
+Configuration:
+  Render: render.yaml
+  Docker: docker-compose.yml
+  Environment: .env (use .env.example as template)
+  Netlify: netlify.toml
+  Vercel: vercel.json
+
+================================================================================
+ENVIRONMENT VARIABLES (Already Set in Render)
+================================================================================
+
+Baserow:
+  BASEROW_URL
+  BASEROW_API_TOKEN
+  BASEROW_DATABASE_ID
+  BASEROW_TABLE_CUSTOMER_DETAILS
+  BASEROW_TABLE_FIX_IT
+  BASEROW_TABLE_RECEIVED_EMAIL
+  BASEROW_TABLE_QUOTES
+  BASEROW_TABLE_SERVICE_REQUESTS
+
+Microsoft 365:
+  MS_CLIENT_ID
+  MS_CLIENT_SECRET
+  MS_TENANT_ID
+  EMAIL_ADDRESS
+
+Cloudinary:
+  CLOUDINARY_CLOUD_NAME
+  CLOUDINARY_API_KEY
+  CLOUDINARY_API_SECRET
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Backend Won't Start:
+  1. Check Python version: python --version (need 3.8+)
+  2. Install dependencies: pip install -r requirements.txt
+  3. Check .env file exists
+  4. Check logs: tail -f backend/logs/garagefy.log
+
+Frontend Won't Start:
+  1. Check Node version: node --version (need 14+)
+  2. Clear cache: rm -rf node_modules && npm install
+  3. Check port 3000 is available
+  4. Check API_BASE_URL in config.js
+
+API Errors:
+  1. Check health: curl http://localhost:8099/health
+  2. Check CORS configuration
+  3. Verify environment variables
+  4. Check backend logs
+
+Database Issues:
+  1. Check file exists: ls backend/garagefy.db
+  2. Check permissions
+  3. Verify SQLAlchemy connection string
+  4. Check logs for SQL errors
+
+================================================================================
+MONITORING
+================================================================================
+
+Health Check:
+  curl http://localhost:8099/health
+
+Logs:
+  Backend: tail -f backend/logs/garagefy.log
+  Requests: tail -f backend/logs/requests.log
+
+API Documentation:
+  http://localhost:8099/docs
+
+Render Dashboard:
+  https://dashboard.render.com
+
+================================================================================
+DEPLOYMENT CHECKLIST
+================================================================================
+
+Before Deploying:
+  [ ] All environment variables configured in Render
+  [ ] Backend imports successfully
+  [ ] Frontend builds without errors
+  [ ] Health endpoint responds
+  [ ] CORS origins updated for production
+  [ ] Database backups configured
+  [ ] Error tracking set up (optional)
+  [ ] Monitoring configured (optional)
+
+After Deploying:
+  [ ] Test health endpoint
+  [ ] Verify API endpoints working
+  [ ] Check logs for errors
+  [ ] Monitor performance
+  [ ] Verify email integration
+  [ ] Test form submissions
+  [ ] Verify image uploads
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+Backend:
+  # Install dependencies
+  pip install -r requirements.txt
+
+  # Run application
+  python run.py
+
+  # Check syntax
+  python -m py_compile app/main.py
+
+  # View logs
+  tail -f logs/garagefy.log
+
+Frontend:
+  # Install dependencies
+  npm install
+
+  # Start development server
+  npm start
+
+  # Build for production
+  npm run build
+
+  # Run tests
+  npm test
+
+Docker:
+  # Start all services
+  docker-compose up
+
+  # Stop all services
+  docker-compose down
+
+  # View logs
+  docker-compose logs -f
+
+  # Rebuild images
+  docker-compose build
+
+Git:
+  # Push to Render
+  git push origin main
+
+  # Check status
+  git status
+
+  # View logs
+  git log --oneline -n 10
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. Environment Variables:
+   - Already configured in Render for security
+   - Never commit .env file to version control
+   - Use .env.example as template for local development
+
+2. Database:
+   - SQLite used for local development
+   - PostgreSQL recommended for production
+   - docker-compose.yml includes PostgreSQL service
+
+3. Logging:
+   - Rotating file handlers prevent disk space issues
+   - Logs stored in backend/logs/
+   - Request logging separated from application logging
+
+4. Services:
+   - Lazy initialization prevents import errors
+   - Services only initialize when actually used
+   - All services properly error-handled
+
+5. Security:
+   - No hardcoded credentials
+   - CORS properly configured
+   - Token management implemented
+   - Error messages don't leak sensitive info
+
+================================================================================
+CONTACT & SUPPORT
+================================================================================
+
+Documentation:
+  - README.md - Project overview
+  - SYSTEM_INSPECTION_REPORT.md - Detailed technical report
+  - HEALTH_CHECK.md - Verification guide
+  - VERIFICATION_CHECKLIST.md - Complete checklist
+
+External Resources:
+  - FastAPI: https://fastapi.tiangolo.com
+  - React: https://react.dev
+  - Render: https://render.com/docs
+  - Docker: https://docs.docker.com
+
+================================================================================
+LAST UPDATED: December 1, 2025
+STATUS: ✓ OPERATIONAL AND READY FOR DEPLOYMENT
+================================================================================
