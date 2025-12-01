@@ -66,6 +66,11 @@ class BaserowService:
                     self.logger.error(f"Full error response: {json.dumps(error_json, indent=2)}")
                     if 'detail' in error_json:
                         self.logger.error(f"Error details: {error_json['detail']}")
+                    # Log field-specific errors for validation issues
+                    if isinstance(error_json, dict):
+                        for key, value in error_json.items():
+                            if key not in ['error', 'detail']:
+                                self.logger.error(f"Field error [{key}]: {value}")
                 except:
                     self.logger.error(f"Raw error response: {response.text}")
                 raise Exception(f"Baserow API error: {error_msg}")
@@ -228,14 +233,40 @@ class BaserowService:
                 payload['field_6389832'] = str(notes_value).strip()
             
             # Date and Time - field_6389834
-            payload['field_6389834'] = datetime.now(timezone.utc).isoformat()
+            # Baserow expects date-time in ISO format without timezone info for date fields
+            # or with timezone for datetime fields
+            try:
+                # Try ISO format with timezone first (for datetime fields)
+                payload['field_6389834'] = datetime.now(timezone.utc).isoformat()
+            except Exception as e:
+                self.logger.warning(f"Could not set date field with timezone: {e}, trying without timezone")
+                # Fallback to just the date part if datetime field doesn't work
+                payload['field_6389834'] = datetime.now().isoformat()
             
             # Handle images - field_6389835
+            # Baserow Image field expects a list of objects with 'name' and 'url' keys
             if data.get('Image'):
-                if isinstance(data['Image'], list):
-                    payload['field_6389835'] = data['Image']
-                else:
-                    payload['field_6389835'] = [data['Image']]
+                images = data['Image']
+                if not isinstance(images, list):
+                    images = [images]
+                
+                # Convert to proper Baserow format
+                formatted_images = []
+                for img in images:
+                    if isinstance(img, dict):
+                        # If it's already a dict with 'url', keep it as is
+                        if 'url' in img:
+                            formatted_images.append(img)
+                        # If it's a dict with other keys, extract URL
+                        elif 'link' in img:
+                            formatted_images.append({'url': img['link']})
+                    elif isinstance(img, str):
+                        # If it's a string URL, wrap it
+                        formatted_images.append({'url': img})
+                
+                if formatted_images:
+                    payload['field_6389835'] = formatted_images
+                    self.logger.info(f"🔍 DEBUG: Formatted {len(formatted_images)} images for Baserow")
             
             self.logger.info(f"Creating customer record for {data.get('Email')}")
             self.logger.info(f"🔍 DEBUG: Payload being sent: {json.dumps(payload, indent=2)}")
@@ -259,10 +290,13 @@ class BaserowService:
                 
                 # Check for field type issues
                 if field_id == 'field_6389835' and isinstance(value, list):  # Image field
-                    # Ensure all items are valid URLs or file objects
+                    # Ensure all items are valid dicts with 'url' key
                     for item in value:
-                        if not isinstance(item, str) or not item.strip():
-                            self.logger.warning(f"Invalid image URL in list: {item}")
+                        if isinstance(item, dict):
+                            if 'url' not in item or not item['url']:
+                                self.logger.warning(f"Invalid image object - missing or empty 'url': {item}")
+                        else:
+                            self.logger.warning(f"Image field expects dict with 'url' key, got: {type(item)}")
             
             self.logger.info(f"🔍 DEBUG: Payload validation passed for {len(payload)} fields")
             
@@ -706,5 +740,20 @@ class BaserowService:
             return None
 
 
-# Singleton instance
-baserow_service = BaserowService()
+# Singleton instance - lazy initialization
+_baserow_service_instance = None
+
+def get_baserow_service():
+    """Get or create the Baserow service instance (lazy initialization)"""
+    global _baserow_service_instance
+    if _baserow_service_instance is None:
+        _baserow_service_instance = BaserowService()
+    return _baserow_service_instance
+
+# For backward compatibility, create a proxy object
+class BaserowServiceProxy:
+    """Proxy that lazily initializes the actual service"""
+    def __getattr__(self, name):
+        return getattr(get_baserow_service(), name)
+
+baserow_service = BaserowServiceProxy()

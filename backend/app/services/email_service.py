@@ -246,9 +246,20 @@ class EmailService:
             self.logger.error(f"Error preparing email: {str(e)}", exc_info=True)
             return False
 
-def create_email_service():
-    """Factory function to create and return an EmailService instance"""
-    return EmailService()
+# Singleton instance - lazy initialization
+_email_service_instance = None
 
-# Singleton instance
-email_service = create_email_service()
+def get_email_service():
+    """Get or create the EmailService instance (lazy initialization)"""
+    global _email_service_instance
+    if _email_service_instance is None:
+        _email_service_instance = EmailService()
+    return _email_service_instance
+
+# For backward compatibility, create a proxy object
+class EmailServiceProxy:
+    """Proxy that lazily initializes the actual service"""
+    def __getattr__(self, name):
+        return getattr(get_email_service(), name)
+
+email_service = EmailServiceProxy()
