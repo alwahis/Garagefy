@@ -50,7 +50,9 @@ class CustomerResponseService:
             vin_groups = {}
             for record in customer_records:
                 fields = record.get('fields', {})
-                vin = fields.get('VIN', '').strip()
+                # Try both field name and field ID for VIN
+                vin = fields.get('VIN', '') or fields.get('field_6389831', '')
+                vin = str(vin).strip()
                 
                 if not vin:
                     logger.warning(f"Record {record.get('id')} has no VIN, skipping")
