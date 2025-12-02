@@ -432,10 +432,18 @@ Résumer en français de manière structurée."""
         for pattern in patterns:
             match = re.search(pattern, subject, re.IGNORECASE)
             if match:
-                # Extract the full request ID
-                if 'req_' in match.group(0):
-                    return match.group(0) if 'req_' in match.group(0) else match.group(1)
-                return match.group(1) if match.lastindex else match.group(0)
+                # Extract just the request ID part
+                # If pattern has a capture group (group 1), use it; otherwise use the full match
+                if match.lastindex and match.lastindex >= 1:
+                    # Pattern has capture groups, use the first captured group (the request ID)
+                    request_id = match.group(1)
+                else:
+                    # Pattern has no capture groups, use the full match
+                    request_id = match.group(0)
+                
+                # Ensure we return just the request ID (req_XXXXX format)
+                if request_id and 'req_' in request_id:
+                    return request_id
         
         return None
     
