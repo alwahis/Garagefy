@@ -350,8 +350,13 @@ Résumer en français de manière structurée."""
                         else:
                             logger.warning(f"⚠️ Could not extract VIN from email. Subject: {subject[:100]}")
                     
+                    # IMPORTANT: Skip emails without VIN to avoid creating empty records
+                    if not vin:
+                        logger.warning(f"⚠️ Skipping email from {from_email} - no VIN could be extracted. Subject: {subject[:100]}")
+                        continue
+                    
                     # Note: Duplicate checking is now handled in store_received_email()
-                    # which checks by VIN to avoid storing multiple responses for the same request
+                    # which checks by VIN AND Email to avoid storing duplicate responses from same garage
                     
                     # Save to Airtable
                     email_data = {

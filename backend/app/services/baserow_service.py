@@ -502,6 +502,13 @@ class BaserowService:
             Dict with success status and record data
         """
         try:
+            # IMPORTANT: Validate VIN before saving
+            # Do not save emails without VIN to avoid creating empty records
+            if not vin or not str(vin).strip():
+                error_msg = f"Cannot store email without VIN. Email from: {email_data.get('from_email', 'unknown')}"
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg}
+            
             table_id = self.table_ids['Recevied email']
             
             # Validate table ID
