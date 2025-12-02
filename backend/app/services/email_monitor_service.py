@@ -253,15 +253,14 @@ Résumer en français de manière structurée."""
             # Select inbox
             mail.select('INBOX')
             
-            # Search for emails received in the last 2 minutes (to have some buffer)
-            # This prevents reprocessing old emails on every check
+            # Search for UNREAD emails from today to prevent reprocessing
+            # This is the key to avoiding duplicate records
             from datetime import datetime, timedelta
-            since_date = (datetime.now() - timedelta(minutes=2)).strftime("%d-%b-%Y")
-            
-            # IMAP SINCE only supports dates, not times, so we'll get all emails from today
-            # and filter by received time after fetching
             today_date = datetime.now().strftime("%d-%b-%Y")
-            status, messages = mail.search(None, f'(SINCE {today_date})')
+            
+            # Search for unread emails from today
+            # UNSEEN flag = unread emails
+            status, messages = mail.search(None, f'(UNSEEN SINCE {today_date})')
             
             if status != 'OK':
                 logger.error("Failed to search for emails")
@@ -375,9 +374,12 @@ Résumer en français de manière structurée."""
                         processed_count += 1
                         logger.info(f"Successfully saved NEW email to Airtable from {from_email}")
                         
-                        # Mark as read if requested
-                        if mark_as_read:
+                        # Always mark as read to prevent reprocessing on next check
+                        try:
                             mail.store(email_id, '+FLAGS', '\\Seen')
+                            logger.debug(f"Marked email {email_id} as read")
+                        except Exception as e:
+                            logger.warning(f"Could not mark email {email_id} as read: {str(e)}")
                     else:
                         errors.append(f"Failed to save email from {from_email}")
                     
