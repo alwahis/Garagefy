@@ -328,9 +328,14 @@ Résumer en français de manière structurée."""
                                 'analysis': analysis
                             })
                     
-                    # Try to extract Request ID from subject (format: Ref: req_XXXXX)
+                    # Try to extract Request ID from subject or body (format: Ref: req_XXXXX)
                     request_id = self._extract_request_id_from_subject(subject)
                     logger.info(f"🔍 DEBUG: Extracted request ID from subject: {request_id}")
+                    
+                    # If not found in subject, try to extract from body
+                    if not request_id:
+                        request_id = self._extract_request_id_from_subject(body)
+                        logger.info(f"🔍 DEBUG: Extracted request ID from body: {request_id}")
                     
                     # If we have a request ID, find the VIN from Customer details table
                     vin = None
@@ -412,16 +417,25 @@ Résumer en français de manière structurée."""
             }
     
     def _extract_request_id_from_subject(self, subject: str) -> Optional[str]:
-        """Extract Request ID from email subject (format: Ref: req_XXXXX)"""
+        """Extract Request ID from email subject (format: Ref: req_XXXXX or in body)"""
         import re
         
         # Pattern to match request ID like "req_1760691162901_aod9uhj2e"
-        request_id_pattern = r'(?:Ref:|Référence:)\s*(req_[a-zA-Z0-9_]+)'
+        # Try multiple patterns:
+        # 1. "Ref: req_XXXXX" or "Reference: req_XXXXX"
+        # 2. "Reference ID: req_XXXXX"
+        patterns = [
+            r'(?:Ref:|Référence:|Reference\s+ID)[\s:]*?(req_[a-zA-Z0-9_]+)',
+            r'req_[a-zA-Z0-9_]+'  # Just match the request ID pattern
+        ]
         
-        match = re.search(request_id_pattern, subject, re.IGNORECASE)
-        
-        if match:
-            return match.group(1)
+        for pattern in patterns:
+            match = re.search(pattern, subject, re.IGNORECASE)
+            if match:
+                # Extract the full request ID
+                if 'req_' in match.group(0):
+                    return match.group(0) if 'req_' in match.group(0) else match.group(1)
+                return match.group(1) if match.lastindex else match.group(0)
         
         return None
     
