@@ -512,19 +512,27 @@ class BaserowService:
             
             self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
             
-            # Check for duplicates by VIN
+            # Check for duplicates by VIN AND Email (same garage shouldn't respond twice for same VIN)
             try:
-                if vin:
-                    existing = self.get_records(
+                if vin and email_data.get('from_email'):
+                    garage_email = email_data.get('from_email', '').strip().lower()
+                    # Get all records for this VIN
+                    existing_records = self.get_records(
                         'Recevied email',
                         formula=f'{{VIN}} = "{vin}"'
                     )
                     
-                    if existing:
-                        self.logger.info(f"Duplicate email detected for VIN {vin}, skipping save")
-                        return existing[0]
+                    # Check if this specific garage already responded for this VIN
+                    for record in existing_records:
+                        existing_email = record.get('fields', {}).get('field_6389838', '').strip().lower()
+                        if existing_email == garage_email:
+                            self.logger.info(f"Duplicate response detected: Garage {garage_email} already responded for VIN {vin}, skipping save")
+                            return record
                 else:
-                    self.logger.warning(f"No VIN provided, cannot check for duplicates")
+                    if not vin:
+                        self.logger.warning(f"No VIN provided, cannot check for duplicates")
+                    if not email_data.get('from_email'):
+                        self.logger.warning(f"No email provided, cannot check for duplicates")
             except Exception as e:
                 self.logger.warning(f"Could not check for duplicates: {str(e)}, will proceed with save")
             
