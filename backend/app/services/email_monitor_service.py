@@ -362,8 +362,13 @@ Résumer en français de manière structurée."""
                     
                     # IMPORTANT: Skip emails without VIN to avoid creating empty records
                     if not vin:
-                        logger.warning(f"⚠️ Skipping email from {from_email} - no VIN could be extracted. Subject: {subject[:100]}")
+                        logger.error(f"❌ CRITICAL: Skipping email from {from_email} - NO VIN EXTRACTED")
+                        logger.error(f"   Subject: {subject[:100]}")
+                        logger.error(f"   Body preview: {body[:200]}")
+                        logger.error(f"   Request ID: {request_id}")
                         continue
+                    
+                    logger.info(f"✅ VIN FOUND: {vin} - Proceeding to store email")
                     
                     # Note: Duplicate checking is now handled in store_received_email()
                     # which checks by VIN AND Email to avoid storing duplicate responses from same garage
@@ -383,7 +388,9 @@ Résumer en français de manière structurée."""
                         for analysis in attachment_analysis:
                             email_data['body'] += f"\n{analysis['filename']}:\n{analysis['analysis']}\n"
                     
+                    logger.info(f"📧 Storing email with VIN={vin}, from={from_email}")
                     result = self.airtable.store_received_email(email_data, vin)
+                    logger.info(f"📧 Storage result: {result}")
                     
                     # Check if save was successful
                     if result and result.get('success', False):
