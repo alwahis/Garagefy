@@ -567,7 +567,11 @@ class BaserowService:
             response = self._make_request('POST', endpoint, data=payload)
             
             self.logger.info(f"✅ Stored email from {email_data.get('from_email', '')} for VIN {vin}")
-            return response
+            # Return with success flag for proper status checking
+            return {
+                'success': True,
+                'data': response
+            }
             
         except Exception as e:
             self.logger.error(f"Error storing email: {str(e)}", exc_info=True)

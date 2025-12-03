@@ -271,8 +271,18 @@ Résumer en français de manière structurée."""
                     'emails_processed': 0
                 }
             
-            email_ids = messages[0].split()
-            logger.info(f"Found {len(email_ids)} emails from today to check")
+            email_ids = messages[0].split() if messages[0] else []
+            logger.info(f"Found {len(email_ids)} unread emails from today to check")
+            
+            # If no unread emails, nothing to process
+            if not email_ids:
+                logger.info("No unread emails to process")
+                mail.logout()
+                return {
+                    'success': True,
+                    'emails_processed': 0,
+                    'total_found': 0
+                }
             
             processed_count = 0
             errors = []
@@ -375,18 +385,22 @@ Résumer en français de manière structurée."""
                     
                     result = self.airtable.store_received_email(email_data, vin)
                     
-                    if result:
+                    # Check if save was successful
+                    if result and result.get('success', False):
                         processed_count += 1
                         logger.info(f"Successfully saved NEW email to Airtable from {from_email}")
-                        
-                        # Always mark as read to prevent reprocessing on next check
-                        try:
-                            mail.store(email_id, '+FLAGS', '\\Seen')
-                            logger.debug(f"Marked email {email_id} as read")
-                        except Exception as e:
-                            logger.warning(f"Could not mark email {email_id} as read: {str(e)}")
                     else:
-                        errors.append(f"Failed to save email from {from_email}")
+                        error_msg = result.get('error', 'Unknown error') if result else 'No response'
+                        logger.warning(f"Failed to save email from {from_email}: {error_msg}")
+                        errors.append(f"Failed to save email from {from_email}: {error_msg}")
+                    
+                    # ALWAYS mark as read to prevent reprocessing on next check
+                    # This is critical - even if save failed, mark as read so we don't process it again
+                    try:
+                        mail.store(email_id, '+FLAGS', '\\Seen')
+                        logger.debug(f"Marked email {email_id} as read")
+                    except Exception as e:
+                        logger.warning(f"Could not mark email {email_id} as read: {str(e)}")
                     
                 except Exception as e:
                     logger.error(f"Error processing email {email_id}: {str(e)}", exc_info=True)
