@@ -588,6 +588,18 @@ class BaserowService:
             Dict with success status
         """
         try:
+            # IMPORTANT: Validate VIN before saving
+            # Do not save responses without VIN to avoid creating empty records
+            vin = response_data.get('vin', '').strip() if response_data.get('vin') else ''
+            if not vin:
+                error_msg = f"Cannot record garage response without VIN. Garage: {response_data.get('garage_email', 'unknown')}"
+                self.logger.error(error_msg)
+                return {
+                    'success': False,
+                    'record': None,
+                    'error': error_msg
+                }
+            
             table_id = self.table_ids['Recevied email']
             
             # Validate table ID
@@ -615,7 +627,7 @@ class BaserowService:
                 'field_6389839': response_data.get('subject', f"Response from {response_data.get('garage_name', '')}"),  # Subject
                 'field_6389840': response_data.get('body', ''),  # Body
                 'field_6389841': response_data.get('response_date', datetime.now(timezone.utc).isoformat()),  # Received At
-                'field_6389842': response_data.get('vin', ''),  # VIN - CRITICAL for matching
+                'field_6389842': vin,  # VIN - CRITICAL for matching (already validated above)
             }
             
             # Remove empty values to avoid validation errors

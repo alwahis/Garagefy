@@ -15,6 +15,7 @@ class GarageResponseBase(BaseModel):
     garage_name: str = Field(..., description="Name of the garage")
     garage_email: str = Field(..., description="Email of the garage")
     request_id: str = Field(..., description="The service request ID this response is for")
+    vin: str = Field(..., description="Vehicle Identification Number - required for matching to customer request")
     quote_amount: Optional[float] = Field(None, description="The quoted amount (optional)")
     notes: Optional[str] = Field(None, description="Additional notes from the garage")
     status: ResponseStatus = Field(ResponseStatus.RECEIVED, description="Status of the response")

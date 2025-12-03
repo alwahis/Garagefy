@@ -17,6 +17,7 @@ async def record_garage_response(response: GarageResponse) -> Dict[str, Any]:
     - **garage_name**: Name of the garage
     - **garage_email**: Email of the garage
     - **request_id**: The service request ID this response is for
+    - **vin**: Vehicle Identification Number (required for matching to customer request)
     - **quote_amount**: The quoted amount (optional)
     - **notes**: Additional notes from the garage (optional)
     - **status**: Status of the response (e.g., 'quoted', 'declined')
@@ -27,6 +28,7 @@ async def record_garage_response(response: GarageResponse) -> Dict[str, Any]:
             'garage_name': response.garage_name,
             'garage_email': response.garage_email,
             'request_id': response.request_id,
+            'vin': response.vin,
             'quote_amount': response.quote_amount,
             'notes': response.notes,
             'status': response.status or 'received',
