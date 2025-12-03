@@ -1,0 +1,204 @@
+================================================================================
+RENDER LOG PATTERNS TO SEARCH FOR
+================================================================================
+
+Go to: Render Dashboard > Garagefy API > Logs
+
+Use Ctrl+F to search for these patterns:
+
+
+PATTERN 1: Email Monitor Starting
+================================================================================
+
+Search for: "Starting email check"
+
+GOOD (system working):
+  2025-12-02 11:00:00,000 - app.services.scheduler_service - INFO - [SCHEDULED] Starting email check at 2025-12-02 11:00:00.000000
+
+BAD (system not running):
+  [Pattern not found in logs]
+
+
+PATTERN 2: Emails Found
+================================================================================
+
+Search for: "Found"
+
+GOOD (emails found):
+  2025-12-02 11:00:01,000 - app.services.email_monitor_service - INFO - Found 3 emails from today to check
+
+BAD (no emails):
+  2025-12-02 11:00:01,000 - app.services.email_monitor_service - INFO - Found 0 emails from today to check
+
+
+PATTERN 3: Email Processing
+================================================================================
+
+Search for: "Processing email from"
+
+GOOD (email being processed):
+  2025-12-02 11:00:02,000 - app.services.email_monitor_service - INFO - Processing email from Wayak <iraqsmartransport@gmail.com>: Re: Repair Quote Request - VIN: LKHLJ254865874125
+
+BAD (no processing):
+  [Pattern not found in logs]
+
+
+PATTERN 4: Request ID Extraction
+================================================================================
+
+Search for: "Extracted request ID"
+
+GOOD (request ID found):
+  2025-12-02 11:00:03,000 - app.services.email_monitor_service - INFO - 🔍 DEBUG: Extracted request ID from body: req_1764659386879_uv5m3bh19
+
+BAD (request ID not found):
+  2025-12-02 11:00:03,000 - app.services.email_monitor_service - INFO - 🔍 DEBUG: Extracted request ID from subject: None
+  2025-12-02 11:00:03,000 - app.services.email_monitor_service - INFO - 🔍 DEBUG: Extracted request ID from body: None
+
+
+PATTERN 5: VIN Extraction
+================================================================================
+
+Search for: "Extracted VIN"
+
+GOOD (VIN extracted):
+  2025-12-02 11:00:04,000 - app.services.email_monitor_service - INFO - ✅ Extracted VIN from email text: LKHLJ254865874125
+
+BAD (VIN not extracted):
+  2025-12-02 11:00:04,000 - app.services.email_monitor_service - WARNING - ⚠️ Could not extract VIN from email. Subject: Re: Repair Quote Request
+
+
+PATTERN 6: Baserow Table ID
+================================================================================
+
+Search for: "Using table ID"
+
+GOOD (correct table ID):
+  2025-12-02 11:00:05,000 - app.services.baserow_service - INFO - 🔍 DEBUG: Using table ID 755538 for Recevied email table
+
+BAD (wrong or missing table ID):
+  2025-12-02 11:00:05,000 - app.services.baserow_service - ERROR - Invalid Recevied email table ID: 0
+
+
+PATTERN 7: Baserow Payload
+================================================================================
+
+Search for: "Storing email with payload"
+
+GOOD (payload prepared):
+  2025-12-02 11:00:06,000 - app.services.baserow_service - INFO - 🔍 DEBUG: Storing email with payload: {
+    "field_6389842": "LKHLJ254865874125",
+    "field_6389838": "wayak <iraqsmartransport@gmail.com>",
+    "field_6389839": "Re: Repair Quote Request - VIN: LKHLJ254865874125",
+    "field_6389840": "I will fix it for 400 euros...",
+    "field_6389841": "2025-12-02T11:00:02.749602+00:00"
+  }
+
+BAD (payload error):
+  [Pattern not found or error in payload]
+
+
+PATTERN 8: Baserow Write Success
+================================================================================
+
+Search for: "Stored email from"
+
+GOOD (record written):
+  2025-12-02 11:00:07,000 - app.services.baserow_service - INFO - ✅ Stored email from Wayak <iraqsmartransport@gmail.com> for VIN LKHLJ254865874125
+
+BAD (write failed):
+  [Pattern not found]
+
+
+PATTERN 9: Baserow API Error
+================================================================================
+
+Search for: "Baserow API error"
+
+GOOD (no errors):
+  [Pattern not found]
+
+BAD (API error):
+  2025-12-02 11:00:07,000 - app.services.baserow_service - ERROR - API Error (400): Invalid table ID
+  2025-12-02 11:00:07,000 - app.services.baserow_service - ERROR - API Error (401): Unauthorized
+
+
+PATTERN 10: OAuth2 Error
+================================================================================
+
+Search for: "Failed to acquire token"
+
+GOOD (no OAuth2 error):
+  [Pattern not found]
+
+BAD (OAuth2 failed):
+  2025-12-02 11:00:00,000 - app.services.email_monitor_service - ERROR - Failed to acquire token: invalid_client
+
+
+PATTERN 11: IMAP Connection Error
+================================================================================
+
+Search for: "Failed to connect to inbox"
+
+GOOD (no IMAP error):
+  [Pattern not found]
+
+BAD (IMAP failed):
+  2025-12-02 11:00:00,000 - app.services.email_monitor_service - ERROR - Failed to connect to inbox: [SSL: CERTIFICATE_VERIFY_FAILED]
+
+
+PATTERN 12: Duplicate Detection
+================================================================================
+
+Search for: "Duplicate email detected"
+
+GOOD (no duplicates):
+  [Pattern not found]
+
+EXPECTED (duplicate skipped):
+  2025-12-02 11:00:06,000 - app.services.baserow_service - INFO - Duplicate email detected for VIN LKHLJ254865874125, skipping save
+
+
+================================================================================
+WHAT TO LOOK FOR
+================================================================================
+
+Successful Flow (all patterns present):
+  1. "Starting email check"
+  2. "Found X emails"
+  3. "Processing email from"
+  4. "Extracted request ID"
+  5. "Extracted VIN"
+  6. "Using table ID 755538"
+  7. "Storing email with payload"
+  8. "Stored email from"
+
+If any pattern is MISSING, that's where the problem is.
+
+If any pattern shows an ERROR, that's the issue to fix.
+
+
+================================================================================
+EXAMPLE: Complete Successful Log
+================================================================================
+
+2025-12-02 11:00:00,000 - app.services.scheduler_service - INFO - [SCHEDULED] Starting email check at 2025-12-02 11:00:00.000000
+2025-12-02 11:00:01,000 - app.services.email_monitor_service - INFO - Connecting to outlook.office365.com:993
+2025-12-02 11:00:02,000 - app.services.email_monitor_service - INFO - Successfully connected to inbox using OAuth2: info@garagefy.app
+2025-12-02 11:00:03,000 - app.services.email_monitor_service - INFO - Found 1 emails from today to check
+2025-12-02 11:00:04,000 - app.services.email_monitor_service - INFO - Processing email from Wayak <iraqsmartransport@gmail.com>: Re: Repair Quote Request - VIN: LKHLJ254865874125
+2025-12-02 11:00:05,000 - app.services.email_monitor_service - INFO - 🔍 DEBUG: Extracted request ID from subject: None
+2025-12-02 11:00:05,000 - app.services.email_monitor_service - INFO - 🔍 DEBUG: Extracted request ID from body: req_1764659386879_uv5m3bh19
+2025-12-02 11:00:06,000 - app.services.email_monitor_service - INFO - Found request ID req_1764659386879_uv5m3bh19, matched to VIN: LKHLJ254865874125
+2025-12-02 11:00:07,000 - app.services.email_monitor_service - INFO - ✅ Extracted VIN from email text: LKHLJ254865874125
+2025-12-02 11:00:08,000 - app.services.baserow_service - INFO - 🔍 DEBUG: Using table ID 755538 for Recevied email table
+2025-12-02 11:00:09,000 - app.services.baserow_service - INFO - 🔍 DEBUG: Storing email with payload: {...}
+2025-12-02 11:00:10,000 - app.services.baserow_service - INFO - ✅ Stored email from Wayak <iraqsmartransport@gmail.com> for VIN LKHLJ254865874125
+2025-12-02 11:00:11,000 - app.services.email_monitor_service - INFO - Successfully saved NEW email to Airtable from Wayak <iraqsmartransport@gmail.com>
+
+Result: Record appears in Baserow "Recevied email" table ✅
+
+
+================================================================================
+NEXT STEP: Search for these patterns in your Render logs
+================================================================================

@@ -45,24 +45,41 @@ class BaserowService:
         url = f'{self.base_url}{endpoint}'
         
         try:
-            # Log POST requests to Recevied email table
-            if method == 'POST' and ('Recevied email' in endpoint or 'table' in endpoint):
-                self.logger.info(f"🔍 BASEROW POST: {endpoint}")
+            # Log ALL requests to see what's happening
+            self.logger.info(f"🔍 BASEROW REQUEST: {method} {endpoint}")
+            if data:
                 self.logger.info(f"🔍 PAYLOAD: {json.dumps(data, indent=2)}")
-                
-                # CRITICAL: Reject empty payloads for Recevied email table
-                if 'Recevied email' in endpoint and (not data or len(data) == 0):
-                    error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY payload: {data}"
-                    self.logger.error(error_msg)
-                    raise ValueError(error_msg)
-                
-                # CRITICAL: Reject payloads without VIN field for Recevied email table
-                if 'Recevied email' in endpoint:
-                    has_vin = any(k in data for k in ['VIN', 'field_6389842']) if data else False
-                    if not has_vin:
-                        error_msg = f"CRITICAL: Attempting to create record in Recevied email table WITHOUT VIN field. Payload: {json.dumps(data, indent=2)}"
-                        self.logger.error(error_msg)
-                        raise ValueError(error_msg)
+            
+            # CRITICAL: Check ALL POST requests to ANY table
+            if method == 'POST':
+                # Check if this is a table endpoint
+                if '/api/database/rows/table/' in endpoint:
+                    table_id_match = endpoint.split('/table/')[-1].split('/')[0]
+                    self.logger.error(f"🚨 ALERT: Creating record in table ID {table_id_match}")
+                    
+                    # Check if this is the Recevied email table
+                    if table_id_match == str(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', '')):
+                        self.logger.error(f"🚨 CRITICAL: Creating record in RECEIVED EMAIL TABLE!")
+                        
+                        # Reject empty payloads
+                        if not data or len(data) == 0:
+                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY payload: {data}"
+                            self.logger.error(error_msg)
+                            raise ValueError(error_msg)
+                        
+                        # Reject payloads without VIN field
+                        has_vin = any(k in data for k in ['VIN', 'field_6389842']) if data else False
+                        if not has_vin:
+                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table WITHOUT VIN field. Payload: {json.dumps(data, indent=2)}"
+                            self.logger.error(error_msg)
+                            raise ValueError(error_msg)
+                        
+                        # Check if VIN is empty
+                        vin_value = data.get('field_6389842') or data.get('VIN', '')
+                        if not vin_value or not str(vin_value).strip():
+                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY VIN. Payload: {json.dumps(data, indent=2)}"
+                            self.logger.error(error_msg)
+                            raise ValueError(error_msg)
             
             if method == 'GET':
                 response = requests.get(url, headers=self.headers, params=params, timeout=30)

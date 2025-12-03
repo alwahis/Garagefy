@@ -1,0 +1,195 @@
+================================================================================
+DEBUG CHECKLIST: No Records in "Recevied email" Table
+================================================================================
+
+STEP 1: Check Render Logs
+================================================================================
+
+Go to: Render Dashboard > Garagefy API > Logs
+
+Search for these keywords and report what you find:
+
+[ ] "Scheduler started successfully"
+    - If YES: Scheduler is running
+    - If NO: Scheduler failed to start
+
+[ ] "[SCHEDULED] Starting email check"
+    - If YES: Email monitor is running
+    - If NO: Email monitor not running
+
+[ ] "Found X emails from today"
+    - If YES: How many? ____
+    - If NO: No emails found
+
+[ ] "Processing email from"
+    - If YES: How many times? ____
+    - If NO: Emails not being processed
+
+[ ] "Extracted VIN from email text"
+    - If YES: What VIN? ____
+    - If NO: VIN extraction failed
+
+[ ] "Stored email from"
+    - If YES: Record was written to Baserow
+    - If NO: Baserow write failed
+
+[ ] "Baserow API error"
+    - If YES: What error? ____
+    - If NO: No Baserow errors
+
+[ ] "Failed to acquire token"
+    - If YES: OAuth2 failed
+    - If NO: OAuth2 working
+
+[ ] "Failed to connect to inbox"
+    - If YES: IMAP connection failed
+    - If NO: IMAP connection working
+
+
+STEP 2: Check Baserow Table
+================================================================================
+
+Go to: Baserow > Database 328778 > Table 755538 (Recevied email)
+
+[ ] Is the table empty?
+    - YES: No records at all
+    - NO: Some records exist
+
+[ ] If records exist, do they have VIN values?
+    - YES: VIN is populated
+    - NO: VIN column is empty
+
+[ ] What's the most recent record?
+    - Email: ____
+    - Subject: ____
+    - VIN: ____
+    - Date: ____
+
+
+STEP 3: Check Email Inbox
+================================================================================
+
+Go to: info@garagefy.app inbox (Outlook)
+
+[ ] Are there any garage responses?
+    - YES: How many? ____
+    - NO: No responses
+
+[ ] If responses exist, do they include VIN?
+    - YES: VIN format: ____
+    - NO: No VIN in email
+
+[ ] What's the most recent response?
+    - From: ____
+    - Subject: ____
+    - Received: ____
+
+
+STEP 4: Check Environment Variables
+================================================================================
+
+Go to: Render Dashboard > Garagefy API > Settings > Environment
+
+Verify these are SET (not empty):
+
+[ ] BASEROW_API_TOKEN
+    - Status: SET / NOT SET
+
+[ ] BASEROW_DATABASE_ID
+    - Value: 328778
+    - Status: CORRECT / WRONG
+
+[ ] BASEROW_TABLE_RECEIVED_EMAIL
+    - Value: 755538
+    - Status: CORRECT / WRONG
+
+[ ] MS_CLIENT_ID
+    - Status: SET / NOT SET
+
+[ ] MS_CLIENT_SECRET
+    - Status: SET / NOT SET
+
+[ ] MS_TENANT_ID
+    - Status: SET / NOT SET
+
+[ ] EMAIL_ADDRESS
+    - Value: info@garagefy.app
+    - Status: CORRECT / WRONG
+
+
+STEP 5: Send Test Email
+================================================================================
+
+[ ] Send test email to info@garagefy.app
+    - From: ____
+    - Subject: Re: Repair Quote Request - VIN: TESTVIN1234567890A
+    - Body: I can fix this for 500 euros
+    - Time sent: ____
+
+[ ] Wait 1-2 minutes
+
+[ ] Check Render logs for:
+    - "Processing email from [your email]"
+    - "Extracted VIN from email text: TESTVIN1234567890A"
+    - "Stored email from [your email]"
+
+[ ] Check Baserow for new record:
+    - Email: ____
+    - VIN: ____
+
+
+STEP 6: Report Your Findings
+================================================================================
+
+Based on the checklist above, answer these questions:
+
+1. Is the email monitor running?
+   Answer: YES / NO
+
+2. Are emails being found?
+   Answer: YES / NO
+   If YES, how many? ____
+
+3. Are VINs being extracted?
+   Answer: YES / NO
+   If YES, what VIN? ____
+
+4. Are records being written to Baserow?
+   Answer: YES / NO
+   If NO, what error? ____
+
+5. Are environment variables set correctly?
+   Answer: YES / NO
+   If NO, which ones? ____
+
+6. Does the test email appear in Baserow?
+   Answer: YES / NO
+
+
+STEP 7: Common Issues
+================================================================================
+
+If email monitor is NOT running:
+  - Check for "Failed to acquire token" error
+  - Check for "Failed to connect to inbox" error
+  - Verify OAuth2 credentials in Render
+
+If emails are NOT being found:
+  - Check if garage actually sent a reply
+  - Check if email is in inbox
+  - Check if email is from today
+
+If VIN is NOT being extracted:
+  - Check if email includes VIN
+  - Check if VIN format is valid (17 characters)
+  - Check if request ID extraction worked
+
+If Baserow write is FAILING:
+  - Check table ID: 755538
+  - Check API token is valid
+  - Check for duplicate VIN (system skips duplicates)
+
+
+================================================================================
+NEXT ACTION: Complete this checklist and report findings
+================================================================================
