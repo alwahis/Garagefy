@@ -195,6 +195,12 @@ class AirtableService:
             Dict: Created record data or existing record data if duplicate found
         """
         try:
+            # CRITICAL: Validate VIN before storing to prevent empty records
+            if not vin or not str(vin).strip():
+                error_msg = f"Cannot store email without VIN. From: {email_data.get('from_email', 'unknown')}, Subject: {email_data.get('subject', 'unknown')}"
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
+            
             # Get the sender's email to determine the field name
             sender_email = email_data.get('from_email', '').strip().lower()
             
@@ -224,8 +230,9 @@ class AirtableService:
             """
             
             # Prepare the data for Airtable - all fields that exist in "Recevied email" table
+            # VIN is already validated above, so we can safely use it
             record_data = {
-                'VIN': vin or '',
+                'VIN': vin,  # VIN is validated above, never None or empty
                 'Email': sender_email,
                 'Subject': email_data.get('subject', 'No Subject'),
                 'Body': email_data.get('body', ''),
