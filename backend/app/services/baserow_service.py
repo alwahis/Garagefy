@@ -45,6 +45,25 @@ class BaserowService:
         url = f'{self.base_url}{endpoint}'
         
         try:
+            # Log POST requests to Recevied email table
+            if method == 'POST' and ('Recevied email' in endpoint or 'table' in endpoint):
+                self.logger.info(f"🔍 BASEROW POST: {endpoint}")
+                self.logger.info(f"🔍 PAYLOAD: {json.dumps(data, indent=2)}")
+                
+                # CRITICAL: Reject empty payloads for Recevied email table
+                if 'Recevied email' in endpoint and (not data or len(data) == 0):
+                    error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY payload: {data}"
+                    self.logger.error(error_msg)
+                    raise ValueError(error_msg)
+                
+                # CRITICAL: Reject payloads without VIN field for Recevied email table
+                if 'Recevied email' in endpoint:
+                    has_vin = any(k in data for k in ['VIN', 'field_6389842']) if data else False
+                    if not has_vin:
+                        error_msg = f"CRITICAL: Attempting to create record in Recevied email table WITHOUT VIN field. Payload: {json.dumps(data, indent=2)}"
+                        self.logger.error(error_msg)
+                        raise ValueError(error_msg)
+            
             if method == 'GET':
                 response = requests.get(url, headers=self.headers, params=params, timeout=30)
             elif method == 'POST':
