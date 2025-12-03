@@ -551,15 +551,15 @@ class BaserowService:
             # field_6389841 = Received At
             # field_6389842 = VIN
             payload = {
-                'field_6389842': vin or '',  # VIN
+                'field_6389842': vin,  # VIN - CRITICAL (already validated above)
                 'field_6389838': email_data.get('from_email', '').strip().lower(),  # Email
                 'field_6389839': email_data.get('subject', 'No Subject'),  # Subject
                 'field_6389840': email_data.get('body', ''),  # Body
                 'field_6389841': email_data.get('received_at', datetime.now(timezone.utc).isoformat())  # Received At
             }
             
-            # Remove empty values
-            payload = {k: v for k, v in payload.items() if v}
+            # Remove empty values, but ALWAYS keep VIN
+            payload = {k: v for k, v in payload.items() if v or k == 'field_6389842'}
             
             self.logger.info(f"🔍 DEBUG: Storing email with payload: {json.dumps(payload, indent=2)}")
             
@@ -630,8 +630,8 @@ class BaserowService:
                 'field_6389842': vin,  # VIN - CRITICAL for matching (already validated above)
             }
             
-            # Remove empty values to avoid validation errors
-            payload = {k: v for k, v in payload.items() if v}
+            # Remove empty values to avoid validation errors, but ALWAYS keep VIN
+            payload = {k: v for k, v in payload.items() if v or k == 'field_6389842'}
             
             self.logger.info(f"🔍 DEBUG: Storing garage response with payload: {json.dumps(payload, indent=2)}")
             
@@ -686,11 +686,22 @@ class BaserowService:
 
         Returns an Airtable-style dict with ``id`` and ``fields`` keys so
         callers like ``quote_service`` can keep using ``record['fields']``.
+        
+        IMPORTANT: For 'Recevied email' table, VIN is required to prevent empty records.
         """
         try:
             table_id = self.table_ids.get(table_name)
             if not table_id:
                 raise ValueError(f"Unknown table: {table_name}")
+            
+            # CRITICAL: Prevent creating empty rows in Recevied email table without VIN
+            if table_name == 'Recevied email':
+                # Check if VIN field is present and not empty
+                vin = data.get('VIN') or data.get('field_6389842', '')
+                if not vin or not str(vin).strip():
+                    error_msg = f"Cannot create record in Recevied email table without VIN. Data: {data}"
+                    self.logger.error(error_msg)
+                    raise ValueError(error_msg)
 
             endpoint = f'/api/database/rows/table/{table_id}/'
             response = self._make_request('POST', endpoint, data=data)
