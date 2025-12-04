@@ -321,6 +321,13 @@ Résumer en français de manière structurée."""
                     body = self._extract_email_body(msg)
                     received_at = datetime.now(timezone.utc).isoformat()
                     
+                    # CRITICAL: Skip emails with empty body to prevent blank rows
+                    if not body or not str(body).strip():
+                        logger.error(f"❌ CRITICAL: Skipping email from {from_email} - EMPTY BODY")
+                        logger.error(f"   Subject: {subject[:100]}")
+                        logger.error(f"   This would create a blank row in Baserow")
+                        continue
+                    
                     # Extract attachments
                     attachments = self._extract_attachments(msg)
                     attachment_names = [att['filename'] for att in attachments]

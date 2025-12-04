@@ -545,6 +545,14 @@ class BaserowService:
                 self.logger.error(error_msg)
                 return {'success': False, 'error': error_msg}
             
+            # CRITICAL: Validate that email has content (body or subject)
+            body = email_data.get('body', '').strip()
+            subject = email_data.get('subject', '').strip()
+            if not body and not subject:
+                error_msg = f"Cannot store email without body or subject. Email from: {email_data.get('from_email', 'unknown')}"
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg}
+            
             table_id = self.table_ids['Recevied email']
             
             # Validate table ID
