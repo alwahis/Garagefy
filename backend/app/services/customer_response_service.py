@@ -282,11 +282,12 @@ class CustomerResponseService:
                     all_garage_emails.add(email)
             
             # Check if all garages have responded
-            all_responded = all_garage_emails.issubset(responded_emails) or responded_emails == all_garage_emails
+            # FIXED: Should check if responded_emails contains all garage emails, not the other way around
+            all_responded = responded_emails == all_garage_emails or (len(responded_emails) > 0 and all_garage_emails.issubset(responded_emails))
             
-            logger.info(f"VIN {vin}: {len(responded_emails)}/{total_garages} garages responded. All responded: {all_responded}")
+            logger.info(f"VIN {vin}: {len(responded_emails)}/{len(all_garage_emails)} garages responded. Garages: {all_garage_emails}. Responded: {responded_emails}. All responded: {all_responded}")
             
-            return all_responded and total_garages > 0
+            return all_responded and len(all_garage_emails) > 0
             
         except Exception as e:
             logger.error(f"Error checking if all garages responded: {str(e)}", exc_info=True)
