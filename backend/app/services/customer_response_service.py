@@ -127,17 +127,30 @@ class CustomerResponseService:
                     # Log available fields for first record to help debug
                     if vin == list(vin_groups.keys())[0]:
                         logger.info(f"📋 Available fields in Customer details: {list(fields.keys())}")
+                        # Log all field values to help identify correct date field
+                        for key, value in fields.items():
+                            if value and isinstance(value, str) and len(str(value)) > 0:
+                                logger.info(f"  Field {key}: {str(value)[:50]}")
                     
                     submission_date_str = self._get_field(fields, 'Date and Time')
-                    
-                    if not submission_date_str:
-                        # If no date field, use current time minus 1 day as fallback
-                        # This allows processing to continue
-                        logger.warning(f"No submission date found for VIN {vin}, using fallback (1 day ago)")
-                        submission_date_str = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-                    
-                    submission_date = datetime.fromisoformat(submission_date_str.replace('Z', '+00:00'))
                     current_time = datetime.now(timezone.utc)
+                    
+                    # Validate and parse date - use fallback if invalid
+                    submission_date = None
+                    if submission_date_str:
+                        try:
+                            # Check if it looks like a date (contains - or T or :)
+                            if any(c in submission_date_str for c in ['-', 'T', ':']):
+                                submission_date = datetime.fromisoformat(submission_date_str.replace('Z', '+00:00'))
+                            else:
+                                logger.warning(f"Date field contains non-date value: '{submission_date_str}' for VIN {vin}")
+                        except ValueError as e:
+                            logger.warning(f"Invalid date format '{submission_date_str}' for VIN {vin}: {e}")
+                    
+                    if not submission_date:
+                        # Use fallback: assume request was made 1 day ago
+                        logger.info(f"Using fallback date (1 day ago) for VIN {vin}")
+                        submission_date = current_time - timedelta(days=1)
                     
                     # Skip old requests (older than 7 days) to prevent processing historical data
                     days_since_submission = (current_time - submission_date).days
