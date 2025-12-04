@@ -93,11 +93,26 @@ class CustomerResponseService:
                     record_id = vin_data['record'].get('id')
                     all_records = vin_data['all_records']
                     
-                    # Get submission date (using Airtable's Date and Time field)
-                    submission_date_str = fields.get('Date and Time') or fields.get('Created time') or fields.get('DateTime')
+                    # Get submission date - try multiple possible field names
+                    # Log available fields for first record to help debug
+                    if vin == list(vin_groups.keys())[0]:
+                        logger.info(f"📋 Available fields in Customer details: {list(fields.keys())}")
+                    
+                    submission_date_str = (
+                        fields.get('Date and Time') or 
+                        fields.get('Created time') or 
+                        fields.get('DateTime') or
+                        fields.get('Created') or
+                        fields.get('Timestamp') or
+                        fields.get('Date') or
+                        fields.get('created_on')  # Baserow's auto-created field
+                    )
+                    
                     if not submission_date_str:
-                        logger.warning(f"No submission date found for VIN {vin}")
-                        continue
+                        # If no date field, use current time minus 1 day as fallback
+                        # This allows processing to continue
+                        logger.warning(f"No submission date found for VIN {vin}, using fallback (1 day ago)")
+                        submission_date_str = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
                     
                     submission_date = datetime.fromisoformat(submission_date_str.replace('Z', '+00:00'))
                     current_time = datetime.now(timezone.utc)
