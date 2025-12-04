@@ -9,9 +9,40 @@ logger = logging.getLogger(__name__)
 class CustomerResponseService:
     """Service for sending compiled quotes to customers"""
     
+    # Field ID mappings for Customer details table
+    # These map logical field names to Baserow field IDs
+    CUSTOMER_FIELD_IDS = {
+        'Name': 'field_6389828',
+        'Email': 'field_6389829',
+        'Phone': 'field_6389830',
+        'VIN': 'field_6389831',
+        'Car Brand': 'field_6389832',
+        'Plate Number': 'field_6389833',
+        'Notes': 'field_6389834',
+        'Images': 'field_6389835',
+        'Sent Emails': 'field_6389836',
+        'Date and Time': 'field_6389837',
+    }
+    
     def __init__(self):
         self.airtable = airtable_service
         self.email_service = email_service
+    
+    def _get_field(self, fields: dict, field_name: str, default: str = '') -> str:
+        """Get field value by name or field ID"""
+        # Try field name first
+        value = fields.get(field_name)
+        if value:
+            return str(value).strip()
+        
+        # Try field ID
+        field_id = self.CUSTOMER_FIELD_IDS.get(field_name)
+        if field_id:
+            value = fields.get(field_id)
+            if value:
+                return str(value).strip()
+        
+        return default
     
     def _calculate_business_days_ago(self, days: int) -> datetime:
         """Calculate a datetime N business days ago"""
@@ -50,16 +81,15 @@ class CustomerResponseService:
             vin_groups = {}
             for record in customer_records:
                 fields = record.get('fields', {})
-                # Try both field name and field ID for VIN
-                vin = fields.get('VIN', '') or fields.get('field_6389831', '')
-                vin = str(vin).strip()
+                # Use helper to get VIN from either field name or ID
+                vin = self._get_field(fields, 'VIN')
                 
                 if not vin:
                     logger.warning(f"Record {record.get('id')} has no VIN, skipping")
                     continue
                 
                 # Check if response already sent using Sent Emails field
-                sent_emails = fields.get('Sent Emails', '')
+                sent_emails = self._get_field(fields, 'Sent Emails')
                 if sent_emails and 'quote sent' in sent_emails.lower():
                     logger.debug(f"Response already sent for VIN {vin} (Sent Emails: {sent_emails}), skipping")
                     continue
@@ -93,20 +123,12 @@ class CustomerResponseService:
                     record_id = vin_data['record'].get('id')
                     all_records = vin_data['all_records']
                     
-                    # Get submission date - try multiple possible field names
+                    # Get submission date using helper
                     # Log available fields for first record to help debug
                     if vin == list(vin_groups.keys())[0]:
                         logger.info(f"📋 Available fields in Customer details: {list(fields.keys())}")
                     
-                    submission_date_str = (
-                        fields.get('Date and Time') or 
-                        fields.get('Created time') or 
-                        fields.get('DateTime') or
-                        fields.get('Created') or
-                        fields.get('Timestamp') or
-                        fields.get('Date') or
-                        fields.get('created_on')  # Baserow's auto-created field
-                    )
+                    submission_date_str = self._get_field(fields, 'Date and Time')
                     
                     if not submission_date_str:
                         # If no date field, use current time minus 1 day as fallback
@@ -332,13 +354,16 @@ class CustomerResponseService:
             bool: True if email sent successfully
         """
         try:
-            customer_email = customer_fields.get('Email')
-            customer_name = customer_fields.get('Name', 'Cher client')
-            car_brand = customer_fields.get('Brand') or customer_fields.get('car brand', 'N/A')
+            # Use helper to get fields by name or ID
+            customer_email = self._get_field(customer_fields, 'Email')
+            customer_name = self._get_field(customer_fields, 'Name') or 'Cher client'
+            car_brand = self._get_field(customer_fields, 'Car Brand') or 'N/A'
             
             if not customer_email:
-                logger.error("No customer email found")
+                logger.error(f"No customer email found. Fields: {list(customer_fields.keys())}")
                 return False
+            
+            logger.info(f"📧 Customer: {customer_name} <{customer_email}>, Car: {car_brand}")
             
             logger.info(f"Compiling quotes for VIN {vin}, customer: {customer_email}")
             
