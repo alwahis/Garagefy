@@ -39,6 +39,39 @@ class BaserowService:
         
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Initializing Baserow service for database {self.database_id}")
+        
+        # Cache for field IDs (will be populated on first use)
+        self._field_id_cache = {}
+    
+    def _get_field_id_by_name(self, table_id: int, field_name: str) -> Optional[int]:
+        """
+        Get the field ID for a given field name in a table
+        This is used to dynamically map field names to IDs instead of hardcoding them
+        """
+        cache_key = f"{table_id}:{field_name}"
+        
+        # Check cache first
+        if cache_key in self._field_id_cache:
+            return self._field_id_cache[cache_key]
+        
+        try:
+            endpoint = f'/api/database/fields/table/{table_id}/'
+            response = self._make_request('GET', endpoint)
+            
+            if isinstance(response, list):
+                for field in response:
+                    if field.get('name') == field_name:
+                        field_id = field.get('id')
+                        self._field_id_cache[cache_key] = field_id
+                        self.logger.info(f"Found field '{field_name}' in table {table_id}: field_{field_id}")
+                        return field_id
+            
+            self.logger.warning(f"Could not find field '{field_name}' in table {table_id}")
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error getting field ID for '{field_name}': {str(e)}")
+            return None
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> Dict:
         """Make HTTP request to Baserow API"""
@@ -587,23 +620,32 @@ class BaserowService:
             except Exception as e:
                 self.logger.warning(f"Could not check for duplicates: {str(e)}, will proceed with save")
             
-            # Prepare payload using field IDs
-            # Recevied email table field mappings:
-            # field_6389838 = Email
-            # field_6389839 = Subject
-            # field_6389840 = Body
-            # field_6389841 = Received At
-            # field_6389842 = VIN
-            payload = {
-                'field_6389842': vin,  # VIN - CRITICAL (already validated above)
-                'field_6389838': email_data.get('from_email', '').strip().lower(),  # Email
-                'field_6389839': email_data.get('subject', 'No Subject'),  # Subject
-                'field_6389840': email_data.get('body', ''),  # Body
-                'field_6389841': email_data.get('received_at', datetime.now(timezone.utc).isoformat())  # Received At
-            }
+            # Prepare payload using DYNAMIC field ID lookup
+            # This ensures we use the correct field IDs even if the table structure changes
+            field_email = self._get_field_id_by_name(table_id, 'Email')
+            field_subject = self._get_field_id_by_name(table_id, 'Subject')
+            field_body = self._get_field_id_by_name(table_id, 'Body')
+            field_received_at = self._get_field_id_by_name(table_id, 'Received At')
+            field_vin = self._get_field_id_by_name(table_id, 'VIN')
             
-            # Remove empty values, but ALWAYS keep VIN
-            payload = {k: v for k, v in payload.items() if v or k == 'field_6389842'}
+            # Build payload with correct field IDs
+            payload = {}
+            if field_vin:
+                payload[f'field_{field_vin}'] = vin  # VIN - CRITICAL
+            if field_email:
+                payload[f'field_{field_email}'] = email_data.get('from_email', '').strip().lower()
+            if field_subject:
+                payload[f'field_{field_subject}'] = email_data.get('subject', 'No Subject')
+            if field_body:
+                payload[f'field_{field_body}'] = email_data.get('body', '')
+            if field_received_at:
+                payload[f'field_{field_received_at}'] = email_data.get('received_at', datetime.now(timezone.utc).isoformat())
+            
+            # Validate we have at least VIN and one content field
+            if not field_vin or (not field_body and not field_subject):
+                error_msg = f"Could not map required fields. VIN: {field_vin}, Body: {field_body}, Subject: {field_subject}"
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg}
             
             self.logger.info(f"🔍 DEBUG: Storing email with payload: {json.dumps(payload, indent=2)}")
             
@@ -670,24 +712,36 @@ class BaserowService:
             
             self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
             
-            # Map response data to Baserow field IDs
-            # Recevied email table field mappings:
-            # field_6389838 = Email
-            # field_6389839 = Subject
-            # field_6389840 = Body
-            # field_6389841 = Received At
-            # field_6389842 = VIN (IMPORTANT for matching responses to customers)
+            # Map response data to Baserow field IDs using DYNAMIC lookup
+            # This ensures we use the correct field IDs even if the table structure changes
+            field_email = self._get_field_id_by_name(table_id, 'Email')
+            field_subject = self._get_field_id_by_name(table_id, 'Subject')
+            field_body = self._get_field_id_by_name(table_id, 'Body')
+            field_received_at = self._get_field_id_by_name(table_id, 'Received At')
+            field_vin = self._get_field_id_by_name(table_id, 'VIN')
             
-            payload = {
-                'field_6389838': response_data.get('garage_email', ''),  # Email
-                'field_6389839': response_data.get('subject', f"Response from {response_data.get('garage_name', '')}"),  # Subject
-                'field_6389840': response_data.get('body', ''),  # Body
-                'field_6389841': response_data.get('response_date', datetime.now(timezone.utc).isoformat()),  # Received At
-                'field_6389842': vin,  # VIN - CRITICAL for matching (already validated above)
-            }
+            # Build payload with correct field IDs
+            payload = {}
+            if field_vin:
+                payload[f'field_{field_vin}'] = vin  # VIN - CRITICAL for matching
+            if field_email:
+                payload[f'field_{field_email}'] = response_data.get('garage_email', '')
+            if field_subject:
+                payload[f'field_{field_subject}'] = response_data.get('subject', f"Response from {response_data.get('garage_name', '')}")
+            if field_body:
+                payload[f'field_{field_body}'] = response_data.get('body', '')
+            if field_received_at:
+                payload[f'field_{field_received_at}'] = response_data.get('response_date', datetime.now(timezone.utc).isoformat())
             
-            # Remove empty values to avoid validation errors, but ALWAYS keep VIN
-            payload = {k: v for k, v in payload.items() if v or k == 'field_6389842'}
+            # Validate we have at least VIN and one content field
+            if not field_vin or (not field_body and not field_subject):
+                error_msg = f"Could not map required fields. VIN: {field_vin}, Body: {field_body}, Subject: {field_subject}"
+                self.logger.error(error_msg)
+                return {
+                    'success': False,
+                    'record': None,
+                    'error': error_msg
+                }
             
             self.logger.info(f"🔍 DEBUG: Storing garage response with payload: {json.dumps(payload, indent=2)}")
             
