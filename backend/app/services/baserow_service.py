@@ -63,16 +63,17 @@ class BaserowService:
                 response = self._make_request('GET', endpoint)
                 
                 if isinstance(response, list):
+                    field_names = []
                     for field in response:
                         field_id = field.get('id')
                         name = field.get('name')
                         if field_id and name:
                             self._field_id_cache[f"{table_id}:{name}"] = field_id
-                            self.logger.debug(f"Cached field '{name}' in table {table_id}: field_{field_id}")
+                            field_names.append(name)
                     
                     # Mark this table as fetched
                     self._field_id_cache[table_cache_key] = True
-                    self.logger.info(f"Cached {len(response)} fields for table {table_id}")
+                    self.logger.info(f"📋 Table {table_id} has {len(response)} fields: {field_names}")
             
             # Now check the cache for the requested field
             if cache_key in self._field_id_cache:
@@ -111,24 +112,32 @@ class BaserowService:
                             raise ValueError(error_msg)
                         
                         # Check if ANY field contains a valid VIN (17 alphanumeric chars)
-                        # This works with dynamic field IDs
+                        # VIN pattern: 17 chars, alphanumeric excluding I, O, Q (case insensitive)
                         import re
                         vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
                         has_valid_vin = False
                         vin_value = None
                         
+                        # Log all field values for debugging
+                        self.logger.info(f"📧 Payload fields: {list(data.keys())}")
+                        
                         for key, value in data.items():
                             if value and isinstance(value, str):
                                 value_stripped = value.strip().upper()
-                                if re.match(vin_pattern, value_stripped):
+                                # Check if this looks like a VIN (17 chars, alphanumeric)
+                                if len(value_stripped) == 17 and re.match(vin_pattern, value_stripped):
                                     has_valid_vin = True
                                     vin_value = value_stripped
+                                    self.logger.info(f"📧 Found VIN in field {key}: {vin_value}")
                                     break
                         
                         if not has_valid_vin:
-                            error_msg = f"BLOCKED: No valid VIN found in payload. Keys: {list(data.keys())}"
-                            self.logger.error(error_msg)
-                            raise ValueError(error_msg)
+                            # Log what we received for debugging
+                            self.logger.error(f"BLOCKED: No valid VIN found in payload")
+                            for key, value in data.items():
+                                if value and isinstance(value, str):
+                                    self.logger.error(f"  Field {key}: '{value[:50]}...' (len={len(value)})")
+                            raise ValueError(f"BLOCKED: No valid VIN found in payload")
                         
                         self.logger.info(f"✅ Valid VIN found: {vin_value}")
             
@@ -660,12 +669,18 @@ class BaserowService:
                 payload[f'field_{field_received_at}'] = email_data.get('received_at', datetime.now(timezone.utc).isoformat())
             
             # Validate we have at least VIN and one content field
-            if not field_vin or (not field_body and not field_subject):
-                error_msg = f"Could not map required fields. VIN: {field_vin}, Body: {field_body}, Subject: {field_subject}"
+            if not field_vin:
+                error_msg = f"Could not find VIN field in table {table_id}. Available fields may have different names."
                 self.logger.error(error_msg)
                 return {'success': False, 'error': error_msg}
             
-            self.logger.info(f"🔍 DEBUG: Storing email with payload: {json.dumps(payload, indent=2)}")
+            if not field_body and not field_subject:
+                error_msg = f"Could not find Body or Subject fields in table {table_id}."
+                self.logger.error(error_msg)
+                return {'success': False, 'error': error_msg}
+            
+            self.logger.info(f"📧 Storing email: VIN={vin}, from={email_data.get('from_email', '')}")
+            self.logger.info(f"📧 Field IDs: VIN={field_vin}, Email={field_email}, Subject={field_subject}, Body={field_body}")
             
             endpoint = f'/api/database/rows/table/{table_id}/'
             response = self._make_request('POST', endpoint, data=payload)
