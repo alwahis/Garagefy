@@ -644,6 +644,18 @@ class BaserowService:
                     'error': error_msg
                 }
             
+            # CRITICAL: Validate that response has content (body or subject)
+            body = response_data.get('body', '').strip() if response_data.get('body') else ''
+            subject = response_data.get('subject', '').strip() if response_data.get('subject') else ''
+            if not body and not subject:
+                error_msg = f"Cannot record garage response without body or subject. Garage: {response_data.get('garage_email', 'unknown')}"
+                self.logger.error(error_msg)
+                return {
+                    'success': False,
+                    'record': None,
+                    'error': error_msg
+                }
+            
             table_id = self.table_ids['Recevied email']
             
             # Validate table ID
