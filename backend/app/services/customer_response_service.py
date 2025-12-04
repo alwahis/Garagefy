@@ -167,12 +167,13 @@ class CustomerResponseService:
                     days_since_submission = (current_time - submission_date).days
                     if days_since_submission > 7:
                         # Mark all records with this VIN as sent
+                        sent_emails_field_id = self.CUSTOMER_FIELD_IDS.get('Sent Emails')
                         for rec in all_records:
                             try:
                                 self.airtable.update_record(
                                     'Customer details',
                                     rec.get('id'),
-                                    {'Sent Emails': f'Quote sent on {current_time.strftime("%Y-%m-%d")}'}
+                                    {sent_emails_field_id: f'Quote sent on {current_time.strftime("%Y-%m-%d")}'}
                                 )
                             except Exception as e:
                                 logger.warning(f"Could not auto-mark old request: {str(e)}")
@@ -202,10 +203,12 @@ class CustomerResponseService:
                             for rec in all_records:
                                 try:
                                     sent_time = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                                    # Use field ID instead of field name for Baserow API
+                                    sent_emails_field_id = self.CUSTOMER_FIELD_IDS.get('Sent Emails')
                                     self.airtable.update_record(
                                         'Customer details',
                                         rec.get('id'),
-                                        {'Sent Emails': f'Quote sent on {sent_time}'}
+                                        {sent_emails_field_id: f'Quote sent on {sent_time}'}
                                     )
                                     logger.info(f"Marked record {rec.get('id')} for VIN {vin} as sent")
                                 except Exception as update_error:
