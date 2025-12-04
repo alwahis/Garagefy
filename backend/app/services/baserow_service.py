@@ -94,16 +94,22 @@ class BaserowService:
             # Log requests at debug level to avoid log spam in production
             self.logger.debug(f"BASEROW REQUEST: {method} {endpoint}")
             
-            # CRITICAL: Validate POST requests to Recevied email table
+            # CRITICAL: Log and validate ALL POST requests
             if method == 'POST':
+                self.logger.warning(f"🚨 POST REQUEST to: {endpoint}")
+                self.logger.warning(f"🚨 POST DATA keys: {list(data.keys()) if data else 'NONE'}")
+                
                 # Check if this is a table endpoint
                 if '/api/database/rows/table/' in endpoint:
                     table_id_match = endpoint.split('/table/')[-1].split('/')[0]
                     received_email_table_id = str(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', ''))
                     
+                    self.logger.warning(f"🚨 Table ID in request: {table_id_match}")
+                    self.logger.warning(f"🚨 Received Email Table ID from env: {received_email_table_id}")
+                    
                     # Check if this is the Recevied email table - apply strict validation
                     if table_id_match == received_email_table_id and received_email_table_id:
-                        self.logger.info(f"📧 Creating record in RECEIVED EMAIL TABLE")
+                        self.logger.warning(f"🚨🚨🚨 CREATING RECORD IN RECEIVED EMAIL TABLE 🚨🚨🚨")
                         
                         # Reject empty payloads
                         if not data or len(data) == 0:
@@ -111,35 +117,29 @@ class BaserowService:
                             self.logger.error(error_msg)
                             raise ValueError(error_msg)
                         
+                        # Log FULL payload for debugging
+                        self.logger.warning(f"🚨 FULL PAYLOAD: {json.dumps(data, indent=2, default=str)}")
+                        
                         # Check if ANY field contains a valid VIN (17 alphanumeric chars)
-                        # VIN pattern: 17 chars, alphanumeric excluding I, O, Q (case insensitive)
                         import re
                         vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
                         has_valid_vin = False
                         vin_value = None
                         
-                        # Log all field values for debugging
-                        self.logger.info(f"📧 Payload fields: {list(data.keys())}")
-                        
                         for key, value in data.items():
                             if value and isinstance(value, str):
                                 value_stripped = value.strip().upper()
-                                # Check if this looks like a VIN (17 chars, alphanumeric)
                                 if len(value_stripped) == 17 and re.match(vin_pattern, value_stripped):
                                     has_valid_vin = True
                                     vin_value = value_stripped
-                                    self.logger.info(f"📧 Found VIN in field {key}: {vin_value}")
+                                    self.logger.warning(f"✅ Found VIN in field {key}: {vin_value}")
                                     break
                         
                         if not has_valid_vin:
-                            # Log what we received for debugging
-                            self.logger.error(f"BLOCKED: No valid VIN found in payload")
-                            for key, value in data.items():
-                                if value and isinstance(value, str):
-                                    self.logger.error(f"  Field {key}: '{value[:50]}...' (len={len(value)})")
+                            self.logger.error(f"❌ BLOCKED: No valid VIN found in payload")
                             raise ValueError(f"BLOCKED: No valid VIN found in payload")
                         
-                        self.logger.info(f"✅ Valid VIN found: {vin_value}")
+                        self.logger.warning(f"✅ Valid VIN found: {vin_value}, proceeding with save")
             
             if method == 'GET':
                 response = requests.get(url, headers=self.headers, params=params, timeout=30)
