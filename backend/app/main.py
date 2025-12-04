@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Session
 
 # Ensure logs directory exists
@@ -201,5 +201,14 @@ async def root() -> Dict[str, str]:
     return {"message": "Welcome to Garagefy API - Body Shop Quote Comparison Platform"}
 
 @app.get("/health")
-async def health_check() -> Dict[str, str]:
-    return {"status": "healthy"}
+async def health_check() -> Dict[str, Any]:
+    """Health check endpoint with service status"""
+    from app.services.scheduler_service import scheduler_service
+    
+    health_status = {
+        "status": "healthy",
+        "scheduler": scheduler_service.get_status(),
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    return health_status

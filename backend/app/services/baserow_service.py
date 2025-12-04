@@ -55,16 +55,28 @@ class BaserowService:
             return self._field_id_cache[cache_key]
         
         try:
-            endpoint = f'/api/database/fields/table/{table_id}/'
-            response = self._make_request('GET', endpoint)
-            
-            if isinstance(response, list):
-                for field in response:
-                    if field.get('name') == field_name:
+            # Check if we've already fetched all fields for this table
+            table_cache_key = f"_table_{table_id}_fetched"
+            if table_cache_key not in self._field_id_cache:
+                # Fetch ALL fields for this table at once (efficiency improvement)
+                endpoint = f'/api/database/fields/table/{table_id}/'
+                response = self._make_request('GET', endpoint)
+                
+                if isinstance(response, list):
+                    for field in response:
                         field_id = field.get('id')
-                        self._field_id_cache[cache_key] = field_id
-                        self.logger.info(f"Found field '{field_name}' in table {table_id}: field_{field_id}")
-                        return field_id
+                        name = field.get('name')
+                        if field_id and name:
+                            self._field_id_cache[f"{table_id}:{name}"] = field_id
+                            self.logger.debug(f"Cached field '{name}' in table {table_id}: field_{field_id}")
+                    
+                    # Mark this table as fetched
+                    self._field_id_cache[table_cache_key] = True
+                    self.logger.info(f"Cached {len(response)} fields for table {table_id}")
+            
+            # Now check the cache for the requested field
+            if cache_key in self._field_id_cache:
+                return self._field_id_cache[cache_key]
             
             self.logger.warning(f"Could not find field '{field_name}' in table {table_id}")
             return None
@@ -78,19 +90,16 @@ class BaserowService:
         url = f'{self.base_url}{endpoint}'
         
         try:
-            # Log ALL requests to see what's happening
-            self.logger.info(f"🔍 BASEROW REQUEST: {method} {endpoint}")
-            if data:
-                self.logger.info(f"🔍 PAYLOAD: {json.dumps(data, indent=2)}")
+            # Log requests at debug level to avoid log spam in production
+            self.logger.debug(f"BASEROW REQUEST: {method} {endpoint}")
             
-            # CRITICAL: Check ALL POST requests to ANY table
+            # CRITICAL: Validate POST requests to Recevied email table
             if method == 'POST':
                 # Check if this is a table endpoint
                 if '/api/database/rows/table/' in endpoint:
                     table_id_match = endpoint.split('/table/')[-1].split('/')[0]
-                    self.logger.error(f"🚨 ALERT: Creating record in table ID {table_id_match}")
                     
-                    # Check if this is the Recevied email table
+                    # Check if this is the Recevied email table - apply strict validation
                     if table_id_match == str(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', '')):
                         self.logger.error(f"🚨 CRITICAL: Creating record in RECEIVED EMAIL TABLE!")
                         

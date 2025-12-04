@@ -9,3 +9,5 @@ apscheduler
 sqlalchemy
 psycopg2-binary
 aiohttp
+pydantic
+pydantic-settings
