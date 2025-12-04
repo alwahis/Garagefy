@@ -267,7 +267,11 @@ class CustomerResponseService:
                     email_match = re.search(r'<(.+?)>', garage_email)
                     if email_match:
                         garage_email = email_match.group(1).strip().lower()
-                    responded_emails.add(garage_email)
+                    # Final normalization: remove whitespace
+                    garage_email = garage_email.replace(' ', '')
+                    if garage_email:
+                        responded_emails.add(garage_email)
+                        logger.debug(f"Garage responded: {garage_email}")
             
             # Get all garage emails (just the address part)
             all_garage_emails = set()
@@ -279,15 +283,22 @@ class CustomerResponseService:
                     email_match = re.search(r'<(.+?)>', email)
                     if email_match:
                         email = email_match.group(1).strip().lower()
-                    all_garage_emails.add(email)
+                    # Final normalization: remove whitespace
+                    email = email.replace(' ', '')
+                    if email:
+                        all_garage_emails.add(email)
+                        logger.debug(f"Expected garage: {email}")
             
             # Check if all garages have responded
-            # FIXED: Should check if responded_emails contains all garage emails, not the other way around
-            all_responded = responded_emails == all_garage_emails or (len(responded_emails) > 0 and all_garage_emails.issubset(responded_emails))
+            # All garages have responded if: responded_emails contains all garage emails
+            all_responded = all_garage_emails.issubset(responded_emails) if len(all_garage_emails) > 0 else False
             
-            logger.info(f"VIN {vin}: {len(responded_emails)}/{len(all_garage_emails)} garages responded. Garages: {all_garage_emails}. Responded: {responded_emails}. All responded: {all_responded}")
+            logger.info(f"VIN {vin}: {len(responded_emails)}/{len(all_garage_emails)} garages responded")
+            logger.info(f"  Expected garages: {all_garage_emails}")
+            logger.info(f"  Responded garages: {responded_emails}")
+            logger.info(f"  All responded: {all_responded}")
             
-            return all_responded and len(all_garage_emails) > 0
+            return all_responded
             
         except Exception as e:
             logger.error(f"Error checking if all garages responded: {str(e)}", exc_info=True)
