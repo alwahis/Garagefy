@@ -98,30 +98,39 @@ class BaserowService:
                 # Check if this is a table endpoint
                 if '/api/database/rows/table/' in endpoint:
                     table_id_match = endpoint.split('/table/')[-1].split('/')[0]
+                    received_email_table_id = str(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', ''))
                     
                     # Check if this is the Recevied email table - apply strict validation
-                    if table_id_match == str(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', '')):
-                        self.logger.error(f"🚨 CRITICAL: Creating record in RECEIVED EMAIL TABLE!")
+                    if table_id_match == received_email_table_id and received_email_table_id:
+                        self.logger.info(f"📧 Creating record in RECEIVED EMAIL TABLE")
                         
                         # Reject empty payloads
                         if not data or len(data) == 0:
-                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY payload: {data}"
+                            error_msg = f"BLOCKED: Empty payload for Recevied email table"
                             self.logger.error(error_msg)
                             raise ValueError(error_msg)
                         
-                        # Reject payloads without VIN field
-                        has_vin = any(k in data for k in ['VIN', 'field_6389842']) if data else False
-                        if not has_vin:
-                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table WITHOUT VIN field. Payload: {json.dumps(data, indent=2)}"
+                        # Check if ANY field contains a valid VIN (17 alphanumeric chars)
+                        # This works with dynamic field IDs
+                        import re
+                        vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
+                        has_valid_vin = False
+                        vin_value = None
+                        
+                        for key, value in data.items():
+                            if value and isinstance(value, str):
+                                value_stripped = value.strip().upper()
+                                if re.match(vin_pattern, value_stripped):
+                                    has_valid_vin = True
+                                    vin_value = value_stripped
+                                    break
+                        
+                        if not has_valid_vin:
+                            error_msg = f"BLOCKED: No valid VIN found in payload. Keys: {list(data.keys())}"
                             self.logger.error(error_msg)
                             raise ValueError(error_msg)
                         
-                        # Check if VIN is empty
-                        vin_value = data.get('field_6389842') or data.get('VIN', '')
-                        if not vin_value or not str(vin_value).strip():
-                            error_msg = f"CRITICAL: Attempting to create record in Recevied email table with EMPTY VIN. Payload: {json.dumps(data, indent=2)}"
-                            self.logger.error(error_msg)
-                            raise ValueError(error_msg)
+                        self.logger.info(f"✅ Valid VIN found: {vin_value}")
             
             if method == 'GET':
                 response = requests.get(url, headers=self.headers, params=params, timeout=30)
@@ -815,10 +824,20 @@ class BaserowService:
             
             # CRITICAL: Prevent creating empty rows in Recevied email table without VIN
             if table_name == 'Recevied email':
-                # Check if VIN field is present and not empty
-                vin = data.get('VIN') or data.get('field_6389842', '')
-                if not vin or not str(vin).strip():
-                    error_msg = f"Cannot create record in Recevied email table without VIN. Data: {data}"
+                # Check if ANY field contains a valid VIN (17 alphanumeric chars)
+                import re
+                vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
+                has_valid_vin = False
+                
+                for key, value in data.items():
+                    if value and isinstance(value, str):
+                        value_stripped = value.strip().upper()
+                        if re.match(vin_pattern, value_stripped):
+                            has_valid_vin = True
+                            break
+                
+                if not has_valid_vin:
+                    error_msg = f"Cannot create record in Recevied email table without valid VIN. Data keys: {list(data.keys())}"
                     self.logger.error(error_msg)
                     raise ValueError(error_msg)
 
