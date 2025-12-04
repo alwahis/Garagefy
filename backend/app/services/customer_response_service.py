@@ -11,17 +11,28 @@ class CustomerResponseService:
     
     # Field ID mappings for Customer details table
     # These map logical field names to Baserow field IDs
+    # Verified from logs on 2025-12-04:
+    #   field_6389828: mudhafar hamid          → Name
+    #   field_6389829: +352661194448           → Phone
+    #   field_6389830: engineermudhafar@gmail.com → Email
+    #   field_6389831: 00000000211144444       → VIN
+    #   field_6389832: test test               → Notes/Description
+    #   field_6389833: Ford                    → Car Brand
+    #   field_6389834: 2025-12-03T10:43:34...  → Date and Time
+    #   field_6389835: (not shown)             → Sent Emails
+    #   field_6389836: https://res.cloudinary... → Images
+    #   field_6389837: QK54444                 → Plate Number
     CUSTOMER_FIELD_IDS = {
         'Name': 'field_6389828',
-        'Email': 'field_6389829',
-        'Phone': 'field_6389830',
+        'Phone': 'field_6389829',
+        'Email': 'field_6389830',
         'VIN': 'field_6389831',
-        'Car Brand': 'field_6389832',
-        'Plate Number': 'field_6389833',
-        'Notes': 'field_6389834',
-        'Images': 'field_6389835',
-        'Sent Emails': 'field_6389836',
-        'Date and Time': 'field_6389837',
+        'Notes': 'field_6389832',
+        'Car Brand': 'field_6389833',
+        'Date and Time': 'field_6389834',
+        'Sent Emails': 'field_6389835',
+        'Images': 'field_6389836',
+        'Plate Number': 'field_6389837',
     }
     
     def __init__(self):
