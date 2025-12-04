@@ -109,34 +109,56 @@ class EmailMonitorService:
             return str(subject)
     
     def _extract_email_body(self, msg: email.message.Message) -> str:
-        """Extract the body text from an email message"""
+        """Extract the body text from an email message, including entire thread"""
         try:
             body = ""
             
             if msg.is_multipart():
+                # Collect ALL text parts (not just the first one)
+                # This ensures we get the entire email thread, not just the immediate response
+                text_parts = []
+                html_parts = []
+                
                 for part in msg.walk():
                     content_type = part.get_content_type()
-                    content_disposition = str(part.get("Content-Disposition"))
+                    content_disposition = str(part.get("Content-Disposition", ""))
                     
                     # Skip attachments
                     if "attachment" in content_disposition:
                         continue
                     
-                    # Get text/plain or text/html
+                    # Collect text parts
                     if content_type == "text/plain":
                         try:
-                            body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
-                            break
+                            text_content = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                            if text_content.strip():  # Only add non-empty content
+                                text_parts.append(text_content)
                         except:
                             pass
-                    elif content_type == "text/html" and not body:
+                    elif content_type == "text/html":
                         try:
-                            body = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                            html_content = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+                            if html_content.strip():  # Only add non-empty content
+                                html_parts.append(html_content)
                         except:
                             pass
+                
+                # Prefer plain text, fall back to HTML
+                if text_parts:
+                    body = "\n\n---\n\n".join(text_parts)
+                elif html_parts:
+                    # Strip HTML tags from HTML content
+                    import re
+                    html_body = "\n\n---\n\n".join(html_parts)
+                    # Remove HTML tags
+                    body = re.sub('<[^<]+?>', '', html_body)
             else:
-                body = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+                try:
+                    body = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+                except:
+                    body = msg.get_payload()
             
+            logger.debug(f"Extracted email body length: {len(body)} characters")
             return body
             
         except Exception as e:
