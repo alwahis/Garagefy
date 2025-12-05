@@ -66,7 +66,7 @@ async def get_garage_responses(request_id: str) -> Dict[str, Any]:
     """
     try:
         # Get responses from Baserow
-        responses = airtable_service.get_records('Recevied email')
+        responses = airtable_service.get_records('Received Email')
         
         return {
             'success': True,

@@ -30,8 +30,7 @@ class BaserowService:
         self.table_ids = {
             'Customer details': int(os.getenv('BASEROW_TABLE_CUSTOMER_DETAILS', 0)),
             'Fix it': int(os.getenv('BASEROW_TABLE_FIX_IT', 0)),
-            'Recevied email': int(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', 0)),
-            'Received': int(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', 0)),  # Use Recevied email for both
+            'Received Email': int(os.getenv('BASEROW_TABLE_RECEIVED_EMAIL', 0)),
             # Quotes subsystem
             'Quotes': int(os.getenv('BASEROW_TABLE_QUOTES', 0)),
             'Service Requests': int(os.getenv('BASEROW_TABLE_SERVICE_REQUESTS', 0)),
@@ -107,17 +106,20 @@ class BaserowService:
                     self.logger.warning(f"🚨 Table ID in request: {table_id_match}")
                     self.logger.warning(f"🚨 Received Email Table ID from env: {received_email_table_id}")
                     
-                    # Check if this is the Recevied email table - apply strict validation
+                    # Check if this is the Received Email table - apply strict validation
                     if table_id_match == received_email_table_id and received_email_table_id:
                         self.logger.warning(f"🚨🚨🚨 CREATING RECORD IN RECEIVED EMAIL TABLE 🚨🚨🚨")
                         
                         # Reject empty payloads
                         if not data or len(data) == 0:
-                            error_msg = f"BLOCKED: Empty payload for Recevied email table"
+                            error_msg = f"BLOCKED: Empty payload for Received Email table"
                             self.logger.error(error_msg)
                             raise ValueError(error_msg)
                         
-                        # Log FULL payload for debugging
+                        # Log FULL payload for debugging with stack trace to see WHO is calling this
+                        import traceback
+                        stack_trace = ''.join(traceback.format_stack()[-5:-1])  # Last 4 frames before this one
+                        self.logger.warning(f"🚨 CALL STACK:\n{stack_trace}")
                         self.logger.warning(f"🚨 FULL PAYLOAD: {json.dumps(data, indent=2, default=str)}")
                         
                         # Check if ANY field contains a valid VIN (17 alphanumeric chars)
@@ -137,6 +139,8 @@ class BaserowService:
                         
                         if not has_valid_vin:
                             self.logger.error(f"❌ BLOCKED: No valid VIN found in payload")
+                            self.logger.error(f"❌ Payload fields checked: {list(data.keys())}")
+                            self.logger.error(f"❌ Payload values: {list(data.values())}")
                             raise ValueError(f"BLOCKED: No valid VIN found in payload")
                         
                         self.logger.warning(f"✅ Valid VIN found: {vin_value}, proceeding with save")
@@ -586,9 +590,53 @@ class BaserowService:
             self.logger.error(f"Error deleting record: {str(e)}")
             return False
     
+    def _extract_quote_from_text(self, text: str) -> str:
+        """
+        Extract price/quote from email text.
+        Looks for common price patterns like:
+        - €500, 500€, EUR 500, 500 EUR
+        - $500, 500$, USD 500
+        - Price: 500, Total: 500, Quote: 500
+        
+        Args:
+            text: Email body or subject text
+            
+        Returns:
+            Extracted price string or empty string if not found
+        """
+        if not text:
+            return ''
+        
+        import re
+        
+        # Common price patterns
+        patterns = [
+            # Euro patterns: €500, 500€, EUR 500, 500 EUR, 500,00€
+            r'€\s*(\d+(?:[.,]\d{2})?)',
+            r'(\d+(?:[.,]\d{2})?)\s*€',
+            r'EUR\s*(\d+(?:[.,]\d{2})?)',
+            r'(\d+(?:[.,]\d{2})?)\s*EUR',
+            # Dollar patterns
+            r'\$\s*(\d+(?:[.,]\d{2})?)',
+            r'(\d+(?:[.,]\d{2})?)\s*\$',
+            r'USD\s*(\d+(?:[.,]\d{2})?)',
+            # With labels
+            r'(?:price|total|quote|cost|amount)[\s:]+€?\s*(\d+(?:[.,]\d{2})?)',
+            r'(?:price|total|quote|cost|amount)[\s:]+\$?\s*(\d+(?:[.,]\d{2})?)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                price = match.group(1) if match.lastindex else match.group(0)
+                self.logger.info(f"💰 Extracted quote: {price}")
+                return price.strip()
+        
+        return ''
+    
     def store_received_email(self, email_data: Dict[str, Any], vin: str = None) -> Dict[str, Any]:
         """
-        Store a received email in the 'Recevied email' table
+        Store a received email in the 'Received Email' table
         
         Args:
             email_data: Dictionary with from_email, subject, body, received_at, attachments
@@ -613,15 +661,15 @@ class BaserowService:
                 self.logger.error(error_msg)
                 return {'success': False, 'error': error_msg}
             
-            table_id = self.table_ids['Recevied email']
+            table_id = self.table_ids['Received Email']
             
             # Validate table ID
             if not table_id or table_id == 0:
-                error_msg = f"Invalid Recevied email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
+                error_msg = f"Invalid Received Email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
             
-            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
+            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Received Email table")
             
             # Check for duplicates by VIN AND Email (same garage shouldn't respond twice for same VIN)
             try:
@@ -629,7 +677,7 @@ class BaserowService:
                     garage_email = email_data.get('from_email', '').strip().lower()
                     # Get all records for this VIN
                     existing_records = self.get_records(
-                        'Recevied email',
+                        'Received Email',
                         formula=f'{{VIN}} = "{vin}"'
                     )
                     
@@ -654,6 +702,13 @@ class BaserowService:
             field_body = self._get_field_id_by_name(table_id, 'Body')
             field_received_at = self._get_field_id_by_name(table_id, 'Received At')
             field_vin = self._get_field_id_by_name(table_id, 'VIN')
+            field_quote = self._get_field_id_by_name(table_id, 'Quote')
+            
+            # Extract quote/price from email body and subject
+            body_text = email_data.get('body', '')
+            subject_text = email_data.get('subject', '')
+            combined_text = f"{subject_text} {body_text}"
+            extracted_quote = self._extract_quote_from_text(combined_text)
             
             # Build payload with correct field IDs
             payload = {}
@@ -667,6 +722,8 @@ class BaserowService:
                 payload[f'field_{field_body}'] = email_data.get('body', '')
             if field_received_at:
                 payload[f'field_{field_received_at}'] = email_data.get('received_at', datetime.now(timezone.utc).isoformat())
+            if field_quote and extracted_quote:
+                payload[f'field_{field_quote}'] = extracted_quote
             
             # Validate we have at least VIN and one content field
             if not field_vin:
@@ -698,7 +755,7 @@ class BaserowService:
     
     def record_garage_response(self, response_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Record a garage response in the 'Recevied email' table
+        Record a garage response in the 'Received Email' table
         
         Args:
             response_data: Dictionary with garage_name, garage_email, request_id, vin, subject, body, etc.
@@ -731,11 +788,11 @@ class BaserowService:
                     'error': error_msg
                 }
             
-            table_id = self.table_ids['Recevied email']
+            table_id = self.table_ids['Received Email']
             
             # Validate table ID
             if not table_id or table_id == 0:
-                error_msg = f"Invalid Recevied email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
+                error_msg = f"Invalid Received Email table ID: {table_id}. Check BASEROW_TABLE_RECEIVED_EMAIL env var"
                 self.logger.error(error_msg)
                 return {
                     'success': False,
@@ -743,7 +800,7 @@ class BaserowService:
                     'error': error_msg
                 }
             
-            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Recevied email table")
+            self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Received Email table")
             
             # Map response data to Baserow field IDs using DYNAMIC lookup
             # This ensures we use the correct field IDs even if the table structure changes
@@ -752,6 +809,13 @@ class BaserowService:
             field_body = self._get_field_id_by_name(table_id, 'Body')
             field_received_at = self._get_field_id_by_name(table_id, 'Received At')
             field_vin = self._get_field_id_by_name(table_id, 'VIN')
+            field_quote = self._get_field_id_by_name(table_id, 'Quote')
+            
+            # Extract quote/price from response body and subject
+            body_text = response_data.get('body', '')
+            subject_text = response_data.get('subject', '')
+            combined_text = f"{subject_text} {body_text}"
+            extracted_quote = self._extract_quote_from_text(combined_text)
             
             # Build payload with correct field IDs
             payload = {}
@@ -765,6 +829,8 @@ class BaserowService:
                 payload[f'field_{field_body}'] = response_data.get('body', '')
             if field_received_at:
                 payload[f'field_{field_received_at}'] = response_data.get('response_date', datetime.now(timezone.utc).isoformat())
+            if field_quote and extracted_quote:
+                payload[f'field_{field_quote}'] = extracted_quote
             
             # Validate we have at least VIN and one content field
             if not field_vin or (not field_body and not field_subject):
@@ -830,15 +896,15 @@ class BaserowService:
         Returns an Airtable-style dict with ``id`` and ``fields`` keys so
         callers like ``quote_service`` can keep using ``record['fields']``.
         
-        IMPORTANT: For 'Recevied email' table, VIN is required to prevent empty records.
+        IMPORTANT: For 'Received Email' table, VIN is required to prevent empty records.
         """
         try:
             table_id = self.table_ids.get(table_name)
             if not table_id:
                 raise ValueError(f"Unknown table: {table_name}")
             
-            # CRITICAL: Prevent creating empty rows in Recevied email table without VIN
-            if table_name == 'Recevied email':
+            # CRITICAL: Prevent creating empty rows in Received Email table without VIN
+            if table_name == 'Received Email':
                 # Check if ANY field contains a valid VIN (17 alphanumeric chars)
                 import re
                 vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
@@ -852,7 +918,7 @@ class BaserowService:
                             break
                 
                 if not has_valid_vin:
-                    error_msg = f"Cannot create record in Recevied email table without valid VIN. Data keys: {list(data.keys())}"
+                    error_msg = f"Cannot create record in Received Email table without valid VIN. Data keys: {list(data.keys())}"
                     self.logger.error(error_msg)
                     raise ValueError(error_msg)
 

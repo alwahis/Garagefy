@@ -18,7 +18,7 @@ async def check_emails(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     2. Fetch unread emails
     3. Extract quote information
     4. Analyze attachments with DeepSeek if present
-    5. Save to 'Recevied email' table in Baserow
+    5. Save to 'Received Email' table in Baserow
     """
     try:
         logger.info("Starting email check process")

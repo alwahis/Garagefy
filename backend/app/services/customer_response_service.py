@@ -316,7 +316,7 @@ class CustomerResponseService:
             
             # Get all responses from Received email table for this VIN
             received_emails = self.airtable.get_records(
-                'Recevied email',
+                'Received Email',
                 formula=f'{{VIN}} = "{vin}"'
             )
             
@@ -396,7 +396,7 @@ class CustomerResponseService:
             
             # Get all quotes from Received email table matching this VIN
             received_emails = self.airtable.get_records(
-                'Recevied email',
+                'Received Email',
                 formula=f'{{VIN}} = "{vin}"'
             )
             
