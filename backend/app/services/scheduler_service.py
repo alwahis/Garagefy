@@ -29,13 +29,17 @@ class SchedulerService:
             self.scheduler = AsyncIOScheduler()
             
             # Add job to check emails every 1 minute (starts at :00 seconds)
+            # misfire_grace_time=30 allows job to run if it's up to 30s late
+            # coalesce=True ensures only one run if multiple were missed
             self.scheduler.add_job(
                 func=self._check_emails_task,
                 trigger=IntervalTrigger(minutes=1),
                 id='check_emails',
                 name='Check inbox for garage responses',
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
+                misfire_grace_time=30,
+                coalesce=True
             )
             logger.info("Scheduled email checking task (every 1 minute)")
             
@@ -57,7 +61,9 @@ class SchedulerService:
                 id='send_customer_responses',
                 name='Send compiled quotes to customers',
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
+                misfire_grace_time=30,
+                coalesce=True
             )
             logger.info(f"Scheduled customer response task (every 1 minute, starting in {delay_seconds}s to avoid conflicts)")
             
@@ -88,16 +94,20 @@ class SchedulerService:
     async def _check_emails_task(self):
         """Scheduled task to check emails"""
         try:
-            logger.info(f"[SCHEDULED] Starting email check at {datetime.now()}")
+            logger.info(f"[SCHEDULED] 📧📧📧 Starting email check at {datetime.now()} 📧📧📧")
             result = await email_monitor_service.check_and_process_new_emails(mark_as_read=True)
             
             if result.get('success'):
-                logger.info(f"[SCHEDULED] Email check completed: {result.get('emails_processed', 0)} emails processed")
+                emails_processed = result.get('emails_processed', 0)
+                total_found = result.get('total_found', 0)
+                logger.info(f"[SCHEDULED] ✅ Email check completed: {emails_processed} processed, {total_found} found")
+                if emails_processed > 0:
+                    logger.info(f"[SCHEDULED] 🎉 NEW EMAILS STORED IN BASEROW!")
             else:
-                logger.error(f"[SCHEDULED] Email check failed: {result.get('error', 'Unknown error')}")
+                logger.error(f"[SCHEDULED] ❌ Email check failed: {result.get('error', 'Unknown error')}")
                 
         except Exception as e:
-            logger.error(f"[SCHEDULED] Error in email check task: {str(e)}", exc_info=True)
+            logger.error(f"[SCHEDULED] ❌ Error in email check task: {str(e)}", exc_info=True)
     
     async def _send_customer_responses_task(self):
         """Scheduled task to send customer responses"""
