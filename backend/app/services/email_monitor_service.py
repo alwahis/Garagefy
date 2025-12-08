@@ -275,14 +275,14 @@ Résumer en français de manière structurée."""
             # Select inbox
             mail.select('INBOX')
             
-            # Search for UNREAD emails from today to prevent reprocessing
-            # This is the key to avoiding duplicate records
+            # Search for UNREAD emails from the last 7 days to catch delayed responses
+            # This is the key to avoiding duplicate records while not missing emails
             from datetime import datetime, timedelta
-            today_date = datetime.now().strftime("%d-%b-%Y")
+            week_ago = (datetime.now() - timedelta(days=7)).strftime("%d-%b-%Y")
             
-            # Search for unread emails from today
+            # Search for unread emails from the last 7 days
             # UNSEEN flag = unread emails
-            status, messages = mail.search(None, f'(UNSEEN SINCE {today_date})')
+            status, messages = mail.search(None, f'(UNSEEN SINCE {week_ago})')
             
             if status != 'OK':
                 logger.error("Failed to search for emails")
@@ -294,7 +294,7 @@ Résumer en français de manière structurée."""
                 }
             
             email_ids = messages[0].split() if messages[0] else []
-            logger.info(f"Found {len(email_ids)} unread emails from today to check")
+            logger.info(f"Found {len(email_ids)} unread emails from last 7 days to check")
             
             # If no unread emails, nothing to process
             if not email_ids:
