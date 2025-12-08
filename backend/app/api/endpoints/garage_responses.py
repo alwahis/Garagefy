@@ -80,3 +80,78 @@ async def get_garage_responses(request_id: str) -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while fetching garage responses: {str(e)}"
         )
+
+@router.post("/test-create", status_code=status.HTTP_201_CREATED)
+async def test_create_record() -> Dict[str, Any]:
+    """
+    Create a test record in the Received Email table
+    """
+    try:
+        # Test email data
+        test_email = {
+            'from_email': 'test@garage.com',
+            'subject': 'Test Quote Response - VIN: TEST1234567890123',
+            'body': 'Dear Customer,\n\nWe can fix your car for EUR500.\n\nBest regards,\nTest Garage',
+            'received_at': datetime.utcnow().isoformat(),
+            'attachments': []
+        }
+        
+        test_vin = 'TEST1234567890123'
+        
+        logger.info(f"Creating test record with VIN: {test_vin}")
+        
+        # Store the test email
+        result = airtable_service.store_received_email(test_email, test_vin)
+        
+        if not result or not result.get('success'):
+            error_msg = result.get('error', 'Unknown error') if result else 'No response'
+            logger.error(f"Failed to create test record: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create test record: {error_msg}"
+            )
+        
+        logger.info(f"Successfully created test record: {result.get('id')}")
+        
+        return {
+            'success': True,
+            'message': 'Test record created successfully',
+            'record_id': result.get('id'),
+            'vin': test_vin,
+            'from_email': test_email['from_email']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating test record: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred: {str(e)}"
+        )
+
+@router.post("/trigger-email-check", status_code=status.HTTP_200_OK)
+async def trigger_email_check() -> Dict[str, Any]:
+    """
+    Manually trigger email check for testing
+    """
+    try:
+        from ...services.email_monitor_service import email_monitor_service
+        
+        logger.info("Manually triggering email check...")
+        
+        # Trigger email check
+        result = await email_monitor_service.check_and_process_new_emails(mark_as_read=False)
+        
+        return {
+            'success': True,
+            'message': 'Email check completed',
+            'result': result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error triggering email check: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred: {str(e)}"
+        )
