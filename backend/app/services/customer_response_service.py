@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta, timezone
 from .baserow_service import baserow_service as airtable_service
@@ -327,7 +328,6 @@ class CustomerResponseService:
                 garage_email = email_fields.get('Email', '').strip().lower()
                 if garage_email:
                     # Extract just the email address from "Name <email@domain.com>" format
-                    import re
                     email_match = re.search(r'<(.+?)>', garage_email)
                     if email_match:
                         garage_email = email_match.group(1).strip().lower()
@@ -343,7 +343,6 @@ class CustomerResponseService:
                 if g.get('email'):
                     email = g['email'].strip().lower()
                     # Extract just the email address from "Name <email@domain.com>" format if present
-                    import re
                     email_match = re.search(r'<(.+?)>', email)
                     if email_match:
                         email = email_match.group(1).strip().lower()
@@ -413,7 +412,6 @@ class CustomerResponseService:
                 garage_email_raw = email_fields.get('Email', '').strip().lower()
                 
                 # Extract just the email address from "Name <email@domain.com>" format
-                import re
                 email_match = re.search(r'<(.+?)>', garage_email_raw)
                 garage_email_clean = email_match.group(1).strip().lower() if email_match else garage_email_raw
                 
@@ -424,7 +422,6 @@ class CustomerResponseService:
                 body_full = email_fields.get('Body', '')
                 
                 # Remove email thread - split by common email reply markers
-                import re
                 
                 # Try to extract price from body if not already set
                 quote_amount = email_fields.get('Quote', '')

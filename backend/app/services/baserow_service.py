@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import logging
 from typing import Dict, List, Optional, Any
@@ -123,7 +124,6 @@ class BaserowService:
                         self.logger.warning(f"🚨 FULL PAYLOAD: {json.dumps(data, indent=2, default=str)}")
                         
                         # Check if ANY field contains a valid VIN (17 alphanumeric chars)
-                        import re
                         vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
                         has_valid_vin = False
                         vin_value = None
@@ -452,8 +452,6 @@ class BaserowService:
             if not table_id:
                 raise ValueError(f"Unknown table: {table_name}")
 
-            import re
-
             def _strip_quotes(value: str) -> str:
                 value = value.strip()
                 if (value.startswith('"') and value.endswith('"')) or (
@@ -607,8 +605,6 @@ class BaserowService:
         if not text:
             return ''
         
-        import re
-        
         # Common price patterns
         patterns = [
             # Euro patterns: €500, 500€, EUR 500, 500 EUR, 500,00€
@@ -683,7 +679,14 @@ class BaserowService:
                     
                     # Check if this specific garage already responded for this VIN
                     for record in existing_records:
-                        existing_email = record.get('fields', {}).get('field_6389838', '').strip().lower()
+                        # Use dynamic field lookup - try 'Email' field name first
+                        existing_email = record.get('fields', {}).get('Email', '').strip().lower()
+                        if not existing_email:
+                            # Fallback: check all fields for an email-like value
+                            for key, value in record.get('fields', {}).items():
+                                if value and isinstance(value, str) and '@' in value:
+                                    existing_email = value.strip().lower()
+                                    break
                         if existing_email == garage_email:
                             self.logger.info(f"Duplicate response detected: Garage {garage_email} already responded for VIN {vin}, skipping save")
                             return record
@@ -906,7 +909,6 @@ class BaserowService:
             # CRITICAL: Prevent creating empty rows in Received Email table without VIN
             if table_name == 'Received Email':
                 # Check if ANY field contains a valid VIN (17 alphanumeric chars)
-                import re
                 vin_pattern = r'^[A-HJ-NPR-Z0-9]{17}$'
                 has_valid_vin = False
                 
@@ -955,7 +957,6 @@ class BaserowService:
             import cloudinary.api
             import hashlib
             import time
-            import re
             
             self.logger.info(f"Starting Cloudinary upload for file: {filename}")
             

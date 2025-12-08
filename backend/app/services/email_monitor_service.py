@@ -1,4 +1,5 @@
 import os
+import re
 import imaplib
 import email
 from email.header import decode_header
@@ -148,7 +149,6 @@ class EmailMonitorService:
                     body = "\n\n---\n\n".join(text_parts)
                 elif html_parts:
                     # Strip HTML tags from HTML content
-                    import re
                     html_body = "\n\n---\n\n".join(html_parts)
                     # Remove HTML tags
                     body = re.sub('<[^<]+?>', '', html_body)
@@ -475,7 +475,6 @@ Résumer en français de manière structurée."""
     
     def _extract_request_id_from_subject(self, subject: str) -> Optional[str]:
         """Extract Request ID from email subject (format: Ref: req_XXXXX or in body)"""
-        import re
         
         # Pattern to match request ID like "req_1760691162901_aod9uhj2e"
         # Try multiple patterns:
@@ -514,7 +513,6 @@ Résumer en français de manière structurée."""
             # Since request_id contains timestamp, we can try to match it
             # Format: req_TIMESTAMP_RANDOM
             # Extract timestamp
-            import re
             timestamp_match = re.search(r'req_(\d+)_', request_id)
             
             if timestamp_match:
@@ -550,7 +548,6 @@ Résumer en français de manière structurée."""
     
     def _extract_vin_from_text(self, text: str) -> Optional[str]:
         """Try to extract VIN from text using regex"""
-        import re
         
         # VIN pattern: 17 alphanumeric characters excluding I, O, Q
         # Standard VIN pattern
