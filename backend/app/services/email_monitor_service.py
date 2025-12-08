@@ -430,13 +430,16 @@ Résumer en français de manière structurée."""
                         logger.warning(f"Failed to save email from {from_email}: {error_msg}")
                         errors.append(f"Failed to save email from {from_email}: {error_msg}")
                     
-                    # ALWAYS mark as read to prevent reprocessing on next check
-                    # This is critical - even if save failed, mark as read so we don't process it again
-                    try:
-                        mail.store(email_id, '+FLAGS', '\\Seen')
-                        logger.debug(f"Marked email {email_id} as read")
-                    except Exception as e:
-                        logger.warning(f"Could not mark email {email_id} as read: {str(e)}")
+                    # Only mark as read if save was successful
+                    # This ensures we retry failed emails on next check
+                    if result and result.get('success', False):
+                        try:
+                            mail.store(email_id, '+FLAGS', '\\Seen')
+                            logger.info(f"✅ Marked email {email_id} as read after successful save")
+                        except Exception as e:
+                            logger.warning(f"Could not mark email {email_id} as read: {str(e)}")
+                    else:
+                        logger.warning(f"⚠️ NOT marking email {email_id} as read - save failed, will retry next check")
                     
                 except Exception as e:
                     logger.error(f"Error processing email {email_id}: {str(e)}", exc_info=True)
@@ -507,7 +510,6 @@ Résumer en français de manière structurée."""
         """Look up VIN from Customer details table using Request ID"""
         try:
             # Search Customer details table for this request ID
-            # The request ID should be stored in a field or we can search by DateTime
             customer_records = self.airtable.get_records('Customer details')
             
             # Since request_id contains timestamp, we can try to match it
@@ -518,12 +520,24 @@ Résumer en français de manière structurée."""
             if timestamp_match:
                 timestamp_ms = int(timestamp_match.group(1))
                 
-                # Search for customer record with matching timestamp (within 1 second tolerance)
+                # Search for customer record with matching timestamp (within 2 seconds tolerance)
                 for record in customer_records:
                     fields = record.get('fields', {})
-                    date_str = fields.get('Date and Time') or fields.get('DateTime') or fields.get('Created time')
                     
-                    if date_str:
+                    # Try multiple possible field names/IDs for date
+                    date_str = None
+                    vin = None
+                    
+                    for key, value in fields.items():
+                        if value and isinstance(value, str):
+                            # Check if this looks like a date field (ISO format)
+                            if 'T' in value and ('+' in value or 'Z' in value):
+                                date_str = value
+                            # Check if this looks like a VIN (17 alphanumeric)
+                            if len(value) == 17 and value.isalnum():
+                                vin = value
+                    
+                    if date_str and vin:
                         try:
                             from datetime import datetime
                             record_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
@@ -531,10 +545,8 @@ Résumer en français de manière structurée."""
                             
                             # Check if timestamps are close (within 2 seconds)
                             if abs(record_timestamp_ms - timestamp_ms) < 2000:
-                                vin = fields.get('VIN')
-                                if vin:
-                                    logger.info(f"Matched request {request_id} to VIN {vin}")
-                                    return vin
+                                logger.info(f"Matched request {request_id} to VIN {vin}")
+                                return vin
                         except Exception as e:
                             logger.debug(f"Error parsing date for record: {str(e)}")
                             continue
@@ -556,7 +568,7 @@ Résumer en français de manière structurée."""
         matches = re.findall(vin_pattern, text.upper())
         
         if matches:
-            logger.debug(f"🔍 DEBUG: Found VIN matches: {matches}")
+            logger.info(f"🔍 Found VIN matches: {matches}")
             return matches[0]
         
         # Fallback: Look for "VIN:" followed by alphanumeric
@@ -564,10 +576,21 @@ Résumer en français de manière structurée."""
         label_matches = re.findall(vin_label_pattern, text.upper())
         
         if label_matches:
-            logger.debug(f"🔍 DEBUG: Found VIN via label pattern: {label_matches}")
+            logger.info(f"🔍 Found VIN via label pattern: {label_matches}")
             return label_matches[0]
         
-        logger.debug(f"🔍 DEBUG: No VIN found in text")
+        # Fallback 2: Look for any 17-character alphanumeric string (more permissive)
+        # This catches VINs that might have lowercase or be in unusual formats
+        permissive_pattern = r'\b([A-Za-z0-9]{17})\b'
+        permissive_matches = re.findall(permissive_pattern, text)
+        
+        for match in permissive_matches:
+            # Validate it's not all numbers (VINs have letters)
+            if not match.isdigit() and not match.isalpha():
+                logger.info(f"🔍 Found VIN via permissive pattern: {match.upper()}")
+                return match.upper()
+        
+        logger.warning(f"🔍 No VIN found in text (searched {len(text)} chars)")
         return None
 
 # Singleton instance
