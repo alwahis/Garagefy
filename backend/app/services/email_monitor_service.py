@@ -366,35 +366,47 @@ Résumer en français de manière structurée."""
                                 'analysis': analysis
                             })
                     
-                    # Try to extract Request ID from subject or body (format: Ref: req_XXXXX)
+                    # CRITICAL: Extract VIN using multiple methods
+                    # Method 1: Extract Request ID from subject or body
                     request_id = self._extract_request_id_from_subject(subject)
-                    logger.info(f"🔍 DEBUG: Extracted request ID from subject: {request_id}")
+                    logger.info(f"🔍 Step 1 - Request ID from subject: {request_id}")
                     
-                    # If not found in subject, try to extract from body
                     if not request_id:
                         request_id = self._extract_request_id_from_subject(body)
-                        logger.info(f"🔍 DEBUG: Extracted request ID from body: {request_id}")
+                        logger.info(f"🔍 Step 1 - Request ID from body: {request_id}")
                     
-                    # If we have a request ID, find the VIN from Customer details table
+                    # Method 2: If we have a request ID, find the VIN from Customer details table
                     vin = None
                     if request_id:
                         vin = self._get_vin_from_request_id(request_id)
-                        logger.info(f"Found request ID {request_id}, matched to VIN: {vin}")
-                    
-                    # Fallback: Try to extract VIN directly from subject or body
-                    if not vin:
-                        vin = self._extract_vin_from_text(subject + " " + body)
                         if vin:
-                            logger.info(f"✅ Extracted VIN from email text: {vin}")
+                            logger.info(f"✅ Step 2 - VIN from request ID {request_id}: {vin}")
                         else:
-                            logger.warning(f"⚠️ Could not extract VIN from email. Subject: {subject[:100]}")
+                            logger.warning(f"⚠️ Step 2 - Could not find VIN for request ID: {request_id}")
+                    
+                    # Method 3: Try to extract VIN directly from subject first (most reliable)
+                    if not vin:
+                        vin = self._extract_vin_from_text(subject)
+                        if vin:
+                            logger.info(f"✅ Step 3 - VIN extracted from subject: {vin}")
+                    
+                    # Method 4: Try to extract VIN from body
+                    if not vin:
+                        vin = self._extract_vin_from_text(body)
+                        if vin:
+                            logger.info(f"✅ Step 4 - VIN extracted from body: {vin}")
+                        else:
+                            logger.error(f"❌ FAILED - No VIN found in email")
+                            logger.error(f"   Subject: {subject}")
+                            logger.error(f"   Body preview: {body[:500]}")
                     
                     # IMPORTANT: Skip emails without VIN to avoid creating empty records
                     if not vin:
                         logger.error(f"❌ CRITICAL: Skipping email from {from_email} - NO VIN EXTRACTED")
-                        logger.error(f"   Subject: {subject[:100]}")
-                        logger.error(f"   Body preview: {body[:200]}")
+                        logger.error(f"   Subject: {subject}")
+                        logger.error(f"   Body (first 1000 chars): {body[:1000]}")
                         logger.error(f"   Request ID: {request_id}")
+                        logger.error(f"   This email will NOT be marked as read and will be retried")
                         continue
                     
                     logger.info(f"✅ VIN FOUND: {vin} - Proceeding to store email")

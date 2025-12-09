@@ -185,15 +185,25 @@ class CustomerResponseService:
                     business_days_passed = self._count_business_days(submission_date, current_time)
                     
                     # Check if ALL garages have responded
-                    all_garages_responded = self._check_all_garages_responded(vin)
+                    all_garages_responded, response_count = self._check_all_garages_responded(vin)
                     
                     # Send response if:
                     # 1. All garages have responded, OR
-                    # 2. 2 business days have passed
-                    should_send = all_garages_responded or business_days_passed >= 2
+                    # 2. At least ONE garage responded AND 1 business day passed, OR
+                    # 3. 2 business days have passed (even with no responses)
+                    should_send = (
+                        all_garages_responded or 
+                        (response_count > 0 and business_days_passed >= 1) or
+                        business_days_passed >= 2
+                    )
                     
                     if should_send:
-                        reason = "all garages responded" if all_garages_responded else "2 business days passed"
+                        if all_garages_responded:
+                            reason = "all garages responded"
+                        elif response_count > 0 and business_days_passed >= 1:
+                            reason = f"{response_count} garage(s) responded and 1 business day passed"
+                        else:
+                            reason = "2 business days passed"
                         logger.info(f"Sending consolidated response for VIN {vin} to {fields.get('Email')} ({reason})")
                         
                         success = await self._send_customer_response(record_id, fields, vin)
@@ -296,7 +306,7 @@ class CustomerResponseService:
         
         return None
     
-    def _check_all_garages_responded(self, vin: str) -> bool:
+    def _check_all_garages_responded(self, vin: str) -> tuple[bool, int]:
         """
         Check if all garages in the 'Fix it' table have responded for this VIN
         
@@ -304,7 +314,7 @@ class CustomerResponseService:
             vin: Vehicle Identification Number
             
         Returns:
-            bool: True if all garages have responded
+            tuple: (all_responded: bool, response_count: int)
         """
         try:
             # Get all garages from Fix it table
@@ -313,7 +323,7 @@ class CustomerResponseService:
             
             if total_garages == 0:
                 logger.warning("No garages found in Fix it table")
-                return False
+                return False, 0
             
             # Get all responses from Received email table for this VIN
             received_emails = self.airtable.get_records(
@@ -355,17 +365,18 @@ class CustomerResponseService:
             # Check if all garages have responded
             # All garages have responded if: responded_emails contains all garage emails
             all_responded = all_garage_emails.issubset(responded_emails) if len(all_garage_emails) > 0 else False
+            response_count = len(responded_emails)
             
-            logger.info(f"VIN {vin}: {len(responded_emails)}/{len(all_garage_emails)} garages responded")
+            logger.info(f"VIN {vin}: {response_count}/{len(all_garage_emails)} garages responded")
             logger.info(f"  Expected garages: {all_garage_emails}")
             logger.info(f"  Responded garages: {responded_emails}")
             logger.info(f"  All responded: {all_responded}")
             
-            return all_responded
+            return all_responded, response_count
             
         except Exception as e:
             logger.error(f"Error checking if all garages responded: {str(e)}", exc_info=True)
-            return False
+            return False, 0
     
     async def _send_customer_response(self, record_id: str, customer_fields: Dict[str, Any], vin: str) -> bool:
         """
