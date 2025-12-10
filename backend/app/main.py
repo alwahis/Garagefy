@@ -212,3 +212,25 @@ async def health_check() -> Dict[str, Any]:
     }
     
     return health_status
+
+@app.post("/api/debug/check-emails")
+async def debug_check_emails() -> Dict[str, Any]:
+    """Manually trigger email check for debugging"""
+    from app.services.email_monitor_service import email_monitor_service
+    
+    logger.info("🔍 Manual email check triggered via debug endpoint")
+    
+    try:
+        result = await email_monitor_service.check_and_process_new_emails(mark_as_read=False)
+        logger.info(f"📊 Email check result: {result}")
+        return {
+            "success": True,
+            "message": "Email check completed",
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"❌ Error in debug email check: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }

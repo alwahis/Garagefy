@@ -40,6 +40,19 @@ class BaserowService:
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"Initializing Baserow service for database {self.database_id}")
         
+        # Hardcoded field IDs for Received Email table
+        # These are fixed field IDs that match the Baserow table structure
+        # If field names don't match exactly, dynamic lookup fails, so we hardcode them
+        # NOTE: Update these if you recreate the Received Email table
+        self.received_email_fields = {
+            'VIN': 6389838,      # VIN field
+            'Email': 6389839,    # Garage email
+            'Subject': 6389840,  # Email subject
+            'Body': 6389841,     # Email body
+            'Received At': 6389842,  # Timestamp
+            'Quote': 6389843,    # Extracted quote/price
+        }
+        
         # Cache for field IDs (will be populated on first use)
         self._field_id_cache = {}
     
@@ -698,14 +711,14 @@ class BaserowService:
             except Exception as e:
                 self.logger.warning(f"Could not check for duplicates: {str(e)}, will proceed with save")
             
-            # Prepare payload using DYNAMIC field ID lookup
-            # This ensures we use the correct field IDs even if the table structure changes
-            field_email = self._get_field_id_by_name(table_id, 'Email')
-            field_subject = self._get_field_id_by_name(table_id, 'Subject')
-            field_body = self._get_field_id_by_name(table_id, 'Body')
-            field_received_at = self._get_field_id_by_name(table_id, 'Received At')
-            field_vin = self._get_field_id_by_name(table_id, 'VIN')
-            field_quote = self._get_field_id_by_name(table_id, 'Quote')
+            # Use HARDCODED field IDs for Received Email table
+            # This is more reliable than dynamic lookup which can fail on field name mismatches
+            field_vin = self.received_email_fields['VIN']
+            field_email = self.received_email_fields['Email']
+            field_subject = self.received_email_fields['Subject']
+            field_body = self.received_email_fields['Body']
+            field_received_at = self.received_email_fields['Received At']
+            field_quote = self.received_email_fields['Quote']
             
             # Extract quote/price from email body and subject
             body_text = email_data.get('body', '')
@@ -713,31 +726,18 @@ class BaserowService:
             combined_text = f"{subject_text} {body_text}"
             extracted_quote = self._extract_quote_from_text(combined_text)
             
-            # Build payload with correct field IDs
-            payload = {}
-            if field_vin:
-                payload[f'field_{field_vin}'] = vin  # VIN - CRITICAL
-            if field_email:
-                payload[f'field_{field_email}'] = email_data.get('from_email', '').strip().lower()
-            if field_subject:
-                payload[f'field_{field_subject}'] = email_data.get('subject', 'No Subject')
-            if field_body:
-                payload[f'field_{field_body}'] = email_data.get('body', '')
-            if field_received_at:
-                payload[f'field_{field_received_at}'] = email_data.get('received_at', datetime.now(timezone.utc).isoformat())
-            if field_quote and extracted_quote:
+            # Build payload with hardcoded field IDs
+            payload = {
+                f'field_{field_vin}': vin,  # VIN - CRITICAL
+                f'field_{field_email}': email_data.get('from_email', '').strip().lower(),
+                f'field_{field_subject}': email_data.get('subject', 'No Subject'),
+                f'field_{field_body}': email_data.get('body', ''),
+                f'field_{field_received_at}': email_data.get('received_at', datetime.now(timezone.utc).isoformat()),
+            }
+            
+            # Add quote if extracted
+            if extracted_quote:
                 payload[f'field_{field_quote}'] = extracted_quote
-            
-            # Validate we have at least VIN and one content field
-            if not field_vin:
-                error_msg = f"Could not find VIN field in table {table_id}. Available fields may have different names."
-                self.logger.error(error_msg)
-                return {'success': False, 'error': error_msg}
-            
-            if not field_body and not field_subject:
-                error_msg = f"Could not find Body or Subject fields in table {table_id}."
-                self.logger.error(error_msg)
-                return {'success': False, 'error': error_msg}
             
             self.logger.info(f"📧 Storing email: VIN={vin}, from={email_data.get('from_email', '')}")
             self.logger.info(f"📧 Field IDs: VIN={field_vin}, Email={field_email}, Subject={field_subject}, Body={field_body}")
@@ -805,14 +805,14 @@ class BaserowService:
             
             self.logger.info(f"🔍 DEBUG: Using table ID {table_id} for Received Email table")
             
-            # Map response data to Baserow field IDs using DYNAMIC lookup
-            # This ensures we use the correct field IDs even if the table structure changes
-            field_email = self._get_field_id_by_name(table_id, 'Email')
-            field_subject = self._get_field_id_by_name(table_id, 'Subject')
-            field_body = self._get_field_id_by_name(table_id, 'Body')
-            field_received_at = self._get_field_id_by_name(table_id, 'Received At')
-            field_vin = self._get_field_id_by_name(table_id, 'VIN')
-            field_quote = self._get_field_id_by_name(table_id, 'Quote')
+            # Use HARDCODED field IDs for Received Email table
+            # This is more reliable than dynamic lookup which can fail on field name mismatches
+            field_vin = self.received_email_fields['VIN']
+            field_email = self.received_email_fields['Email']
+            field_subject = self.received_email_fields['Subject']
+            field_body = self.received_email_fields['Body']
+            field_received_at = self.received_email_fields['Received At']
+            field_quote = self.received_email_fields['Quote']
             
             # Extract quote/price from response body and subject
             body_text = response_data.get('body', '')
@@ -820,30 +820,18 @@ class BaserowService:
             combined_text = f"{subject_text} {body_text}"
             extracted_quote = self._extract_quote_from_text(combined_text)
             
-            # Build payload with correct field IDs
-            payload = {}
-            if field_vin:
-                payload[f'field_{field_vin}'] = vin  # VIN - CRITICAL for matching
-            if field_email:
-                payload[f'field_{field_email}'] = response_data.get('garage_email', '')
-            if field_subject:
-                payload[f'field_{field_subject}'] = response_data.get('subject', f"Response from {response_data.get('garage_name', '')}")
-            if field_body:
-                payload[f'field_{field_body}'] = response_data.get('body', '')
-            if field_received_at:
-                payload[f'field_{field_received_at}'] = response_data.get('response_date', datetime.now(timezone.utc).isoformat())
-            if field_quote and extracted_quote:
-                payload[f'field_{field_quote}'] = extracted_quote
+            # Build payload with hardcoded field IDs
+            payload = {
+                f'field_{field_vin}': vin,  # VIN - CRITICAL for matching
+                f'field_{field_email}': response_data.get('garage_email', ''),
+                f'field_{field_subject}': response_data.get('subject', f"Response from {response_data.get('garage_name', '')}"),
+                f'field_{field_body}': response_data.get('body', ''),
+                f'field_{field_received_at}': response_data.get('response_date', datetime.now(timezone.utc).isoformat()),
+            }
             
-            # Validate we have at least VIN and one content field
-            if not field_vin or (not field_body and not field_subject):
-                error_msg = f"Could not map required fields. VIN: {field_vin}, Body: {field_body}, Subject: {field_subject}"
-                self.logger.error(error_msg)
-                return {
-                    'success': False,
-                    'record': None,
-                    'error': error_msg
-                }
+            # Add quote if extracted
+            if extracted_quote:
+                payload[f'field_{field_quote}'] = extracted_quote
             
             self.logger.info(f"🔍 DEBUG: Storing garage response with payload: {json.dumps(payload, indent=2)}")
             
