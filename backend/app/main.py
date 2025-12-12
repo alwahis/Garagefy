@@ -234,3 +234,55 @@ async def debug_check_emails() -> Dict[str, Any]:
             "success": False,
             "error": str(e)
         }
+
+@app.post("/api/test/write-received-email")
+async def test_write_received_email() -> Dict[str, Any]:
+    """Test endpoint to write a record to the Received Email table"""
+    from app.services.baserow_service import BaserowService
+    from datetime import datetime, timezone
+    
+    logger.info("🧪 Test write to Received Email table triggered")
+    
+    try:
+        baserow = BaserowService()
+        
+        # Prepare test email data
+        test_vin = "1HGBH41JXMN109186"  # Valid VIN format
+        test_email_data = {
+            'from_email': 'test-garage@example.com',
+            'subject': f'Test Quote - EUR 450 - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
+            'body': 'This is a test email to verify the Received Email table is working.\n\nQuote: EUR 450\n\nTest Garage',
+            'received_at': datetime.now(timezone.utc).isoformat()
+        }
+        
+        logger.info(f"Writing test record with VIN: {test_vin}")
+        
+        # Write to Received Email table
+        result = baserow.store_received_email(test_email_data, vin=test_vin)
+        
+        if result.get('success'):
+            record_id = result.get('data', {}).get('id')
+            logger.info(f"✅ SUCCESS: Created record {record_id} in Received Email table")
+            
+            return {
+                "success": True,
+                "message": "Test record created successfully in Received Email table",
+                "record_id": record_id,
+                "vin": test_vin,
+                "from_email": test_email_data['from_email'],
+                "timestamp": test_email_data['received_at']
+            }
+        else:
+            error = result.get('error', 'Unknown error')
+            logger.error(f"❌ FAILED to write to Received Email table: {error}")
+            return {
+                "success": False,
+                "error": error
+            }
+            
+    except Exception as e:
+        logger.error(f"❌ Exception in test_write_received_email: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }
